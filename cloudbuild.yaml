@@ -13,6 +13,6 @@ steps:
       - '--region'
       - '${_REGION}'
 options:
-  logging: GCS_ONLY
+  logging: cloud_logging
 images:
   - 'gcr.io/$PROJECT_ID/ici:$BUILD_ID'
