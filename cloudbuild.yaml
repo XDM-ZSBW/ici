@@ -5,12 +5,12 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - '${_SERVICE_NAME}'  # Cloud Run service name
+      - '${_SERVICE_NAME}'
       - '--image'
       - 'gcr.io/$PROJECT_ID/ici:$BUILD_ID'
       - '--platform'
-      - '${_PLATFORM}'  # Platform (e.g., managed)
+      - '${_PLATFORM}'
       - '--region'
-      - '${_REGION}'  # Cloud Run region
+      - '${_REGION}'
 images:
   - 'gcr.io/$PROJECT_ID/ici:$BUILD_ID'
