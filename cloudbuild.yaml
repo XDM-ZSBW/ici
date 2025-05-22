@@ -5,4 +5,3 @@ steps:
 images:
   - 'gcr.io/$PROJECT_ID/ici:$BUILD_ID'
 logsBucket: 'gs://zip-myl-dev'
-loggingService: 'logging.googleapis.com'
