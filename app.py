@@ -3,7 +3,6 @@ import socketserver
 import logging
 import os
 import datetime
-import shutil
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -33,7 +32,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
-            uptime_str = "System Uptime: " + str(datetime.datetime.now())
+            now = datetime.datetime.now()
+            uptime_str = f"System Uptime: {now}"  # Use f-string for formatting
             self.wfile.write(uptime_str.encode())
             logging.info(f"Served uptime: {uptime_str}")
         else:
