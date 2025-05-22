@@ -8,7 +8,6 @@ import json  # Import the json module
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-VERSION = "1.1.2"  # Or read from a file, environment variable, etc.
 TEMPLATES_DIR = "templates"
 
 class MyHandler(http.server.SimpleHTTPRequestHandler):
