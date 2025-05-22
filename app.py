@@ -3,7 +3,9 @@ import socketserver
 import logging
 import os
 import datetime
-import json  # Import the json module
+import json
+import secrets  # Import the secrets module
+import string  # Import the string module
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,13 +32,22 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 logging.error("index.html not found in templates directory.")
         elif self.path == "/uptime":
             self.send_response(200)
-            self.send_header("Content-type", "application/json")  # Set content type to JSON
+            self.send_header("Content-type", "application/json")
             self.end_headers()
             now = datetime.datetime.now()
-            uptime_data = {"uptime": str(now)}  # Create a dictionary
-            uptime_json = json.dumps(uptime_data)  # Convert to JSON
-            self.wfile.write(uptime_json.encode())  # Encode and send
+            uptime_data = {"uptime": str(now)}
+            uptime_json = json.dumps(uptime_data)
+            self.wfile.write(uptime_json.encode())
             logging.info(f"Served uptime: {uptime_json}")
+        elif self.path == "/data":
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            random_string = ''.join(secrets.choice(string.ascii_letters) for i in range(128))  # Generate 128-bit random string
+            data = {"random_string": random_string}
+            json_data = json.dumps(data)
+            self.wfile.write(json_data.encode())
+            logging.info("Served random data.")
         else:
             # Serve other static files (if needed)
             filepath = os.path.join(TEMPLATES_DIR, self.path[1:])  # Remove leading slash

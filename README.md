@@ -16,4 +16,6 @@ git.. etc
 python app.py
 ```
 
-The server will start on port 8080 by default. You can access it at `http://localhost:8080`.
+The server will start on port 8080 by default. 
+
+You can access it at `http://localhost:8080`.
