@@ -14,8 +14,7 @@ steps:
       - '${_REGION}'
 options:
   logging: GCS_ONLY
-  gcs_logging_options:
-    bucket: '${_LOGS_BUCKET}/logs'
+  logsBucket: '${_LOGS_BUCKET}'
 substitutions:
     _SERVICE_NAME: "ici"
     _PLATFORM: "managed"
