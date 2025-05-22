@@ -24,13 +24,16 @@ docker build -t my-app . from dev... How to build and run a docker image during 
 
 ## Build and Deployment
 
-To build and deploy this application, you'll need to use the `gcloud builds submit` command. The following substitutions are required for the build to succeed in development and staging environments:
+To build and deploy this application, you'll need to use the `gcloud builds submit` command with a `cloudbuild.yaml` configuration file. The following substitutions are required for the build to succeed in development and staging environments:
 
-*   `_CACHE_BUST`: This substitution is used to bust the Dockerfile cache. It should be set to a unique value for each build, such as a timestamp. Example: `_CACHE_BUST=$(date +%s)`
-*   `--gcs-log-bucket`: This flag specifies the Google Cloud Storage bucket where build logs will be stored. You must have a bucket created and replace `gs://your-log-bucket-name` with the correct bucket name.
+*   `_CACHE_BUST`: This substitution is used to bust the Dockerfile cache. It should be set to a unique value for each build, such as a timestamp.
+*   `_SERVICE_NAME`: The name of your Cloud Run service.
+*   `_PLATFORM`: The Cloud Run platform (e.g., `managed`).
+*   `_REGION`: The Cloud Run region (e.g., `us-central1`).
+*   `--gcs-log-dir`: This flag specifies the Google Cloud Storage directory where build logs will be stored. You must have a bucket created and replace `gs://your-log-bucket/logs` with the correct bucket and directory.
 
 **Example `gcloud builds submit` command:**
 
 ```bash
-gcloud builds submit --substitutions _CACHE_BUST=$(date +%s) --gcs-log-bucket=gs://your-log-bucket-name .
+gcloud builds submit --config cloudbuild.yaml --substitutions _CACHE_BUST=$((Get-Date -UFormat %s)),_SERVICE_NAME="your-service-name",_PLATFORM="managed",_REGION="your-region" --gcs-log-dir=gs://your-log-bucket/logs .
 ```
