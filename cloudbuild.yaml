@@ -12,5 +12,14 @@ steps:
       - '${_PLATFORM}'
       - '--region'
       - '${_REGION}'
+options:
+  logging: GCS_ONLY
+  gcs_logging_options:
+    bucket: '${_LOGS_BUCKET}/logs'
+substitutions:
+    _SERVICE_NAME: "ici"
+    _PLATFORM: "managed"
+    _REGION: "us-west1"
+    _LOGS_BUCKET: "gs://your-log-bucket"
 images:
   - 'gcr.io/$PROJECT_ID/ici:$BUILD_ID'
