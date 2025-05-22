@@ -3,6 +3,7 @@ import socketserver
 import logging
 import os
 import datetime
+import json  # Import the json module
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,12 +31,13 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 logging.error("index.html not found in templates directory.")
         elif self.path == "/uptime":
             self.send_response(200)
-            self.send_header("Content-type", "text/plain")
+            self.send_header("Content-type", "application/json")  # Set content type to JSON
             self.end_headers()
             now = datetime.datetime.now()
-            uptime_str = f"System Uptime: {now}"  # Use f-string for formatting
-            self.wfile.write(uptime_str.encode())
-            logging.info(f"Served uptime: {uptime_str}")
+            uptime_data = {"uptime": str(now)}  # Create a dictionary
+            uptime_json = json.dumps(uptime_data)  # Convert to JSON
+            self.wfile.write(uptime_json.encode())  # Encode and send
+            logging.info(f"Served uptime: {uptime_json}")
         else:
             # Serve other static files (if needed)
             filepath = os.path.join(TEMPLATES_DIR, self.path[1:])  # Remove leading slash
