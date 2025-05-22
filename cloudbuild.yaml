@@ -1,24 +1,23 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '--build-arg', 'CACHE_BUST=$BUILD_ID', '-t', 'gcr.io/$PROJECT_ID/ici:$BUILD_ID', '.']
+    args: ['build', '--build-arg', 'CACHE_BUST=$BUILD_ID', '-t', 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$BUILD_ID', '.']
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
       - 'deploy'
       - '${_SERVICE_NAME}'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/ici:$BUILD_ID'
+      - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$BUILD_ID'
       - '--platform'
       - '${_PLATFORM}'
       - '--region'
       - '${_REGION}'
 options:
   logging: GCS_ONLY
-logsBucket: '${_LOGS_BUCKET}' # Top-level field for the GCS bucket
 substitutions:
-    _SERVICE_NAME: ""
-    _PLATFORM: ""
-    _REGION: ""
-    _LOGS_BUCKET: "" # Define substitution for the logs bucket
+    _IMAGE_NAME: "ici"
+    _SERVICE_NAME: "ici"
+    _PLATFORM: "managed"
+    _REGION: "us-west1"
 images:
-  - 'gcr.io/$PROJECT_ID/ici:$BUILD_ID'
+  - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$BUILD_ID'
