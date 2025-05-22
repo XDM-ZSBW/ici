@@ -23,7 +23,7 @@ async function fetchHealthStatus() {
 fetchHealthStatus();
 
 // Fetch health status every 5 seconds (adjust as needed)
-setInterval(fetchHealthStatus, 5000);
+//setInterval(fetchHealthStatus, 5000);
 
 module.exports = {
   health,
