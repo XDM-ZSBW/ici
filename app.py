@@ -114,8 +114,6 @@ def send_server_sent_event(endpoint, data):
         # Iterate over a copy of the clients list to avoid modification during iteration
         for client in list(clients[endpoint]):
             try:
-                # Try sending a small amount of data to check if the connection is still open
-                client.send(b'')  # Send an empty byte string
                 client.write(encoded_string)
                 client.flush()  # Ensure data is sent immediately
             except (BrokenPipeError, ConnectionResetError):
