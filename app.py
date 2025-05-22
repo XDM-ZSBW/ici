@@ -1,34 +1,34 @@
 import http.server
 import socketserver
-import datetime
 import logging
 import os
+import datetime
+import shutil
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 VERSION = "1.1.2"  # Or read from a file, environment variable, etc.
+TEMPLATES_DIR = "templates"
 
 class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/":
-            self.send_response(200)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
-            self.wfile.write(b"<!DOCTYPE html>\n")
-            self.wfile.write(b"<html lang='en'>\n")
-            self.wfile.write(b"<head>\n")
-            self.wfile.write(b"<meta charset='utf-8'>\n")
-            self.wfile.write(b"<title>Hello World!</title>\n")
-            self.wfile.write(b"</head>\n")
-            self.wfile.write(b"<body>\n")
-            self.wfile.write(b"<h1>Hello World!</h1>\n")
-            self.wfile.write(b"<p>This is a HTTP server.</p>\n")
-            # Add version indicator
-            self.wfile.write(b"<p style='color: #ccc; font-size: smaller;'>Version: " + VERSION.encode() + b"</p>\n")
-            self.wfile.write(b"</body>\n")
-            self.wfile.write(b"</html>\n")
-            logging.info("Served Hello World page.")
+            try:
+                # Serve index.html from the templates directory
+                with open(os.path.join(TEMPLATES_DIR, "index.html"), "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write(content)
+                logging.info("Served index.html from templates directory.")
+            except FileNotFoundError:
+                self.send_response(404)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Error: index.html not found in templates directory.")
+                logging.error("index.html not found in templates directory.")
         elif self.path == "/uptime":
             self.send_response(200)
             self.send_header("Content-type", "text/plain")
@@ -37,7 +37,29 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(uptime_str.encode())
             logging.info(f"Served uptime: {uptime_str}")
         else:
-            super().do_GET()  # Serve other files normally
+            # Serve other static files (if needed)
+            filepath = os.path.join(TEMPLATES_DIR, self.path[1:])  # Remove leading slash
+            if os.path.exists(filepath) and os.path.isfile(filepath):
+                try:
+                    with open(filepath, 'rb') as f:
+                        content = f.read()
+                    self.send_response(200)
+                    self.send_header("Content-type", self.guess_type(filepath))
+                    self.end_headers()
+                    self.wfile.write(content)
+                    logging.info(f"Served static file: {self.path}")
+                except Exception as e:
+                    self.send_response(500)
+                    self.send_header("Content-type", "text/plain")
+                    self.end_headers()
+                    self.wfile.write(f"Error serving file: {str(e)}".encode())
+                    logging.error(f"Error serving file: {str(e)}")
+            else:
+                self.send_response(404)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Error: File not found.")
+                logging.warning(f"File not found: {self.path}")
 
 if __name__ == "__main__":
     PORT = int(os.environ.get("PORT", 8080))
