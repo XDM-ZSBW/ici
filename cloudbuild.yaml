@@ -14,9 +14,5 @@ steps:
       - '${_REGION}'
 options:
   logging: GCS_ONLY
-substitutions:
-    _SERVICE_NAME: "ici"
-    _PLATFORM: "managed"
-    _REGION: "us-west1"
 images:
   - 'gcr.io/$PROJECT_ID/ici:$BUILD_ID'
