@@ -1,4 +1,3 @@
-# filepath: e:\zip-myl-dev\ici\dockerfile
 FROM python:3.9-slim-buster
 
 WORKDIR /app
