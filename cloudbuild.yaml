@@ -1,6 +1,6 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '--build-arg', 'CACHE_BUST=${_CACHE_BUST}', '-t', 'gcr.io/$PROJECT_ID/ici:$BUILD_ID', '.']
+    args: ['build', '--build-arg', 'CACHE_BUST=$BUILD_ID', '-t', 'gcr.io/$PROJECT_ID/ici:$BUILD_ID', '.']
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
