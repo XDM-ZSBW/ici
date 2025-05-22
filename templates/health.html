@@ -8,6 +8,23 @@
 <body>
     <h1>Health Check</h1>
     <p>Status: <span id="health-status">Loading...</span></p>
-    <script src="health.js"></script>
+    <p><span id="data-from-server"></span></p>
+    <script>
+        const eventSource = new EventSource("/events");
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            document.getElementById("data-from-server").textContent = "Data from server: " + data.random_string;
+        };
+
+        eventSource.onerror = function(error) {
+            console.error("EventSource failed:", error);
+            document.getElementById("data-from-server").textContent = "Error: Could not retrieve data. Reconnecting...";
+            // Attempt to reconnect after a delay
+            setTimeout(() => {
+                eventSource = new EventSource("/events"); // Recreate the EventSource
+            }, 5000); // Wait 5 seconds before reconnecting
+        };
+    </script>
 </body>
 </html>

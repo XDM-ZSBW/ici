@@ -3,12 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>ICI App</title>
 </head>
 <body>
     <h1>ICI 1.1</h1>
-    <h1>System uptime:</h1>
-    <div id="content-area"></div>
-    <script src="index.js"></script>
+    <p id="app-description">This app is designed to demonstrate continuous integration and deployment with Google Cloud Run.</p>
+    <p>Data from server: <span id="data-from-server"></span></p>
+    <script>
+        const eventSource = new EventSource("/events");
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            document.getElementById("data-from-server").textContent = "Data from server: " + data.random_string;
+        };
+
+        eventSource.onerror = function(error) {
+            console.error("EventSource failed:", error);
+            document.getElementById("data-from-server").textContent = "Error: Could not retrieve data.";
+            eventSource.close(); // Close the connection on error
+        };
+    </script>
 </body>
 </html>

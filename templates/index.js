@@ -2,13 +2,14 @@
 async function fetchData() {
   try {
     const response = await fetch('/data'); // Replace '/data' with your actual endpoint
-    const data = await response.text(); // Or response.json() if your server sends JSON
+    const data = await response.json(); // Or response.text() if your server sends plain text
 
     // Update the content on the page
-    document.getElementById('content-area').textContent = data;
+    document.getElementById('app-description').textContent = 'This app is designed to demonstrate continuous integration and deployment with Google Cloud Run.';
+    document.getElementById('data-from-server').textContent = 'Data from server: ' + data.random_string; // Access the random_string property
   } catch (error) {
     console.error('Error fetching data:', error);
-    document.getElementById('content-area').textContent = 'Error: Could not retrieve data.';
+    document.getElementById('data-from-server').textContent = 'Error: Could not retrieve data.';
   }
 }
 
@@ -16,4 +17,4 @@ async function fetchData() {
 fetchData();
 
 // Fetch data every 5 seconds (adjust as needed)
-// setInterval(fetchData, 10000);
+setInterval(fetchData, 5000);
