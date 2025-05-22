@@ -48,6 +48,22 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             json_data = json.dumps(data)
             self.wfile.write(json_data.encode())
             logging.info("Served random data.")
+        elif self.path == "/health":
+            try:
+                # Serve health.html from the templates directory
+                with open(os.path.join(TEMPLATES_DIR, "health.html"), "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write(content)
+                logging.info("Served health.html from templates directory.")
+            except FileNotFoundError:
+                self.send_response(404)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Error: health.html not found in templates directory.")
+                logging.error("health.html not found in templates directory.")
         else:
             # Serve other static files (if needed)
             filepath = os.path.join(TEMPLATES_DIR, self.path[1:])  # Remove leading slash
