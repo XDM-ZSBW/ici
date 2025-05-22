@@ -12,6 +12,11 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 TEMPLATES_DIR = "templates"
 
+# Create timestamp.txt if it doesn't exist
+if not os.path.exists("timestamp.txt"):
+    with open("timestamp.txt", "w") as f:
+        f.write(str(datetime.datetime.now()))
+
 class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/":

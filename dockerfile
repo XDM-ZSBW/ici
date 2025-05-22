@@ -2,14 +2,21 @@ FROM python:3.9-slim-buster
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
-COPY templates ./templates
+COPY app.py /app/
+COPY templates /app/templates/
 
-RUN date > timestamp.txt  # Create timestamp.txt to bust cache
+# Create a test script
+RUN echo "import os; assert os.path.exists('/app/app.py'); assert os.path.exists('/app/templates/index.html')" > test.py
+
+# Run the test script
+RUN python test.py
+
+#RUN echo "" > /app/timestamp.txt # Create timestamp.txt to bust cache
+#RUN date > /app/timestamp.txt  # Create timestamp.txt to bust cache
+#COPY timestamp.txt /app/ # Copy timestamp.txt to bust cache
 
 ENV PORT 8080
-
 CMD [ "python", "app.py" ]

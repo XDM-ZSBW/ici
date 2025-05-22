@@ -19,3 +19,5 @@ python app.py
 The server will start on port 8080 by default. 
 
 You can access it at `http://localhost:8080`.
+Docker build testing
+docker build -t my-app . from dev... How to build and run a docker image during development?
