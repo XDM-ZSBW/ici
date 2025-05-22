@@ -10,17 +10,23 @@
     <p id="app-description">This app is designed to demonstrate continuous integration and deployment with Google Cloud Run.</p>
     <p>Data from server: <span id="data-from-server"></span></p>
     <script>
-        const eventSource = new EventSource("/events");
+        const socket = new WebSocket("ws://localhost:8080/events"); // Replace with your WebSocket URL
 
-        eventSource.onmessage = function(event) {
+        socket.onopen = function(event) {
+            console.log("Connected to WebSocket");
+        };
+
+        socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
             document.getElementById("data-from-server").textContent = "Data from server: " + data.random_string;
         };
 
-        eventSource.onerror = function(error) {
-            console.error("EventSource failed:", error);
-            document.getElementById("data-from-server").textContent = "Error: Could not retrieve data.";
-            eventSource.close(); // Close the connection on error
+        socket.onclose = function(event) {
+            console.log("Disconnected from WebSocket");
+        };
+
+        socket.onerror = function(error) {
+            console.error("WebSocket error:", error);
         };
     </script>
 </body>
