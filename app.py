@@ -23,7 +23,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(b"</head>\n")
             self.wfile.write(b"<body>\n")
             self.wfile.write(b"<h1>Hello World!</h1>\n")
-            self.wfile.write(b"<p>This is a simple HTTP server.</p>\n")
+            self.wfile.write(b"<p>This is a HTTP server.</p>\n")
             # Add version indicator
             self.wfile.write(b"<p style='color: #ccc; font-size: smaller;'>Version: " + VERSION.encode() + b"</p>\n")
             self.wfile.write(b"</body>\n")
