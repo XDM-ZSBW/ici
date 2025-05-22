@@ -14,9 +14,11 @@ steps:
       - '${_REGION}'
 options:
   logging: GCS_ONLY
+logsBucket: '${_LOGS_BUCKET}' # Top-level field for the GCS bucket
 substitutions:
     _SERVICE_NAME: ""
     _PLATFORM: ""
     _REGION: ""
+    _LOGS_BUCKET: "" # Define substitution for the logs bucket
 images:
   - 'gcr.io/$PROJECT_ID/ici:$BUILD_ID'
