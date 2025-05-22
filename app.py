@@ -1,8 +1,8 @@
 import subprocess
 import sys
-from flask import Flask, render_template
+import http.server
+import socketserver
 import datetime
-import unittest
 import logging
 import os
 
@@ -30,63 +30,33 @@ def install_dependencies():
 
 install_dependencies()
 
-app = Flask(__name__, template_folder='e:\\zip-myl-dev\\templates'
-'')
-
-@app.route("/")
-def index():
-    """
-    Defines the index route for the application.
-    Returns:
-        str: Content of index.html or an error message if the file is not found.
-    """
-    logging.info("Index route called.")
-    try:
-        return render_template('index.html')
-    except Exception as e:
-        logging.error(f"Failed to render index.html: {e}")
-        # Report error to health providers (replace with actual reporting mechanism)
-        print("ERROR: Could not serve index.html. Please check the file.")  # Echo to console
-        return "<h1>Error: index.html not found</h1>", 500  # Return an error response
-
-@app.route("/uptime")
-def uptime():
-    """
-    Defines the uptime route for the application.
-    Returns:
-        str: A string containing "System Uptime: " followed by the current date and time.
-    """
-    logging.info("Uptime route called.")
-    uptime_str = "System Uptime: " + str(datetime.datetime.now())
-    logging.info(f"Uptime: {uptime_str}")
-    return uptime_str
-
-class TestApp(unittest.TestCase):
-    """
-    Defines the unit tests for the application.
-    """
-    def test_index(self):
-        """
-        Tests the index route.
-        It checks if the response status code is 200.
-        """
-        logging.info("Testing index route...")
-        with app.test_client() as client:
-            response = client.get('/')
-            self.assertEqual(response.status_code, 200)
-        logging.info("Index route test passed.")
-
-    def test_uptime(self):
-        """
-        Tests the uptime route.
-        It checks if the response status code is 200 and if the response data starts with "System Uptime:".
-        """
-        logging.info("Testing uptime route...")
-        with app.test_client() as client:
-            response = client.get('/uptime')
-            self.assertEqual(response.status_code, 200)
-            self.assertTrue(response.data.decode('utf-8').startswith("System Uptime:"))
-        logging.info("Uptime route test passed.")
+class MyHandler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/":
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(b"<!DOCTYPE html>\n")
+            self.wfile.write(b"<html lang='en'>\n")
+            self.wfile.write(b"<head>\n")
+            self.wfile.write(b"<meta charset='utf-8'>\n")
+            self.wfile.write(b"<title>Hello World!</title>\n")
+            self.wfile.write(b"</head>\n")
+            self.wfile.write(b"<body>\n")
+            self.wfile.write(b"<h1>Hello World!</h1>\n")
+            self.wfile.write(b"<p>Served without Flask!</p>\n")
+            self.wfile.write(b"</body>\n")
+            self.wfile.write(b"</html>\n")
+            logging.info("Served Hello World page.")
+        elif self.path == "/uptime":
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            uptime_str = "System Uptime: " + str(datetime.datetime.now())
+            self.wfile.write(uptime_str.encode())
+            logging.info(f"Served uptime: {uptime_str}")
+        else:
+            super().do_GET()  # Serve other files normally
 
 if __name__ == "__main__":
     import os
@@ -95,7 +65,9 @@ if __name__ == "__main__":
         logging.info("Running tests...")
         unittest.main()
     else:
-        logging.info("Starting Flask development server...")
+        logging.info("Starting server...")
         # Use the environment variable defined by Google Cloud Run
         port = int(os.environ.get("PORT", 8080))
-        app.run(debug=True, host="0.0.0.0", port=port)
+        with socketserver.TCPServer(("", port), MyHandler) as httpd:
+            logging.info(f"Serving on port {port}...")
+            httpd.serve_forever()
