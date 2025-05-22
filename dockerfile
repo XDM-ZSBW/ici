@@ -7,9 +7,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
-# Add a timestamp to force a rebuild on every deployment
-RUN date > timestamp.txt
-COPY timestamp.txt .
+# Create timestamp.txt and copy it in one step
+RUN date > timestamp.txt && COPY timestamp.txt .
 
 ENV PORT 8080
 
