@@ -7,7 +7,7 @@ import os
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-VERSION = "1.0.0"  # Or read from a file, environment variable, etc.
+VERSION = "1.1.1"  # Or read from a file, environment variable, etc.
 
 class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
