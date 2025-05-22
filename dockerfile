@@ -1,5 +1,5 @@
-# filepath: e:\zip-myl-dev\ici\Dockerfile
-FROM python:3.9-slim-buster
+# filepath: e:\zip-myl-dev\ici\dockerfile
+FROM python:3.10-slim-buster  # Temporarily change the Python version
 
 WORKDIR /app
 

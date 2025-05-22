@@ -7,6 +7,8 @@ import os
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+VERSION = "1.0.0"  # Or read from a file, environment variable, etc.
+
 class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/":
@@ -22,6 +24,8 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(b"<body>\n")
             self.wfile.write(b"<h1>Hello World!</h1>\n")
             self.wfile.write(b"<p>This is a simple HTTP server.</p>\n")
+            # Add version indicator
+            self.wfile.write(b"<p style='color: #ccc; font-size: smaller;'>Version: " + VERSION.encode() + b"</p>\n")
             self.wfile.write(b"</body>\n")
             self.wfile.write(b"</html>\n")
             logging.info("Served Hello World page.")
