@@ -21,7 +21,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(b"</head>\n")
             self.wfile.write(b"<body>\n")
             self.wfile.write(b"<h1>Hello World!</h1>\n")
-# ---            self.wfile.write(b"<p>Served without Flask!</p>\n") --- #
+            self.wfile.write(b"<p>This is a simple HTTP server.</p>\n")
             self.wfile.write(b"</body>\n")
             self.wfile.write(b"</html>\n")
             logging.info("Served Hello World page.")
