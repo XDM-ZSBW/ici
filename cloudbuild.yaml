@@ -14,6 +14,7 @@ steps:
       - '${_REGION}'
 options:
   logging: GCS_ONLY
+logsBucket: '${_LOGS_BUCKET}'
 substitutions:
     _IMAGE_NAME: ""
     _SERVICE_NAME: ""
