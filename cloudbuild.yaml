@@ -14,3 +14,4 @@ steps:
       - 'us-west1'
 images:
   - 'us-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ici:$BUILD_ID'
+logsBucket: 'gs://zip-myl-dev/logs'
