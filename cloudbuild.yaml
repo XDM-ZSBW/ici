@@ -24,9 +24,3 @@ images:
 logsBucket: '${_LOGS_BUCKET}'
 options:
   logging: GCS_ONLY
-substitutions:
-  _SERVICE_NAME: 'zip-myl-dev'
-  _PLATFORM: 'managed'
-  _REGION: 'us-west1'
-  _IMAGE_NAME: 'zip-myl-dev' # Default image name
-  _LOGS_BUCKET: 'gs://zip-myl-dev/logs'
