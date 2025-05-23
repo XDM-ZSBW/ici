@@ -1,17 +1,24 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ici:$BUILD_ID', '.']
+    args: ['build', '-t', '${_ARTIFACT_REGISTRY}/${_IMAGE_NAME}:$BUILD_ID', '.']
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
       - 'deploy'
-      - 'ici'
+      - '${_SERVICE_NAME}'
       - '--image'
-      - 'us-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ici:$BUILD_ID'
+      - '${_ARTIFACT_REGISTRY}/${_IMAGE_NAME}:$BUILD_ID'
       - '--platform'
-      - 'managed'
+      - '${_PLATFORM}'
       - '--region'
-      - 'us-west1'
+      - '${_REGION}'
 images:
-  - 'us-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ici:$BUILD_ID'
-logsBucket: 'gs://zip-myl-dev/logs'
+  - '${_ARTIFACT_REGISTRY}/${_IMAGE_NAME}:$BUILD_ID'
+logsBucket: '${_LOGS_BUCKET}'
+substitutions:
+  _ARTIFACT_REGISTRY: 'us-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy'
+  _IMAGE_NAME: 'ici'
+  _SERVICE_NAME: 'ici'
+  _PLATFORM: 'managed'
+  _REGION: 'us-west1'
+  _LOGS_BUCKET: 'gs://zip-myl-dev/logs'
