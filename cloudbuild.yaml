@@ -13,7 +13,7 @@ steps:
       - 'CACHE_BUST=$BUILD_ID'
       - '-f' # Explicitly specify the Dockerfile
       - 'Dockerfile' # Name of the Dockerfile
-      - '.' # Build context (current directory /workspace)
+      - '.' # Build context (current directory /workspace )
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - 'run'
