@@ -15,10 +15,5 @@ steps:
 options:
   logging: GCS_ONLY
 logsBucket: '${_LOGS_BUCKET}'
-substitutions:
-    _IMAGE_NAME: ""
-    _SERVICE_NAME: ""
-    _PLATFORM: ""
-    _REGION: ""
 images:
   - 'gcr.io/$PROJECT_ID/${_IMAGE_NAME}:$BUILD_ID'
