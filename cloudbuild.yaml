@@ -18,3 +18,6 @@ steps:
       ]
 images:
   - 'us-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/test-hello:$BUILD_ID'
+logsBucket: '${_LOGS_BUCKET}'
+substitutions:
+  _LOGS_BUCKET: 'gs://your-cloud-build-logs-bucket'
