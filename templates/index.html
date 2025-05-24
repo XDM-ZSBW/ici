@@ -15,7 +15,6 @@
     <br>
     <textarea id="private-box" style="width:100%;height:40px;" placeholder="Private for this browser, env-id, and public IP"></textarea>
     <br>
-    <button id="save-btn">Save Changes</button>
     {% if env_id is defined %}
     <script type="text/javascript">
       window.env_id_from_server = "{{ env_id }}";
@@ -54,27 +53,37 @@
     function getPrivateBoxKey(envId, publicIp, privateClientId) {
         return 'private-box-' + envId + '-' + publicIp + '-' + privateClientId;
     }
-    // Server API for client-box (shared for env-id + public IP)
-    function getClientBoxApiUrl() {
-        return '/client-box';
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
     }
     Promise.all([fetchEnvId(), fetchPublicIp()]).then(([envId, publicIp]) => {
         const privateClientId = getPrivateClientId(envId, publicIp);
-        // Set up env-box (shared across all clients with same env-id)
+        // Env-box (shared across all clients with same env-id)
         const envBox = document.getElementById('env-box');
         let isEditingEnvBox = false;
         function loadEnvBox() {
             if (!isEditingEnvBox) {
                 fetch('/env-box').then(r => r.json()).then(d => {
                     envBox.value = (d.value !== undefined && d.value !== null && d.value !== "") ? d.value : envId;
-                    document.querySelectorAll('#env-box').forEach(box => { box.value = envBox.value; });
                 });
             }
         }
         envBox.addEventListener('focus', function() { isEditingEnvBox = true; });
         envBox.addEventListener('blur', function() { isEditingEnvBox = false; });
+        envBox.addEventListener('input', debounce(function() {
+            fetch('/env-box', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({value: envBox.value})
+            });
+        }, 400));
         loadEnvBox();
-        // Set up client-box (shared for all with same public IP and env-id, server API)
+        setInterval(loadEnvBox, 2000);
+        // Client-box (shared for all with same public IP and env-id, server API)
         const clientBox = document.getElementById('client-box');
         let isEditingClientBox = false;
         function loadClientBox() {
@@ -87,31 +96,23 @@
         }
         clientBox.addEventListener('focus', function() { isEditingClientBox = true; });
         clientBox.addEventListener('blur', function() { isEditingClientBox = false; });
-        loadClientBox();
-        // Set up private-box (private for this browser, env-id, and public IP)
-        const privateBox = document.getElementById('private-box');
-        const privateBoxKey = getPrivateBoxKey(envId, publicIp, privateClientId);
-        let privateBoxValue = localStorage.getItem(privateBoxKey);
-        privateBox.value = (privateBoxValue !== undefined && privateBoxValue !== null && privateBoxValue !== "") ? privateBoxValue : privateClientId;
-        // Save button functionality
-        document.getElementById('save-btn').addEventListener('click', function() {
-            // Save env-box to server
-            fetch('/env-box', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({value: envBox.value})
-            }).then(() => loadEnvBox());
-            // Save client-box to server
+        clientBox.addEventListener('input', debounce(function() {
             fetch('/client-box', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({env_id: envId, public_ip: publicIp, value: clientBox.value})
-            }).then(() => loadClientBox());
-            // Save private-box to localStorage
-            localStorage.setItem(privateBoxKey, privateBox.value);
-        });
-        setInterval(loadEnvBox, 2000);
+            });
+        }, 400));
+        loadClientBox();
         setInterval(loadClientBox, 2000);
+        // Private-box (private for this browser, env-id, and public IP)
+        const privateBox = document.getElementById('private-box');
+        const privateBoxKey = getPrivateBoxKey(envId, publicIp, privateClientId);
+        let privateBoxValue = localStorage.getItem(privateBoxKey);
+        privateBox.value = (privateBoxValue !== undefined && privateBoxValue !== null && privateBoxValue !== "") ? privateBoxValue : privateClientId;
+        privateBox.addEventListener('input', debounce(function() {
+            localStorage.setItem(privateBoxKey, privateBox.value);
+        }, 400));
     });
     </script>
 </body>
