@@ -4,20 +4,35 @@
     <meta charset="UTF-8">
     <title>Environment and Client ID</title>
     <script>
-        // Generate a simple client ID (browser fingerprint + random)
-        function getClientId() {
-            let fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
-            let hash = 0;
-            for (let i = 0; i < fingerprint.length; i++) {
-                hash = ((hash << 5) - hash) + fingerprint.charCodeAt(i);
-                hash |= 0;
+        // Generate or retrieve a persistent client ID for this env-id
+        function getClientId(envId) {
+            const storageKey = 'client-id-' + envId;
+            let clientId = localStorage.getItem(storageKey);
+            if (!clientId) {
+                // Generate a new client ID (browser fingerprint + random)
+                let fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
+                let hash = 0;
+                for (let i = 0; i < fingerprint.length; i++) {
+                    hash = ((hash << 5) - hash) + fingerprint.charCodeAt(i);
+                    hash |= 0;
+                }
+                clientId = (hash >>> 0).toString(16) + '-' + Math.random().toString(16).slice(2);
+                localStorage.setItem(storageKey, clientId);
             }
-            // Add a random component for extra uniqueness
-            return (hash >>> 0).toString(16) + '-' + Math.random().toString(16).slice(2);
+            return clientId;
+        }
+        function resetClientId(envId) {
+            const storageKey = 'client-id-' + envId;
+            localStorage.removeItem(storageKey);
+            location.reload();
         }
         document.addEventListener('DOMContentLoaded', function() {
-            const clientId = getClientId();
+            const envId = document.getElementById('env-id').textContent;
+            const clientId = getClientId(envId);
             document.getElementById('client-id').textContent = clientId;
+            document.getElementById('reset-btn').addEventListener('click', function() {
+                resetClientId(envId);
+            });
         });
     </script>
 </head>
@@ -25,5 +40,6 @@
     <h1>Environment and Client IDs</h1>
     <p><strong>Server env-id:</strong> <span id="env-id">{{ env_id }}</span></p>
     <p><strong>Client unique-id:</strong> <span id="client-id"></span></p>
+    <button id="reset-btn">Reset Client ID</button>
 </body>
 </html>
