@@ -11,87 +11,84 @@
     <p>Data from server: <span id="data-from-server"></span></p>
     <textarea id="env-box" style="width:100%;height:80px;" placeholder="Shared for all clients with the same env-id"></textarea>
     <br>
-    <textarea id="client-box" style="width:100%;height:40px;" placeholder="Private for this client and env-id"></textarea>
+    <textarea id="client-box" style="width:100%;height:40px;" placeholder="Shared for all with the same public IP and env-id"></textarea>
     <br>
-    <button id="paste-hash-btn">Paste env-id + client-id hash to shared box</button>
+    <textarea id="private-box" style="width:100%;height:40px;" placeholder="Private for this browser and env-id"></textarea>
+    <br>
+    <button id="save-btn">Save Changes</button>
+    {% if env_id is defined %}
+    <script type="text/javascript">
+      window.env_id_from_server = "{{ env_id }}";
+    </script>
+    {% endif %}
     <script>
-    // Fetch env-id from the server
+    // Fetch public IP using a public API
+    function fetchPublicIp() {
+        return fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => d.ip);
+    }
+    // Use env_id from server if available, otherwise fetch
+    var envIdFromServer = window.env_id_from_server || null;
     function fetchEnvId() {
+        if (envIdFromServer) {
+            return Promise.resolve(envIdFromServer);
+        }
         return fetch('/env-id').then(r => r.json()).then(d => d.env_id);
     }
-    // Generate or retrieve a persistent client ID for this env-id
-    function getClientId(envId) {
-        const storageKey = 'client-id-' + envId;
+    // Generate or retrieve a persistent private client ID for this env-id
+    function getPrivateClientId(envId) {
+        const storageKey = 'private-client-id-' + envId;
         let clientId = localStorage.getItem(storageKey);
         if (!clientId) {
-            let fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
-            let hash = 0;
-            for (let i = 0; i < fingerprint.length; i++) {
-                hash = ((hash << 5) - hash) + fingerprint.charCodeAt(i);
-                hash |= 0;
-            }
-            clientId = (hash >>> 0).toString(16) + '-' + Math.random().toString(16).slice(2);
+            clientId = Math.random().toString(16).slice(2) + Date.now().toString(16);
             localStorage.setItem(storageKey, clientId);
         }
         return clientId;
     }
-    // Private box for this client and env-id
-    function getClientBoxKey(envId, clientId) {
-        return 'client-box-' + envId + '-' + clientId;
+    // Key helpers
+    function getEnvBoxKey(envId) {
+        return 'env-box-' + envId;
     }
-    fetchEnvId().then(envId => {
-        const clientId = getClientId(envId);
+    function getClientBoxKey(envId, publicIp) {
+        return 'client-box-' + envId + '-' + publicIp;
+    }
+    function getPrivateBoxKey(envId, privateClientId) {
+        return 'private-box-' + envId + '-' + privateClientId;
+    }
+    Promise.all([fetchEnvId(), fetchPublicIp()]).then(([envId, publicIp]) => {
+        const privateClientId = getPrivateClientId(envId);
         // Set up env-box (shared across all clients with same env-id)
         const envBox = document.getElementById('env-box');
         function loadEnvBox() {
             fetch('/env-box').then(r => r.json()).then(d => {
-                envBox.value = d.value || '';
+                envBox.value = (d.value !== undefined && d.value !== null && d.value !== "") ? d.value : envId;
             });
         }
-        envBox.addEventListener('input', function() {
+        loadEnvBox();
+        // Set up client-box (shared for all with same public IP and env-id)
+        const clientBox = document.getElementById('client-box');
+        const clientBoxKey = getClientBoxKey(envId, publicIp);
+        let clientBoxValue = localStorage.getItem(clientBoxKey);
+        clientBox.value = (clientBoxValue !== undefined && clientBoxValue !== null && clientBoxValue !== "") ? clientBoxValue : publicIp;
+        // Set up private-box (private to this browser and env-id)
+        const privateBox = document.getElementById('private-box');
+        const privateBoxKey = getPrivateBoxKey(envId, privateClientId);
+        let privateBoxValue = localStorage.getItem(privateBoxKey);
+        privateBox.value = (privateBoxValue !== undefined && privateBoxValue !== null && privateBoxValue !== "") ? privateBoxValue : privateClientId;
+        // Save button functionality
+        document.getElementById('save-btn').addEventListener('click', function() {
+            // Save env-box to server
             fetch('/env-box', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({value: envBox.value})
             });
-        });
-        loadEnvBox();
-        // Set up client-box (private to this client and env-id)
-        const clientBox = document.getElementById('client-box');
-        const clientBoxKey = getClientBoxKey(envId, clientId);
-        clientBox.value = localStorage.getItem(clientBoxKey) || '';
-        clientBox.addEventListener('input', function() {
+            // Save client-box to localStorage
             localStorage.setItem(clientBoxKey, clientBox.value);
+            // Save private-box to localStorage
+            localStorage.setItem(privateBoxKey, privateBox.value);
         });
-        // Add button functionality
-        document.getElementById('paste-hash-btn').addEventListener('click', function() {
-            // Hash env-id + client-id
-            const hashInput = envId + '|' + clientId;
-            // Simple hash function (SHA-256 if available, else fallback)
-            function sha256(str) {
-                if (window.crypto && window.crypto.subtle) {
-                    return window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(buf => {
-                        return Array.from(new Uint8Array(buf)).map(x => x.toString(16).padStart(2, '0')).join('');
-                    });
-                } else {
-                    // Fallback: use a simple hash
-                    let hash = 0;
-                    for (let i = 0; i < str.length; i++) {
-                        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                        hash |= 0;
-                    }
-                    return Promise.resolve((hash >>> 0).toString(16));
-                }
-            }
-            sha256(hashInput).then(hash => {
-                envBox.value = hash;
-                fetch('/env-box', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({value: envBox.value})
-                });
-            });
-        });
+        // Optionally, keep env-box updated from server
+        setInterval(loadEnvBox, 2000);
     });
     </script>
 </body>

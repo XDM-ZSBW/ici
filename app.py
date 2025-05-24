@@ -10,9 +10,14 @@ app = Flask(__name__)
 # In-memory store for env-box values by env_id (for demo; use persistent storage in production)
 shared_env_box = {}
 
+def get_env_id():
+    info = f"{sys.executable}|{sys.version}|{platform.platform()}|{platform.python_implementation()}"
+    return hashlib.sha256(info.encode()).hexdigest()
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    env_id = get_env_id()
+    return render_template("index.html", env_id=env_id)
 
 @app.route("/health")
 def health():
@@ -25,22 +30,17 @@ def data():
 
 @app.route("/env-id")
 def env_id():
-    # Use built-in info to create a fingerprint
-    info = f"{sys.executable}|{sys.version}|{platform.platform()}|{platform.python_implementation()}"
-    unique_id = hashlib.sha256(info.encode()).hexdigest()
-    # Render the HTML template instead of returning JSON
-    return render_template("env-id.html", env_id=unique_id)
+    env_id = get_env_id()
+    return render_template("index.html", env_id=env_id)
 
 @app.route("/env-id-html")
 def env_id_html():
-    info = f"{sys.executable}|{sys.version}|{platform.platform()}|{platform.python_implementation()}"
-    env_id = hashlib.sha256(info.encode()).hexdigest()
+    env_id = get_env_id()
     return render_template("env-id.html", env_id=env_id)
 
 @app.route("/env-box", methods=["GET", "POST"])
 def env_box_api():
-    info = f"{sys.executable}|{sys.version}|{platform.platform()}|{platform.python_implementation()}"
-    env_id = hashlib.sha256(info.encode()).hexdigest()
+    env_id = get_env_id()
     if request.method == "POST":
         data = request.get_json()
         shared_env_box[env_id] = data.get("value", "")
