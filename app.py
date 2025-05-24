@@ -16,16 +16,24 @@ def get_env_id():
     info = f"{sys.executable}|{sys.version}|{platform.platform()}|{platform.python_implementation()}"
     return hashlib.sha256(info.encode()).hexdigest()
 
+build_version = None
+
 def get_build_version():
-    ts_path = os.path.join(os.path.dirname(__file__), 'timestamp.txt')
+    global build_version
+    if build_version is not None:
+        return build_version
+    # Use a hash of the current file's content and mtime as a unique build version
     try:
-        with open(ts_path, 'r') as f:
-            ts = f.read().strip()
-            if ts:
-                return ts[:10]  # Use up to 10 chars
+        main_path = os.path.abspath(__file__)
+        stat = os.stat(main_path)
+        with open(main_path, 'rb') as f:
+            content = f.read()
+        version_hash = hashlib.sha1(content + str(stat.st_mtime).encode()).hexdigest()[:10]
+        build_version = version_hash
+        return build_version
     except Exception:
-        pass
-    return str(int(time.time()))[-10:]
+        # Fallback to env_id or timestamp
+        return get_env_id()[:10]
 
 @app.route("/")
 def index():
