@@ -1,4 +1,1 @@
-# filepath: e:\zip-myl-dev\ici\requirements.txt
-gunicorn==21.2.0
-packaging==25.0
 flask
