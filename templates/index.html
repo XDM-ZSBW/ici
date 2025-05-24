@@ -67,11 +67,12 @@
         let isEditingEnvBox = false;
         function loadEnvBox() {
             if (!isEditingEnvBox) {
-                fetch('/env-box').then r => r.json()).then(d => {
+                fetch('/env-box').then(r => r.json()).then(d => {
                     envBox.value = (d.value !== undefined && d.value !== null && d.value !== "") ? d.value : envId;
                 });
             }
         }
+        envBox.value = envId; // Set default value
         envBox.addEventListener('focus', function() { isEditingEnvBox = true; });
         envBox.addEventListener('blur', function() { isEditingEnvBox = false; });
         envBox.addEventListener('input', debounce(function() {
@@ -94,6 +95,7 @@
                   });
             }
         }
+        clientBox.value = publicIp; // Set default value
         clientBox.addEventListener('focus', function() { isEditingClientBox = true; });
         clientBox.addEventListener('blur', function() { isEditingClientBox = false; });
         clientBox.addEventListener('input', debounce(function() {
@@ -110,6 +112,9 @@
         const privateBoxKey = getPrivateBoxKey(envId, publicIp, privateClientId);
         let privateBoxValue = localStorage.getItem(privateBoxKey);
         privateBox.value = (privateBoxValue !== undefined && privateBoxValue !== null && privateBoxValue !== "") ? privateBoxValue : privateClientId;
+        if (!privateBoxValue) {
+            privateBox.value = privateClientId; // Set default value if not present
+        }
         privateBox.addEventListener('input', debounce(function() {
             localStorage.setItem(privateBoxKey, privateBox.value);
         }, 400));
