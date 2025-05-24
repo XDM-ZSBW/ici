@@ -12,6 +12,8 @@
     <textarea id="env-box" style="width:100%;height:80px;" placeholder="Shared for all clients with the same env-id"></textarea>
     <br>
     <textarea id="client-box" style="width:100%;height:40px;" placeholder="Private for this client and env-id"></textarea>
+    <br>
+    <button id="paste-hash-btn">Paste env-id + client-id hash to shared box</button>
     <script>
     // Fetch env-id from the server
     function fetchEnvId() {
@@ -33,29 +35,62 @@
         }
         return clientId;
     }
-    // Shared box for all clients with the same env-id
-    function getEnvBoxKey(envId) {
-        return 'env-box-' + envId;
-    }
     // Private box for this client and env-id
     function getClientBoxKey(envId, clientId) {
         return 'client-box-' + envId + '-' + clientId;
     }
     fetchEnvId().then(envId => {
         const clientId = getClientId(envId);
-        // Set up env-box
+        // Set up env-box (shared across all clients with same env-id)
         const envBox = document.getElementById('env-box');
-        const envBoxKey = getEnvBoxKey(envId);
-        envBox.value = localStorage.getItem(envBoxKey) || '';
+        function loadEnvBox() {
+            fetch('/env-box').then(r => r.json()).then(d => {
+                envBox.value = d.value || '';
+            });
+        }
         envBox.addEventListener('input', function() {
-            localStorage.setItem(envBoxKey, envBox.value);
+            fetch('/env-box', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({value: envBox.value})
+            });
         });
-        // Set up client-box
+        loadEnvBox();
+        // Set up client-box (private to this client and env-id)
         const clientBox = document.getElementById('client-box');
         const clientBoxKey = getClientBoxKey(envId, clientId);
         clientBox.value = localStorage.getItem(clientBoxKey) || '';
         clientBox.addEventListener('input', function() {
             localStorage.setItem(clientBoxKey, clientBox.value);
+        });
+        // Add button functionality
+        document.getElementById('paste-hash-btn').addEventListener('click', function() {
+            // Hash env-id + client-id
+            const hashInput = envId + '|' + clientId;
+            // Simple hash function (SHA-256 if available, else fallback)
+            function sha256(str) {
+                if (window.crypto && window.crypto.subtle) {
+                    return window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)).then(buf => {
+                        return Array.from(new Uint8Array(buf)).map(x => x.toString(16).padStart(2, '0')).join('');
+                    });
+                } else {
+                    // Fallback: use a simple hash
+                    let hash = 0;
+                    for (let i = 0; i < str.length; i++) {
+                        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                        hash |= 0;
+                    }
+                    return Promise.resolve((hash >>> 0).toString(16));
+                }
+            }
+            sha256(hashInput).then(hash => {
+                envBox.value = hash;
+                fetch('/env-box', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({value: envBox.value})
+                });
+            });
         });
     });
     </script>
