@@ -58,4 +58,12 @@ gcloud builds submit --config cloudbuild.yaml \
 - Replace the substitutions with your service name, region, and log bucket as needed.
 - See [Creating a Cloud Storage bucket](https://cloud.google.com/storage/docs/creating-buckets) for instructions.
 
+## Changelog
+
+### [Unreleased]
+- Removed all textboxes from the `/env-id` endpoint page (`env-id.html`).
+- The `/env-id` page now only displays the server env-id, client unique-id, and a reset button for the client-id.
+
+See the main page (`/`) for the shared/private textbox demo.
+
 ---
