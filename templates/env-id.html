@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Environment and Client ID</title>
+    <script>
+        // Generate a simple client ID (browser fingerprint + random)
+        function getClientId() {
+            let fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
+            let hash = 0;
+            for (let i = 0; i < fingerprint.length; i++) {
+                hash = ((hash << 5) - hash) + fingerprint.charCodeAt(i);
+                hash |= 0;
+            }
+            // Add a random component for extra uniqueness
+            return (hash >>> 0).toString(16) + '-' + Math.random().toString(16).slice(2);
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const clientId = getClientId();
+            document.getElementById('client-id').textContent = clientId;
+        });
+    </script>
+</head>
+<body>
+    <h1>Environment and Client IDs</h1>
+    <p><strong>Server env-id:</strong> <span id="env-id">{{ env_id }}</span></p>
+    <p><strong>Client unique-id:</strong> <span id="client-id"></span></p>
+</body>
+</html>
