@@ -61,9 +61,27 @@
         function loadEnvBox() {
             fetch('/env-box').then(r => r.json()).then(d => {
                 envBox.value = (d.value !== undefined && d.value !== null && d.value !== "") ? d.value : envId;
+                // Sync all textboxes with the same env-id
+                document.querySelectorAll('#env-box').forEach(box => { box.value = envBox.value; });
             });
         }
         loadEnvBox();
+        // Save env-box on Save button click
+        document.getElementById('save-btn').addEventListener('click', function() {
+            fetch('/env-box', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({value: envBox.value})
+            }).then(() => loadEnvBox());
+            // Save client-box to localStorage
+            const clientBox = document.getElementById('client-box');
+            const clientBoxKey = getClientBoxKey(envId, publicIp);
+            localStorage.setItem(clientBoxKey, clientBox.value);
+            // Save private-box to localStorage
+            const privateBox = document.getElementById('private-box');
+            const privateBoxKey = getPrivateBoxKey(envId, privateClientId);
+            localStorage.setItem(privateBoxKey, privateBox.value);
+        });
         // Set up client-box (shared for all with same public IP and env-id)
         const clientBox = document.getElementById('client-box');
         const clientBoxKey = getClientBoxKey(envId, publicIp);
@@ -74,19 +92,6 @@
         const privateBoxKey = getPrivateBoxKey(envId, privateClientId);
         let privateBoxValue = localStorage.getItem(privateBoxKey);
         privateBox.value = (privateBoxValue !== undefined && privateBoxValue !== null && privateBoxValue !== "") ? privateBoxValue : privateClientId;
-        // Save button functionality
-        document.getElementById('save-btn').addEventListener('click', function() {
-            // Save env-box to server
-            fetch('/env-box', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({value: envBox.value})
-            });
-            // Save client-box to localStorage
-            localStorage.setItem(clientBoxKey, clientBox.value);
-            // Save private-box to localStorage
-            localStorage.setItem(privateBoxKey, privateBox.value);
-        });
         // Optionally, keep env-box updated from server
         setInterval(loadEnvBox, 2000);
     });
