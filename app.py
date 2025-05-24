@@ -1,93 +1,10 @@
-import logging
-import os
-import datetime
-import json
-import secrets
-import string
-import http.server
-import socketserver
+from flask import Flask
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+app = Flask(__name__)
 
-TEMPLATES_DIR = "templates"
-
-# Create timestamp.txt if it doesn't exist
-if not os.path.exists("timestamp.txt"):
-    with open("timestamp.txt", "w") as f:
-        f.write(str(datetime.datetime.now()))
-
-class MyHandler(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == "/":
-            try:
-                # Serve index.html from the templates directory
-                with open(os.path.join(TEMPLATES_DIR, "index.html"), "rb") as f:
-                    content = f.read()
-                self.send_response(200)
-                self.send_header("Content-type", "text/html")
-                self.end_headers()
-                self.wfile.write(content)
-                logging.info("Served index.html from templates directory.")
-            except FileNotFoundError:
-                self.send_response(404)
-                self.send_header("Content-type", "text/plain")
-                self.end_headers()
-                self.wfile.write(b"Error: index.html not found in templates directory.")
-                logging.error("index.html not found in templates directory.")
-        elif self.path == "/uptime":
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            now = datetime.datetime.now()
-            uptime_data = {"uptime": str(now)}
-            uptime_json = json.dumps(uptime_data)
-            self.wfile.write(uptime_json.encode())
-            logging.info(f"Served uptime: {uptime_json}")
-        elif self.path == "/data":
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            random_string = ''.join(secrets.choice(string.ascii_letters) for i in range(128))  # Generate 128-bit random string
-            data = {"random_string": random_string}
-            json_data = json.dumps(data)
-            self.wfile.write(json_data.encode())
-            logging.info("Served random data.")
-        elif self.path == "/health":
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            health_data = {"status": "ok"}
-            health_json = json.dumps(health_data)
-            self.wfile.write(health_json.encode())
-            logging.info("Served health status.")
-        else:
-            # Serve other static files (if needed)
-            filepath = os.path.join(TEMPLATES_DIR, self.path[1:])  # Remove leading slash
-            if os.path.exists(filepath) and os.path.isfile(filepath):
-                try:
-                    with open(filepath, 'rb') as f:
-                        content = f.read()
-                    self.send_response(200)
-                    self.send_header("Content-type", self.guess_type(filepath))
-                    self.end_headers()
-                    self.wfile.write(content)
-                    logging.info(f"Served static file: {self.path}")
-                except Exception as e:
-                    self.send_response(500)
-                    self.send_header("Content-type", "text/plain")
-                    self.end_headers()
-                    self.wfile.write(f"Error serving file: {str(e)}".encode())
-                    logging.error(f"Error serving file: {str(e)}")
-            else:
-                self.send_response(404)
-                self.send_header("Content-type", "text/plain")
-                self.end_headers()
-                self.wfile.write(b"Error: File not found.")
-                logging.warning(f"File not found: {self.path}")
+@app.route("/")
+def hello():
+    return "Hello I'm here."
 
 if __name__ == "__main__":
-    PORT = int(os.environ.get("PORT", 8080))
-    logging.info(f"Starting server on port {PORT}...")
-    with socketserver.TCPServer(("", PORT), MyHandler) as httpd:
-        httpd.serve_forever()
+    app.run(host="0.0.0.0", port=8080)
