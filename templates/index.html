@@ -9,7 +9,55 @@
     <h1>ICI 2.5</h1>
     <p id="app-description">This app is designed to demonstrate continuous integration and deployment.</p>
     <p>Data from server: <span id="data-from-server"></span></p>
+    <textarea id="env-box" style="width:100%;height:80px;" placeholder="Shared for all clients with the same env-id"></textarea>
+    <br>
+    <textarea id="client-box" style="width:100%;height:40px;" placeholder="Private for this client and env-id"></textarea>
     <script>
+    // Fetch env-id from the server
+    function fetchEnvId() {
+        return fetch('/env-id').then(r => r.json()).then(d => d.env_id);
+    }
+    // Generate or retrieve a persistent client ID for this env-id
+    function getClientId(envId) {
+        const storageKey = 'client-id-' + envId;
+        let clientId = localStorage.getItem(storageKey);
+        if (!clientId) {
+            let fingerprint = navigator.userAgent + navigator.language + screen.width + screen.height;
+            let hash = 0;
+            for (let i = 0; i < fingerprint.length; i++) {
+                hash = ((hash << 5) - hash) + fingerprint.charCodeAt(i);
+                hash |= 0;
+            }
+            clientId = (hash >>> 0).toString(16) + '-' + Math.random().toString(16).slice(2);
+            localStorage.setItem(storageKey, clientId);
+        }
+        return clientId;
+    }
+    // Shared box for all clients with the same env-id
+    function getEnvBoxKey(envId) {
+        return 'env-box-' + envId;
+    }
+    // Private box for this client and env-id
+    function getClientBoxKey(envId, clientId) {
+        return 'client-box-' + envId + '-' + clientId;
+    }
+    fetchEnvId().then(envId => {
+        const clientId = getClientId(envId);
+        // Set up env-box
+        const envBox = document.getElementById('env-box');
+        const envBoxKey = getEnvBoxKey(envId);
+        envBox.value = localStorage.getItem(envBoxKey) || '';
+        envBox.addEventListener('input', function() {
+            localStorage.setItem(envBoxKey, envBox.value);
+        });
+        // Set up client-box
+        const clientBox = document.getElementById('client-box');
+        const clientBoxKey = getClientBoxKey(envId, clientId);
+        clientBox.value = localStorage.getItem(clientBoxKey) || '';
+        clientBox.addEventListener('input', function() {
+            localStorage.setItem(clientBoxKey, clientBox.value);
+        });
+    });
     </script>
 </body>
 </html>
