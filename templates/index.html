@@ -61,64 +61,121 @@
         };
     }
     Promise.all([fetchEnvId(), fetchPublicIp()]).then(([envId, publicIp]) => {
-        const privateClientId = getPrivateClientId(envId, publicIp);
-        // Env-box (shared across all clients with same env-id)
-        const envBox = document.getElementById('env-box');
-        let isEditingEnvBox = false;
-        function loadEnvBox() {
-            if (!isEditingEnvBox) {
-                fetch('/env-box').then(r => r.json()).then(d => {
-                    envBox.value = (d.value !== undefined && d.value !== null && d.value !== "") ? d.value : envId;
-                });
-            }
-        }
-        envBox.value = envId; // Set default value
-        envBox.addEventListener('focus', function() { isEditingEnvBox = true; });
-        envBox.addEventListener('blur', function() { isEditingEnvBox = false; });
-        envBox.addEventListener('input', debounce(function() {
-            fetch('/env-box', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({value: envBox.value})
+    const privateClientId = getPrivateClientId(envId, publicIp);
+    // Env-box (shared across all clients with same env-id)
+    const envBox = document.getElementById('env-box');
+    let isEditingEnvBox = false;
+    let envBoxPendingSync = false;
+    let envBoxLastServerValue = null;
+    let envBoxOfflineQueue = [];
+    function loadEnvBox() {
+        if (!isEditingEnvBox) {
+            fetch('/env-box').then(r => r.json()).then(d => {
+                envBoxLastServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : envId;
+                if (!envBoxPendingSync) {
+                    envBox.value = envBoxLastServerValue;
+                }
+                if (envBoxOfflineQueue.length > 0) {
+                    let merged = envBoxOfflineQueue.join('\n') + (envBoxLastServerValue ? ('\n' + envBoxLastServerValue) : '');
+                    envBox.value = merged;
+                    fetch('/env-box', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({value: merged})
+                    }).then(() => {
+                        envBoxOfflineQueue = [];
+                        envBoxPendingSync = false;
+                    });
+                }
+            }).catch(() => {
+                // Server offline, do nothing
             });
-        }, 400));
-        loadEnvBox();
-        setInterval(loadEnvBox, 2000);
-        // Client-box (shared for all with same public IP and env-id, server API)
-        const clientBox = document.getElementById('client-box');
-        let isEditingClientBox = false;
-        function loadClientBox() {
-            if (!isEditingClientBox) {
-                fetch(`/client-box?env_id=${encodeURIComponent(envId)}&public_ip=${encodeURIComponent(publicIp)}`)
-                  .then(r => r.json()).then(d => {
-                    clientBox.value = (d.value !== undefined && d.value !== null && d.value !== "") ? d.value : publicIp;
-                  });
-            }
         }
-        clientBox.value = publicIp; // Set default value
-        clientBox.addEventListener('focus', function() { isEditingClientBox = true; });
-        clientBox.addEventListener('blur', function() { isEditingClientBox = false; });
-        clientBox.addEventListener('input', debounce(function() {
-            fetch('/client-box', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({env_id: envId, public_ip: publicIp, value: clientBox.value})
+    }
+    // Set default value if empty
+    if (!envBox.value) envBox.value = envId;
+    envBox.addEventListener('focus', function() { isEditingEnvBox = true; });
+    envBox.addEventListener('blur', function() { isEditingEnvBox = false; });
+    envBox.addEventListener('input', debounce(function() {
+        fetch('/env-box', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({value: envBox.value})
+        }).then(() => {
+            envBoxPendingSync = false;
+        }).catch(() => {
+            envBoxPendingSync = true;
+            envBoxOfflineQueue.push(envBox.value);
+        });
+    }, 400));
+    loadEnvBox();
+    setInterval(loadEnvBox, 2000);
+    // Client-box (shared for all with same public IP and env-id, server API)
+    const clientBox = document.getElementById('client-box');
+    let isEditingClientBox = false;
+    let clientBoxPendingSync = false;
+    let clientBoxLastServerValue = null;
+    let clientBoxOfflineQueue = [];
+    function loadClientBox() {
+        if (!isEditingClientBox) {
+            fetch(`/client-box?env_id=${encodeURIComponent(envId)}&public_ip=${encodeURIComponent(publicIp)}`)
+              .then(r => r.json()).then(d => {
+                clientBoxLastServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : publicIp;
+                if (!clientBoxPendingSync) {
+                    clientBox.value = clientBoxLastServerValue;
+                }
+                if (clientBoxOfflineQueue.length > 0) {
+                    let merged = clientBoxOfflineQueue.join('\n') + (clientBoxLastServerValue ? ('\n' + clientBoxLastServerValue) : '');
+                    clientBox.value = merged;
+                    fetch('/client-box', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({env_id: envId, public_ip: publicIp, value: merged})
+                    }).then(() => {
+                        clientBoxOfflineQueue = [];
+                        clientBoxPendingSync = false;
+                    });
+                }
+            }).catch(() => {
+                // Server offline, do nothing
             });
-        }, 400));
-        loadClientBox();
-        setInterval(loadClientBox, 2000);
-        // Private-box (private for this browser, env-id, and public IP)
-        const privateBox = document.getElementById('private-box');
-        const privateBoxKey = getPrivateBoxKey(envId, publicIp, privateClientId);
+        }
+    }
+    // Set default value if empty
+    if (!clientBox.value) clientBox.value = publicIp;
+    clientBox.addEventListener('focus', function() { isEditingClientBox = true; });
+    clientBox.addEventListener('blur', function() { isEditingClientBox = false; });
+    clientBox.addEventListener('input', debounce(function() {
+        fetch('/client-box', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({env_id: envId, public_ip: publicIp, value: clientBox.value})
+        }).then(() => {
+            clientBoxPendingSync = false;
+        }).catch(() => {
+            clientBoxPendingSync = true;
+            clientBoxOfflineQueue.push(clientBox.value);
+        });
+    }, 400));
+    loadClientBox();
+    setInterval(loadClientBox, 2000);
+    // Private-box (private for this browser, env-id, and public IP)
+    const privateBox = document.getElementById('private-box');
+    const privateBoxKey = getPrivateBoxKey(envId, publicIp, privateClientId);
+    function updatePrivateBoxFromStorage() {
         let privateBoxValue = localStorage.getItem(privateBoxKey);
         privateBox.value = (privateBoxValue !== undefined && privateBoxValue !== null && privateBoxValue !== "") ? privateBoxValue : privateClientId;
-        if (!privateBoxValue) {
-            privateBox.value = privateClientId; // Set default value if not present
+    }
+    updatePrivateBoxFromStorage();
+    window.addEventListener('storage', function(e) {
+        if (e.key === privateBoxKey) {
+            updatePrivateBoxFromStorage();
         }
-        privateBox.addEventListener('input', debounce(function() {
-            localStorage.setItem(privateBoxKey, privateBox.value);
-        }, 400));
     });
+    privateBox.addEventListener('input', debounce(function() {
+        localStorage.setItem(privateBoxKey, privateBox.value);
+    }, 400));
+});
     </script>
 </body>
 </html>
