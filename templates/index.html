@@ -6,7 +6,7 @@
     <title>ICI App</title>
 </head>
 <body>
-    <h1>ICI 2.5</h1>
+    <h1>ICI {{ build_version if build_version is defined else '' }}</h1>
     <p id="app-description">This app is designed to demonstrate continuous integration and deployment.</p>
     <p>Data from server: <span id="data-from-server"></span></p>
     <textarea id="env-box" style="width:100%;height:80px;" placeholder="Shared for all clients with the same env-id"></textarea>
@@ -67,7 +67,7 @@
         let isEditingEnvBox = false;
         function loadEnvBox() {
             if (!isEditingEnvBox) {
-                fetch('/env-box').then(r => r.json()).then(d => {
+                fetch('/env-box').then r => r.json()).then(d => {
                     envBox.value = (d.value !== undefined && d.value !== null && d.value !== "") ? d.value : envId;
                 });
             }

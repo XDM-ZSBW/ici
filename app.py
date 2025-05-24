@@ -4,6 +4,7 @@ import sys
 import platform
 import hashlib
 import os
+import time
 
 app = Flask(__name__)
 
@@ -15,10 +16,22 @@ def get_env_id():
     info = f"{sys.executable}|{sys.version}|{platform.platform()}|{platform.python_implementation()}"
     return hashlib.sha256(info.encode()).hexdigest()
 
+def get_build_version():
+    ts_path = os.path.join(os.path.dirname(__file__), 'timestamp.txt')
+    try:
+        with open(ts_path, 'r') as f:
+            ts = f.read().strip()
+            if ts:
+                return ts[:10]  # Use up to 10 chars
+    except Exception:
+        pass
+    return str(int(time.time()))[-10:]
+
 @app.route("/")
 def index():
     env_id = get_env_id()
-    return render_template("index.html", env_id=env_id)
+    build_version = get_build_version()
+    return render_template("index.html", env_id=env_id, build_version=build_version)
 
 @app.route("/health")
 def health():
@@ -32,7 +45,8 @@ def data():
 @app.route("/env-id")
 def env_id():
     env_id = get_env_id()
-    return render_template("index.html", env_id=env_id)
+    build_version = get_build_version()
+    return render_template("index.html", env_id=env_id, build_version=build_version)
 
 @app.route("/env-id-html")
 def env_id_html():
