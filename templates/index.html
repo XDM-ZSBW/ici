@@ -10,24 +10,6 @@
     <p id="app-description">This app is designed to demonstrate continuous integration and deployment with Google Cloud Run.</p>
     <p>Data from server: <span id="data-from-server"></span></p>
     <script>
-        async function fetchData() {
-            try {
-                const response = await fetch('/data'); // Replace '/data' with your actual endpoint
-                const data = await response.json(); // Or response.text() if your server sends plain text
-
-                // Update the content on the page
-                document.getElementById('data-from-server').textContent = 'Data from server: ' + data.random_string;
-            } catch (error) {
-                console.error('Error fetching data:', error);
-                document.getElementById('data-from-server').textContent = 'Error: Could not retrieve data.';
-            }
-        }
-
-        // Fetch data initially
-        fetchData();
-
-        // Fetch data every 5 seconds (adjust as needed)
-        setInterval(fetchData, 5000);
     </script>
 </body>
 </html>
