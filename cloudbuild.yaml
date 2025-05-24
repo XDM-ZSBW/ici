@@ -1,6 +1,7 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: [ 'build', '-t', 'us-west1-docker.pkg.dev/myproject/myimage', '.' ]
+    args: [ 'build', '-t', 'global-docker.pkg.dev/myproject/myimage', '.' ]
 logsBucket: 'gs://zip-myl-dev/logs'
 options:
   logging: GCS_ONLY
+#
