@@ -24,7 +24,8 @@ def env_id():
     # Use built-in info to create a fingerprint
     info = f"{sys.executable}|{sys.version}|{platform.platform()}|{platform.python_implementation()}"
     unique_id = hashlib.sha256(info.encode()).hexdigest()
-    return jsonify({"env_id": unique_id})
+    # Render the HTML template instead of returning JSON
+    return render_template("env-id.html", env_id=unique_id)
 
 @app.route("/env-id-html")
 def env_id_html():
