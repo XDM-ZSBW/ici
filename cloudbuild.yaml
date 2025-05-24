@@ -14,7 +14,6 @@ steps:
         '--region', 'us-west1',
         '--platform', 'managed',
         '--allow-unauthenticated',
-        '--quiet'
       ]
 images:
   - 'us-west1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/test-hello:$BUILD_ID'
