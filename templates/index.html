@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ICI App</title>
+    <style>
+        .offline {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
 </head>
 <body>
     <h1>ICI {{ build_version if build_version is defined else '' }}</h1>
@@ -68,45 +74,66 @@
     let envBoxPendingSync = false;
     let envBoxLastServerValue = null;
     let envBoxOfflineQueue = [];
-    function loadEnvBox() {
-        if (!isEditingEnvBox) {
-            fetch('/env-box').then(r => r.json()).then(d => {
-                envBoxLastServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : envId;
-                if (!envBoxPendingSync) {
-                    envBox.value = envBoxLastServerValue;
-                }
-                if (envBoxOfflineQueue.length > 0) {
-                    let merged = envBoxOfflineQueue.join('\n') + (envBoxLastServerValue ? ('\n' + envBoxLastServerValue) : '');
-                    envBox.value = merged;
-                    fetch('/env-box', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({value: merged})
-                    }).then(() => {
-                        envBoxOfflineQueue = [];
-                        envBoxPendingSync = false;
-                    });
-                }
-            }).catch(() => {
-                // Server offline, do nothing
-            });
+    let envBoxServerOnline = true;
+    function setEnvBoxDisabled(disabled) {
+        envBox.disabled = disabled;
+        if (disabled) {
+            envBox.classList.add('offline');
+        } else {
+            envBox.classList.remove('offline');
         }
+    }
+    function loadEnvBox() {
+        fetch('/env-box').then(r => r.json()).then(d => {
+            envBoxServerOnline = true;
+            setEnvBoxDisabled(false);
+            envBoxLastServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : envId;
+            if (!isEditingEnvBox && !envBoxPendingSync) {
+                envBox.value = envBoxLastServerValue;
+            }
+            // If we have offline changes, merge them and sync
+            if (envBoxOfflineQueue.length > 0) {
+                let merged = envBoxOfflineQueue.join('\n') + (envBoxLastServerValue ? ('\n' + envBoxLastServerValue) : '');
+                envBox.value = merged;
+                fetch('/env-box', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({value: merged})
+                }).then(() => {
+                    envBoxOfflineQueue = [];
+                    envBoxPendingSync = false;
+                });
+            }
+        }).catch(() => {
+            envBoxServerOnline = false;
+            setEnvBoxDisabled(true);
+            // Show last known value
+            if (envBoxLastServerValue !== null) {
+                envBox.value = envBoxLastServerValue;
+            } else {
+                envBox.value = envId;
+            }
+        });
     }
     // Set default value if empty
     if (!envBox.value) envBox.value = envId;
     envBox.addEventListener('focus', function() { isEditingEnvBox = true; });
     envBox.addEventListener('blur', function() { isEditingEnvBox = false; });
     envBox.addEventListener('input', debounce(function() {
-        fetch('/env-box', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({value: envBox.value})
-        }).then(() => {
-            envBoxPendingSync = false;
-        }).catch(() => {
-            envBoxPendingSync = true;
+        if (envBoxServerOnline) {
+            fetch('/env-box', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({value: envBox.value})
+            }).then(() => {
+                envBoxPendingSync = false;
+            }).catch(() => {
+                envBoxPendingSync = true;
+                envBoxOfflineQueue.push(envBox.value);
+            });
+        } else {
             envBoxOfflineQueue.push(envBox.value);
-        });
+        }
     }, 400));
     loadEnvBox();
     setInterval(loadEnvBox, 2000);
@@ -116,46 +143,67 @@
     let clientBoxPendingSync = false;
     let clientBoxLastServerValue = null;
     let clientBoxOfflineQueue = [];
-    function loadClientBox() {
-        if (!isEditingClientBox) {
-            fetch(`/client-box?env_id=${encodeURIComponent(envId)}&public_ip=${encodeURIComponent(publicIp)}`)
-              .then(r => r.json()).then(d => {
-                clientBoxLastServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : publicIp;
-                if (!clientBoxPendingSync) {
-                    clientBox.value = clientBoxLastServerValue;
-                }
-                if (clientBoxOfflineQueue.length > 0) {
-                    let merged = clientBoxOfflineQueue.join('\n') + (clientBoxLastServerValue ? ('\n' + clientBoxLastServerValue) : '');
-                    clientBox.value = merged;
-                    fetch('/client-box', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({env_id: envId, public_ip: publicIp, value: merged})
-                    }).then(() => {
-                        clientBoxOfflineQueue = [];
-                        clientBoxPendingSync = false;
-                    });
-                }
-            }).catch(() => {
-                // Server offline, do nothing
-            });
+    let clientBoxServerOnline = true;
+    function setClientBoxDisabled(disabled) {
+        clientBox.disabled = disabled;
+        if (disabled) {
+            clientBox.classList.add('offline');
+        } else {
+            clientBox.classList.remove('offline');
         }
+    }
+    function loadClientBox() {
+        fetch(`/client-box?env_id=${encodeURIComponent(envId)}&public_ip=${encodeURIComponent(publicIp)}`)
+          .then(r => r.json()).then(d => {
+            clientBoxServerOnline = true;
+            setClientBoxDisabled(false);
+            clientBoxLastServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : publicIp;
+            if (!isEditingClientBox && !clientBoxPendingSync) {
+                clientBox.value = clientBoxLastServerValue;
+            }
+            // If we have offline changes, merge them and sync
+            if (clientBoxOfflineQueue.length > 0) {
+                let merged = clientBoxOfflineQueue.join('\n') + (clientBoxLastServerValue ? ('\n' + clientBoxLastServerValue) : '');
+                clientBox.value = merged;
+                fetch('/client-box', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({env_id: envId, public_ip: publicIp, value: merged})
+                }).then(() => {
+                    clientBoxOfflineQueue = [];
+                    clientBoxPendingSync = false;
+                });
+            }
+        }).catch(() => {
+            clientBoxServerOnline = false;
+            setClientBoxDisabled(true);
+            // Show last known value
+            if (clientBoxLastServerValue !== null) {
+                clientBox.value = clientBoxLastServerValue;
+            } else {
+                clientBox.value = publicIp;
+            }
+        });
     }
     // Set default value if empty
     if (!clientBox.value) clientBox.value = publicIp;
     clientBox.addEventListener('focus', function() { isEditingClientBox = true; });
     clientBox.addEventListener('blur', function() { isEditingClientBox = false; });
     clientBox.addEventListener('input', debounce(function() {
-        fetch('/client-box', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({env_id: envId, public_ip: publicIp, value: clientBox.value})
-        }).then(() => {
-            clientBoxPendingSync = false;
-        }).catch(() => {
-            clientBoxPendingSync = true;
+        if (clientBoxServerOnline) {
+            fetch('/client-box', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({env_id: envId, public_ip: publicIp, value: clientBox.value})
+            }).then(() => {
+                clientBoxPendingSync = false;
+            }).catch(() => {
+                clientBoxPendingSync = true;
+                clientBoxOfflineQueue.push(clientBox.value);
+            });
+        } else {
             clientBoxOfflineQueue.push(clientBox.value);
-        });
+        }
     }, 400));
     loadClientBox();
     setInterval(loadClientBox, 2000);
