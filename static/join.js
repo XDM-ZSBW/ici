@@ -79,14 +79,11 @@ document.addEventListener('DOMContentLoaded', function() {
             setQrWithPrivateId(pid);
         }
     });
-    // SSE for live updates
-    if (!!window.EventSource) {
-        const sse = new EventSource('/client-table-events');
-        sse.onmessage = function(event) {
-            try {
-                const table = JSON.parse(event.data);
-                renderClientTable(table);
-            } catch (e) {}
-        };
+    // --- Socket.IO for live client table updates ---
+    if (window.io) {
+        const socket = io();
+        socket.on('client_table_updated', function(table) {
+            renderClientTable(table);
+        });
     }
 });
