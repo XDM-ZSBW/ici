@@ -56,36 +56,6 @@ function renderClientTable(table) {
     tbl.innerHTML = html;
 }
 
-function fetchAndRenderClientTable() {
-    fetch('/client-table').then(r => r.json()).then(function(table) {
-        // If table is empty, try to restore from localStorage and render it immediately
-        if ((!Array.isArray(table) || table.length === 0) && localStorage.getItem('ici-client-table-backup')) {
-            const backup = localStorage.getItem('ici-client-table-backup');
-            try {
-                const parsed = JSON.parse(backup);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    // Render backup immediately for user feedback
-                    renderClientTable(parsed);
-                    // POST to /client-table-restore
-                    fetch('/client-table-restore', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: backup
-                    }).then(r => r.json()).then(resp => {
-                        if (resp.status === 'ok') {
-                            // After restore, reload the table
-                            setTimeout(fetchAndRenderClientTable, 500);
-                        }
-                    });
-                    return; // Don't render empty table
-                }
-            } catch (e) { /* ignore */ }
-        }
-        // Normal render
-        renderClientTable(table);
-    });
-}
-
 document.addEventListener('DOMContentLoaded', function() {
     Promise.all([fetchEnvId(), fetchPublicIp()]).then(([envId, publicIp]) => {
         // Generate full 256-bit private-id (SHA-256 hex of info string)
@@ -107,7 +77,14 @@ document.addEventListener('DOMContentLoaded', function() {
             setQrWithPrivateId(pid);
         }
     });
-    // At the end, start polling for the client table
-    fetchAndRenderClientTable();
-    setInterval(fetchAndRenderClientTable, 2000);
+    // SSE for live updates
+    if (!!window.EventSource) {
+        const sse = new EventSource('/client-table-events');
+        sse.onmessage = function(event) {
+            try {
+                const table = JSON.parse(event.data);
+                renderClientTable(table);
+            } catch (e) {}
+        };
+    }
 });

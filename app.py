@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, Response
 import secrets
 import sys
 import platform
@@ -6,6 +6,8 @@ import hashlib
 import os
 import time
 import re
+import json
+import threading
 
 app = Flask(__name__)
 
@@ -177,6 +179,7 @@ def client_remember():
                 'user_agent': user_agent
             }
         })
+    notify_client_table_sse()
     return jsonify({"status": "ok", "key": client_id})
 
 @app.route("/client-lookup", methods=["POST"])
@@ -192,6 +195,27 @@ def client_lookup():
 def client_table():
     return jsonify(client_json_table)
 
+@app.route("/client-table-events")
+def client_table_events():
+    def event_stream():
+        import queue
+        q = queue.Queue()
+        with client_table_sse_lock:
+            client_table_sse_listeners.append(q)
+        try:
+            # Send initial state
+            yield f"data: {json.dumps(client_json_table)}\n\n"
+            while True:
+                data = q.get()
+                yield f"data: {data}\n\n"
+        except GeneratorExit:
+            pass
+        finally:
+            with client_table_sse_lock:
+                if q in client_table_sse_listeners:
+                    client_table_sse_listeners.remove(q)
+    return Response(event_stream(), mimetype='text/event-stream')
+
 @app.route("/client-table-restore", methods=["POST"])
 def client_table_restore():
     global client_json_table
@@ -201,7 +225,20 @@ def client_table_restore():
     if not isinstance(data, list):
         return jsonify({"status": "error", "reason": "invalid format"}), 400
     client_json_table = data
+    notify_client_table_sse()
     return jsonify({"status": "ok", "restored": len(client_json_table)})
+
+# For SSE: keep a list of listeners (simple, not production-grade)
+client_table_sse_listeners = []
+client_table_sse_lock = threading.Lock()
+
+def notify_client_table_sse():
+    with client_table_sse_lock:
+        for q in client_table_sse_listeners:
+            try:
+                q.put(json.dumps(client_json_table))
+            except Exception:
+                pass
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, debug=True)
