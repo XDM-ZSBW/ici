@@ -32,6 +32,60 @@ function makeQrCode(text, canvas) {
     document.body.appendChild(script);
 }
 
+function renderClientTable(table) {
+    // Save backup to localStorage for recovery
+    try {
+        if (Array.isArray(table) && table.length > 0) {
+            localStorage.setItem('ici-client-table-backup', JSON.stringify(table));
+        }
+    } catch (e) { /* ignore quota errors */ }
+    // Pretty JSON
+    const pre = document.getElementById('client-table-json');
+    pre.textContent = JSON.stringify(table, null, 2);
+    // Tabular view
+    const tbl = document.getElementById('client-table-html');
+    if (!Array.isArray(table) || table.length === 0) {
+        tbl.innerHTML = '<tr><td>No records</td></tr>';
+        return;
+    }
+    const cols = Object.keys(table[0]);
+    let html = '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+    for (const row of table) {
+        html += '<tr>' + cols.map(c => `<td>${row[c] !== undefined ? row[c] : ''}</td>`).join('') + '</tr>';
+    }
+    tbl.innerHTML = html;
+}
+
+function fetchAndRenderClientTable() {
+    fetch('/client-table').then(r => r.json()).then(function(table) {
+        // If table is empty, try to restore from localStorage and render it immediately
+        if ((!Array.isArray(table) || table.length === 0) && localStorage.getItem('ici-client-table-backup')) {
+            const backup = localStorage.getItem('ici-client-table-backup');
+            try {
+                const parsed = JSON.parse(backup);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    // Render backup immediately for user feedback
+                    renderClientTable(parsed);
+                    // POST to /client-table-restore
+                    fetch('/client-table-restore', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: backup
+                    }).then(r => r.json()).then(resp => {
+                        if (resp.status === 'ok') {
+                            // After restore, reload the table
+                            setTimeout(fetchAndRenderClientTable, 500);
+                        }
+                    });
+                    return; // Don't render empty table
+                }
+            } catch (e) { /* ignore */ }
+        }
+        // Normal render
+        renderClientTable(table);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     Promise.all([fetchEnvId(), fetchPublicIp()]).then(([envId, publicIp]) => {
         // Generate full 256-bit private-id (SHA-256 hex of info string)
@@ -53,4 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setQrWithPrivateId(pid);
         }
     });
+    // At the end, start polling for the client table
+    fetchAndRenderClientTable();
+    setInterval(fetchAndRenderClientTable, 2000);
 });
