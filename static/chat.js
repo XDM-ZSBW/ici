@@ -38,19 +38,39 @@ document.addEventListener('DOMContentLoaded', function() {
     chatSection.style.display = '';
   }
 
+  // Add a flag to track if authenticated via QR code
+  const AUTH_VIA_QR_KEY = 'ici-auth-via-qr';
+
+  function showMemorySection() {
+    document.getElementById('chat-section').style.display = 'none';
+    document.getElementById('memory-section').style.display = '';
+  }
+  function showChatSection() {
+    document.getElementById('memory-section').style.display = 'none';
+    document.getElementById('chat-section').style.display = '';
+  }
+
   // Check authentication
   if (!userId) {
     showAuthPrompt();
+  } else if (localStorage.getItem(AUTH_VIA_QR_KEY) === '1') {
+    showMemorySection();
   } else {
-    showChat();
-    localStorage.setItem(USER_ID_KEY, userId);
+    showChatSection();
   }
+
+  localStorage.setItem(USER_ID_KEY, userId);
 
   // Listen for authentication (user visits /client/<userId> and sets email)
   window.addEventListener('storage', function(e) {
     if (e.key === USER_ID_KEY && e.newValue) {
       userId = e.newValue;
-      showChat();
+      // If authenticated via QR, show memory section instead of chat
+      if (localStorage.getItem(AUTH_VIA_QR_KEY) === '1') {
+        showMemorySection();
+      } else {
+        showChatSection();
+      }
     }
   });
 
