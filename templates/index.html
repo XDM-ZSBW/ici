@@ -119,7 +119,8 @@
         }        // Event listeners for input - these will call saveAllToPrivateBox
         envBox.addEventListener('input', debounce(function() {
             envBoxLastUserChange = Date.now(); // Track user change time
-            if (envBoxServerOnline) { 
+            envBoxJustRestored = false; // Clear restoration flag when user actually types
+            if (envBoxServerOnline) {
                 fetch('/env-box', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -133,10 +134,9 @@
                 if (!envBoxOfflineQueue.includes(envBox.value)) envBoxOfflineQueue.push(envBox.value);
             }
             saveAllToPrivateBox();
-        }, 400));
-
-        clientBox.addEventListener('input', debounce(function() {
+        }, 400));        clientBox.addEventListener('input', debounce(function() {
             clientBoxLastUserChange = Date.now(); // Track user change time
+            clientBoxJustRestored = false; // Clear restoration flag when user actually types
             if (clientBoxServerOnline) {
                 fetch('/client-box', {
                     method: 'POST',
@@ -188,8 +188,8 @@
         let envBoxPendingSync = false;
         let envBoxLastServerValue = null;
         let envBoxOfflineQueue = [];
-        let envBoxServerOnline = true;
-        let envBoxLastUserChange = 0; // Timestamp of last user input
+        let envBoxServerOnline = true;        let envBoxLastUserChange = 0; // Timestamp of last user input
+        let envBoxJustRestored = false; // Flag to prevent polling overwrites after restoration
 
         function setEnvBoxDisabled(disabled) {
             envBox.disabled = disabled;
@@ -208,17 +208,19 @@
                 const wasOffline = !envBoxServerOnline;
                 envBoxServerOnline = true; 
                 setEnvBoxDisabled(false);                const currentServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : envId;
-                envBoxLastServerValue = currentServerValue; 
-
-                // Check if server was restarted (empty response) and we have stored data
+                envBoxLastServerValue = currentServerValue;                // Check if server was restarted (empty response) and we have stored data
                 if (!wasOffline && currentServerValue === envId) {
                     let storedJson = localStorage.getItem(privateBoxKey);
                     if (storedJson) {
                         try {
                             let obj = JSON.parse(storedJson);
-                            if (obj.envBox && obj.envBox !== envId && obj.envBox.trim() !== "") {
-                                console.log('Server restart detected for envBox, restoring:', obj.envBox);
+                            if (obj.envBox && obj.envBox !== envId && obj.envBox.trim() !== "") {                                console.log('Server restart detected for envBox, restoring:', obj.envBox);
                                 envBox.value = obj.envBox;
+                                envBoxLastUserChange = Date.now(); // Mark as recent user change to protect from polling
+                                envBoxJustRestored = true; // Prevent polling overwrites
+                                setTimeout(() => {
+                                    envBoxJustRestored = false; // Allow normal polling after 15 seconds
+                                }, 15000);
                                 // Immediately POST to server to restore the value
                                 fetch('/env-box', {
                                     method: 'POST',
@@ -267,9 +269,9 @@
                             envBoxOfflineQueue.push(clientState);
                         }
                     });                } else { 
-                    // Only update from server if no recent user changes (within last 10 seconds)
+                    // Only update from server if no recent user changes (within last 10 seconds) and not just restored
                     const timeSinceLastChange = Date.now() - envBoxLastUserChange;
-                    if (!isEditingEnvBox && !envBoxPendingSync && timeSinceLastChange > 10000) {
+                    if (!isEditingEnvBox && !envBoxPendingSync && !envBoxJustRestored && timeSinceLastChange > 10000) {
                         envBox.value = currentServerValue; 
                     }
                 }
@@ -290,8 +292,8 @@
         let clientBoxPendingSync = false;
         let clientBoxLastServerValue = null;
         let clientBoxOfflineQueue = [];
-        let clientBoxServerOnline = true;
-        let clientBoxLastUserChange = 0; // Timestamp of last user input
+        let clientBoxServerOnline = true;        let clientBoxLastUserChange = 0; // Timestamp of last user input
+        let clientBoxJustRestored = false; // Flag to prevent polling overwrites after restoration
 
         clientBox.addEventListener('focus', function() { isEditingClientBox = true; });
         clientBox.addEventListener('blur', function() { isEditingClientBox = false; });
@@ -314,17 +316,19 @@
                 const wasOffline = !clientBoxServerOnline;
                 clientBoxServerOnline = true; 
                 setClientBoxDisabled(false);                const currentServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : publicIp;
-                clientBoxLastServerValue = currentServerValue; 
-
-                // Check if server was restarted (empty response) and we have stored data
+                clientBoxLastServerValue = currentServerValue;                // Check if server was restarted (empty response) and we have stored data
                 if (!wasOffline && currentServerValue === publicIp) {
                     let storedJson = localStorage.getItem(privateBoxKey);
                     if (storedJson) {
                         try {
                             let obj = JSON.parse(storedJson);
-                            if (obj.clientBox && obj.clientBox !== publicIp && obj.clientBox.trim() !== "") {
-                                console.log('Server restart detected for clientBox, restoring:', obj.clientBox);
+                            if (obj.clientBox && obj.clientBox !== publicIp && obj.clientBox.trim() !== "") {                                console.log('Server restart detected for clientBox, restoring:', obj.clientBox);
                                 clientBox.value = obj.clientBox;
+                                clientBoxLastUserChange = Date.now(); // Mark as recent user change to protect from polling
+                                clientBoxJustRestored = true; // Prevent polling overwrites
+                                setTimeout(() => {
+                                    clientBoxJustRestored = false; // Allow normal polling after 15 seconds
+                                }, 15000);
                                 // Immediately POST to server to restore the value
                                 fetch('/client-box', {
                                     method: 'POST',
@@ -373,9 +377,9 @@
                             clientBoxOfflineQueue.push(clientState);
                         }
                     });                } else { 
-                    // Only update from server if no recent user changes (within last 10 seconds)
+                    // Only update from server if no recent user changes (within last 10 seconds) and not just restored
                     const timeSinceLastChange = Date.now() - clientBoxLastUserChange;
-                    if (!isEditingClientBox && !clientBoxPendingSync && timeSinceLastChange > 10000) {
+                    if (!isEditingClientBox && !clientBoxPendingSync && !clientBoxJustRestored && timeSinceLastChange > 10000) {
                         clientBox.value = currentServerValue;
                     }
                 }
