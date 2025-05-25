@@ -281,4 +281,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initial render
   renderPrivateChat();
   renderSharedChat();
+
+  // --- Socket.IO for real-time shared memory updates ---
+  if (window.io) {
+    const socket = io();
+    socket.on('shared_memory_updated', function(data) {
+      // Optionally, check env_id matches if you want to filter
+      renderSharedChat();
+    });
+  }
 });

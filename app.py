@@ -1,4 +1,5 @@
 from flask import Flask, render_template, send_file, jsonify, request, Response
+from flask_socketio import SocketIO, emit
 import secrets
 import sys
 import platform
@@ -10,6 +11,7 @@ import json
 import threading
 
 app = Flask(__name__)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 # In-memory store for env-box values by env_id (for demo; use persistent storage in production)
 shared_env_box = {}
@@ -99,12 +101,17 @@ def env_box_api():
         for msg in shared_env_box[env_id]:
             if isinstance(msg, dict) and 'ts' in msg and 'q' in msg:
                 existing_keys.add(str(msg['ts']) + ':' + str(msg['q']))
+        updated = False
         for msg in value:
             if isinstance(msg, dict) and 'ts' in msg and 'q' in msg:
                 key = str(msg['ts']) + ':' + str(msg['q'])
                 if key not in existing_keys:
                     shared_env_box[env_id].append(msg)
                     existing_keys.add(key)
+                    updated = True
+        if updated:
+            # Notify all websocket clients of update
+            socketio.emit('shared_memory_updated', {'env_id': env_id})
         return jsonify({"status": "ok"})
     # GET
     arr = shared_env_box.get(env_id, [])
@@ -336,4 +343,4 @@ def notify_client_table_sse():
                 pass
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    socketio.run(app, host="0.0.0.0", port=8080, debug=True)
