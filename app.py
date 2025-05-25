@@ -149,23 +149,14 @@ def client_remember():
         return jsonify({"status": "error", "reason": "No valid client_id"}), 400
     env_id, env_elements = get_env_id_full()
     private_id = get_private_id(env_id, public_ip, user_agent)
-    # Update or add the row for this client_id
-    found = False
+    # Find the most recent record for this private_id
+    last_record = None
     for row in reversed(client_json_table):
-        if row.get('client_id') == client_id:
-            row['email'] = email
-            row['timestamp'] = time.time()
-            row['env_id'] = env_id
-            row['env_id_elements'] = env_elements
-            row['private_id'] = private_id
-            row['private_id_elements'] = {
-                'env_id': env_id,
-                'public_ip': public_ip,
-                'user_agent': user_agent
-            }
-            found = True
+        if row.get('private_id') == private_id:
+            last_record = row
             break
-    if not found:
+    # If email changed for this private_id, create a new record
+    if last_record and last_record.get('email') != email:
         client_json_table.append({
             "email": email,
             "client_id": client_id,
@@ -177,8 +168,41 @@ def client_remember():
                 'env_id': env_id,
                 'public_ip': public_ip,
                 'user_agent': user_agent
-            }
+            },
+            "previous_email": last_record.get('email'),
+            "previous_client_id": last_record.get('client_id')
         })
+    else:
+        # Update or add the row for this client_id
+        found = False
+        for row in reversed(client_json_table):
+            if row.get('client_id') == client_id:
+                row['email'] = email
+                row['timestamp'] = time.time()
+                row['env_id'] = env_id
+                row['env_id_elements'] = env_elements
+                row['private_id'] = private_id
+                row['private_id_elements'] = {
+                    'env_id': env_id,
+                    'public_ip': public_ip,
+                    'user_agent': user_agent
+                }
+                found = True
+                break
+        if not found:
+            client_json_table.append({
+                "email": email,
+                "client_id": client_id,
+                "timestamp": time.time(),
+                "env_id": env_id,
+                "env_id_elements": env_elements,
+                "private_id": private_id,
+                "private_id_elements": {
+                    'env_id': env_id,
+                    'public_ip': public_ip,
+                    'user_agent': user_agent
+                }
+            })
     notify_client_table_sse()
     return jsonify({"status": "ok", "key": client_id})
 

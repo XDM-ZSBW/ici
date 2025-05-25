@@ -23,6 +23,8 @@
             <th>Email</th>
             <th>Timestamp</th>
             <th>Private ID</th>
+            <th>Previous Email</th>
+            <th>Previous Client ID</th>
         </tr>
         {% for c in clients %}
         <tr>
@@ -30,6 +32,8 @@
             <td>{{ c.email }}</td>
             <td>{{ c.timestamp|round|int }}</td>
             <td style="font-family:monospace">{{ c.private_id }}</td>
+            <td>{{ c.previous_email if c.previous_email is defined else '' }}</td>
+            <td>{{ c.previous_client_id if c.previous_client_id is defined else '' }}</td>
         </tr>
         {% endfor %}
     </table>
