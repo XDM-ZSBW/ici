@@ -70,6 +70,10 @@
     const privateClientId = getPrivateClientId(envId, publicIp);
     // Env-box (shared across all clients with same env-id)
     const envBox = document.getElementById('env-box');
+    // Add a hidden textbox for offline preservation
+    let envBoxHidden = document.createElement('textarea');
+    envBoxHidden.style.display = 'none';
+    envBox.parentNode.insertBefore(envBoxHidden, envBox.nextSibling);
     let isEditingEnvBox = false;
     let envBoxPendingSync = false;
     let envBoxLastServerValue = null;
@@ -79,8 +83,14 @@
         envBox.disabled = disabled;
         if (disabled) {
             envBox.classList.add('offline');
+            // Copy value to hidden textbox
+            envBoxHidden.value = envBox.value;
         } else {
             envBox.classList.remove('offline');
+            // Restore value from hidden textbox if it exists
+            if (envBoxHidden.value !== undefined && envBoxHidden.value !== null && envBoxHidden.value !== "") {
+                envBox.value = envBoxHidden.value;
+            }
         }
     }
     function loadEnvBox() {
@@ -143,6 +153,10 @@
     setInterval(loadEnvBox, 2000);
     // Client-box (shared for all with same public IP and env-id, server API)
     const clientBox = document.getElementById('client-box');
+    // Add a hidden textbox for offline preservation
+    let clientBoxHidden = document.createElement('textarea');
+    clientBoxHidden.style.display = 'none';
+    clientBox.parentNode.insertBefore(clientBoxHidden, clientBox.nextSibling);
     let isEditingClientBox = false;
     let clientBoxPendingSync = false;
     let clientBoxLastServerValue = null;
@@ -152,8 +166,14 @@
         clientBox.disabled = disabled;
         if (disabled) {
             clientBox.classList.add('offline');
+            // Copy value to hidden textbox
+            clientBoxHidden.value = clientBox.value;
         } else {
             clientBox.classList.remove('offline');
+            // Restore value from hidden textbox if it exists
+            if (clientBoxHidden.value !== undefined && clientBoxHidden.value !== null && clientBoxHidden.value !== "") {
+                clientBox.value = clientBoxHidden.value;
+            }
         }
     }
     function loadClientBox() {
