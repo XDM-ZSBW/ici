@@ -15,7 +15,31 @@
 </head>
 <body>
     <div class="container">
-        <h1><img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" class="logo" alt="logo">ICI Collaborative Memory Portal</h1>
+        <h1>
+          <span class="logo" style="display:inline-block;vertical-align:middle;">
+            <!-- SVG: Sphere of glimmering hope rising from a stable footing -->
+            <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Stable footing -->
+              <ellipse cx="30" cy="54" rx="22" ry="5" fill="#b3b3b3"/>
+              <!-- Sphere shadow -->
+              <ellipse cx="30" cy="46" rx="16" ry="4" fill="#d1e3f7"/>
+              <!-- Sphere -->
+              <circle cx="30" cy="30" r="18" fill="url(#sphereGradient)"/>
+              <!-- Glimmer -->
+              <ellipse cx="22" cy="22" rx="6" ry="3" fill="white" fill-opacity="0.7"/>
+              <ellipse cx="36" cy="18" rx="3" ry="1.5" fill="white" fill-opacity="0.5"/>
+              <ellipse cx="30" cy="36" rx="8" ry="2" fill="white" fill-opacity="0.15"/>
+              <defs>
+                <radialGradient id="sphereGradient" cx="0.5" cy="0.4" r="0.7">
+                  <stop offset="0%" stop-color="#eaf6ff"/>
+                  <stop offset="60%" stop-color="#6db3f2"/>
+                  <stop offset="100%" stop-color="#2a5298"/>
+                </radialGradient>
+              </defs>
+            </svg>
+          </span>
+          ICI Collaborative Memory Portal
+        </h1>
         <p>Welcome! This is the public landing page for the ICI collaborative memory and chat codebase.<br>
         <b>What is this?</b> A Flask-based app for collaborative, persistent, and recoverable memory across devices, with advanced offline/merge logic and live admin tools.<br>
         <b>Explore:</b> <a href="/chat">Try the collaborative chat demo</a> | <a href="/join">Join a session</a> | <a href="/recovery">Recovery/Admin</a></p>
