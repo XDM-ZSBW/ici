@@ -238,19 +238,69 @@
     // Private-box (private for this browser, env-id, and public IP)
     const privateBox = document.getElementById('private-box');
     const privateBoxKey = getPrivateBoxKey(envId, publicIp, privateClientId);
-    function updatePrivateBoxFromStorage() {
-        let privateBoxValue = localStorage.getItem(privateBoxKey);
-        privateBox.value = (privateBoxValue !== undefined && privateBoxValue !== null && privateBoxValue !== "") ? privateBoxValue : privateClientId;
+    // Helper to get all values
+    function getAllBoxValues() {
+        return {
+            envBox: envBox.value,
+            clientBox: clientBox.value,
+            privateBox: privateBox.value
+        };
     }
-    updatePrivateBoxFromStorage();
-    window.addEventListener('storage', function(e) {
-        if (e.key === privateBoxKey) {
-            updatePrivateBoxFromStorage();
+    // Helper to set all values
+    function setAllBoxValues(obj) {
+        if (obj.envBox !== undefined) envBox.value = obj.envBox;
+        if (obj.clientBox !== undefined) clientBox.value = obj.clientBox;
+        if (obj.privateBox !== undefined) privateBox.value = obj.privateBox;
+    }
+    // Load from privateBox (client-id textbox) if present
+    let storedJson = localStorage.getItem(privateBoxKey);
+    if (storedJson) {
+        try {
+            let obj = JSON.parse(storedJson);
+            setAllBoxValues(obj);
+        } catch (e) {}
+    }
+    // Save all values to privateBox (client-id textbox) on any change
+    function saveAllToPrivateBox() {
+        const obj = getAllBoxValues();
+        const json = JSON.stringify(obj);
+        privateBox.value = json;
+        localStorage.setItem(privateBoxKey, json);
+    }
+    envBox.addEventListener('input', debounce(saveAllToPrivateBox, 400));
+    clientBox.addEventListener('input', debounce(saveAllToPrivateBox, 400));
+    privateBox.addEventListener('input', debounce(saveAllToPrivateBox, 400));
+    // Also save on load
+    saveAllToPrivateBox();
+    // On load, if the server returns an empty value for envBox or clientBox, restore from privateBox JSON if available
+    function restoreFromPrivateBoxIfServerEmpty() {
+        let storedJson = localStorage.getItem(privateBoxKey);
+        if (storedJson) {
+            try {
+                let obj = JSON.parse(storedJson);
+                if (obj.envBox && (!envBox.value || envBox.value === envId)) {
+                    envBox.value = obj.envBox;
+                    // Push to server
+                    fetch('/env-box', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({value: obj.envBox})
+                    });
+                }
+                if (obj.clientBox && (!clientBox.value || clientBox.value === publicIp)) {
+                    clientBox.value = obj.clientBox;
+                    // Push to server
+                    fetch('/client-box', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({env_id: envId, public_ip: publicIp, value: obj.clientBox})
+                    });
+                }
+            } catch (e) {}
         }
-    });
-    privateBox.addEventListener('input', debounce(function() {
-        localStorage.setItem(privateBoxKey, privateBox.value);
-    }, 400));
+    }
+    // After loading from server, if empty, restore from privateBox
+    setTimeout(restoreFromPrivateBoxIfServerEmpty, 1500);
 });
     </script>
 </body>
