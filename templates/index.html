@@ -155,14 +155,13 @@
     function loadClientBox() {
         fetch(`/client-box?env_id=${encodeURIComponent(envId)}&public_ip=${encodeURIComponent(publicIp)}`)
           .then(r => r.json()).then(d => {
+            const wasOffline = !clientBoxServerOnline;
             clientBoxServerOnline = true;
             setClientBoxDisabled(false);
             clientBoxLastServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : publicIp;
-            if (!isEditingClientBox && !clientBoxPendingSync) {
-                clientBox.value = clientBoxLastServerValue;
-            }
-            // If we have offline changes, merge them and sync
-            if (clientBoxOfflineQueue.length > 0) {
+            // Only merge and update the textbox if we were offline and have queued changes
+            if (wasOffline && clientBoxOfflineQueue.length > 0) {
+                // Merge: client changes first, then server value
                 let merged = clientBoxOfflineQueue.join('\n') + (clientBoxLastServerValue ? ('\n' + clientBoxLastServerValue) : '');
                 clientBox.value = merged;
                 fetch('/client-box', {
@@ -173,6 +172,9 @@
                     clientBoxOfflineQueue = [];
                     clientBoxPendingSync = false;
                 });
+            } else if (!isEditingClientBox && !clientBoxPendingSync) {
+                // Only update the textbox if not editing and not pending sync
+                clientBox.value = clientBoxLastServerValue;
             }
         }).catch(() => {
             clientBoxServerOnline = false;
