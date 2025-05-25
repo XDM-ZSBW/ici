@@ -102,39 +102,46 @@ def join_with_client_id(client_id):
     # Placeholder: could show a confirmation or info page
     return f"Joined with client-id: {client_id}"
 
+def find_client_record(client_id):
+    # Find the most recent record by client_id
+    for row in reversed(client_json_table):
+        if row.get('client_id') == client_id:
+            return row
+    return None
+
 @app.route("/client/<path:rest>")
 def client_id_page(rest):
     match = re.match(r"([A-Za-z0-9]+)", rest)
     client_id = match.group(1) if match else ""
-    return render_template("client.html", client_id=client_id)
-
-def find_client_record(email, client_id):
-    # Find the most recent record by email or client_id
-    for row in reversed(client_json_table):
-        if (email and row.get('email') == email) or (client_id and row.get('client_id') == client_id):
-            return row
-    return None
+    # Try to find the record by client_id
+    record = find_client_record(client_id)
+    email = record["email"] if record else ""
+    return render_template("client.html", client_id=client_id, email=email)
 
 @app.route("/client-remember", methods=["POST"])
 def client_remember():
     data = request.get_json() or {}
     email = data.get('email', '').strip().lower()
     client_id = data.get('client_id', '').strip()
-    key = email if email and re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) else client_id
-    if not key:
-        return jsonify({"status": "error", "reason": "No valid email or client_id"}), 400
-    # Save or update the record in the dict for fast lookup
-    client_memory[key] = {"email": email, "client_id": client_id}
-    # Add a row to the JSON table for every new session/email combo
-    client_json_table.append({"email": email, "client_id": client_id, "timestamp": time.time()})
-    return jsonify({"status": "ok", "key": key})
+    if not client_id:
+        return jsonify({"status": "error", "reason": "No valid client_id"}), 400
+    # Update or add the row for this client_id
+    found = False
+    for row in reversed(client_json_table):
+        if row.get('client_id') == client_id:
+            row['email'] = email
+            row['timestamp'] = time.time()
+            found = True
+            break
+    if not found:
+        client_json_table.append({"email": email, "client_id": client_id, "timestamp": time.time()})
+    return jsonify({"status": "ok", "key": client_id})
 
 @app.route("/client-lookup", methods=["POST"])
 def client_lookup():
     data = request.get_json() or {}
-    email = data.get('email', '').strip().lower()
     client_id = data.get('client_id', '').strip()
-    record = find_client_record(email, client_id)
+    record = find_client_record(client_id)
     if record:
         return jsonify({"status": "ok", "record": record})
     return jsonify({"status": "not_found"})

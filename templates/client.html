@@ -19,11 +19,12 @@
         <li><b>client public IP:</b> <span id="info-client-ip"></span></li>
         <li><b>server public IP:</b> <span id="info-server-ip"></span></li>
         <li><b>client_id (256-bit):</b> <span id="info-client-id"></span></li>
-        <li><b>email:</b> <span id="info-email"></span></li>
+        <li><b>email:</b> <span id="info-email">{{ email|default('') }}</span></li>
       </ul>
     </div>
     <script>
       window.CLIENT_ID_VALUE = "{{ client_id }}";
+      window.SERVER_EMAIL_VALUE = "{{ email|default('') }}";
     </script>
     <script src="/static/client.js" defer></script>
 </body>

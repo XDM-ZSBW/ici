@@ -22,24 +22,25 @@ document.addEventListener('DOMContentLoaded', function() {
   const infoClientId = document.getElementById('info-client-id');
   const infoEmail = document.getElementById('info-email');
 
-  // Restore last valid email from localStorage if present
+  // Restore last valid email from localStorage if present, or from server if provided
   const EMAIL_STORAGE_KEY = 'ici-client-email-' + CLIENT_ID_VALUE;
-  let lastEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
-  if (lastEmail && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(lastEmail)) {
+  let lastEmail = '';
+  if (window.SERVER_EMAIL_VALUE && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(window.SERVER_EMAIL_VALUE)) {
+    lastEmail = window.SERVER_EMAIL_VALUE;
     emailBox.value = lastEmail;
     infoEmail.textContent = lastEmail;
-    lookupClient(lastEmail, CLIENT_ID_VALUE);
+    localStorage.setItem(EMAIL_STORAGE_KEY, lastEmail);
+    lookupClient(CLIENT_ID_VALUE);
   } else {
-    lookupClient('', CLIENT_ID_VALUE);
+    lastEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
+    if (lastEmail && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(lastEmail)) {
+      emailBox.value = lastEmail;
+      infoEmail.textContent = lastEmail;
+      lookupClient(CLIENT_ID_VALUE);
+    } else {
+      lookupClient(CLIENT_ID_VALUE);
+    }
   }
-
-  // Populate known data
-  fetchEnvId().then(envId => { infoEnvId.textContent = envId; });
-  fetchClientIp().then(ip => { infoClientIp.textContent = ip; });
-  // For demo, use /data endpoint as a placeholder for server IP (replace with real server IP in production)
-  fetchServerIp().then(ip => { infoServerIp.textContent = ip; });
-  infoClientId.textContent = CLIENT_ID_VALUE;
-  infoEmail.textContent = '';
 
   function isValidEmail(email) {
     return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
@@ -57,7 +58,6 @@ document.addEventListener('DOMContentLoaded', function() {
       emailStatus.textContent = 'Saved!';
       emailStatus.style.color = '#007700';
       infoEmail.textContent = email;
-      // Save to localStorage
       localStorage.setItem(EMAIL_STORAGE_KEY, email);
     }).catch(() => {
       emailStatus.textContent = 'Error saving email.';
@@ -65,23 +65,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function lookupClient(email, clientId) {
-    return fetch('/client-lookup', {
+  function lookupClient(clientId) {
+    fetch('/client-lookup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email, client_id: clientId })
+      body: JSON.stringify({ client_id: clientId })
     }).then(r => r.json()).then(data => {
       if (data.status === 'ok' && data.record) {
-        // Display the last known record (could be extended to show more fields)
-        document.getElementById('client-id-value').textContent = data.record.client_id;
-        infoEmail.textContent = data.record.email;
-        // Optionally, show a message or restore more data here
+        if (data.record.email) {
+          emailBox.value = data.record.email;
+          infoEmail.textContent = data.record.email;
+          localStorage.setItem(EMAIL_STORAGE_KEY, data.record.email);
+        } else {
+          emailBox.value = '';
+          infoEmail.textContent = '';
+          localStorage.removeItem(EMAIL_STORAGE_KEY);
+        }
       }
     });
   }
-
-  // On page load, try to look up by client_id (and by email if present in localStorage)
-  lookupClient('', CLIENT_ID_VALUE);
 
   emailBox.addEventListener('input', function() {
     const email = emailBox.value.trim();
@@ -90,9 +92,8 @@ document.addEventListener('DOMContentLoaded', function() {
       emailStatus.style.color = '#007700';
       saveEmail(email);
       infoEmail.textContent = email;
-      // Save to localStorage
       localStorage.setItem(EMAIL_STORAGE_KEY, email);
-      lookupClient(email, CLIENT_ID_VALUE);
+      lookupClient(CLIENT_ID_VALUE);
     } else if (email.length > 0) {
       emailStatus.textContent = 'Invalid email';
       emailStatus.style.color = '#bb0000';
@@ -104,4 +105,15 @@ document.addEventListener('DOMContentLoaded', function() {
       localStorage.removeItem(EMAIL_STORAGE_KEY);
     }
   });
+
+  // Populate known data
+  fetchEnvId().then(envId => { infoEnvId.textContent = envId; });
+  fetchClientIp().then(ip => { infoClientIp.textContent = ip; });
+  // For demo, use /data endpoint as a placeholder for server IP (replace with real server IP in production)
+  fetchServerIp().then(ip => { infoServerIp.textContent = ip; });
+  infoClientId.textContent = CLIENT_ID_VALUE;
+  infoEmail.textContent = '';
+
+  // On page load, try to look up by client_id (and by email if present in localStorage)
+  lookupClient(CLIENT_ID_VALUE);
 });
