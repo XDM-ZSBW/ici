@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICI Chat</title>
+    <style>
+        .offline {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>ICI Chat {{ build_version if build_version is defined else '' }}</h1>
+    <p id="app-description">Collaborative memory chat and textbox demo.</p>
+    <p>Data from server: <span id="data-from-server"></span></p>
+    <textarea id="env-box" style="width:100%;height:80px;" placeholder="Shared for all clients with the same env-id"></textarea>
+    <br>
+    <textarea id="client-box" style="width:100%;height:40px;" placeholder="Shared for all with the same public IP and env-id"></textarea>
+    <br>
+    <textarea id="private-box" style="width:100%;height:40px;" placeholder="Private for this browser, env-id, and public IP"></textarea>
+    <br>
+    {% if env_id is defined %}
+    <script type="text/javascript">
+      window.env_id_from_server = "{{ env_id }}";
+    </script>
+    {% endif %}
+    <script src="/static/index.js" defer></script>
+</body>
+</html>

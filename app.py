@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, Response
+from flask import Flask, render_template, send_file, jsonify, request, Response
 import secrets
 import sys
 import platform
@@ -48,6 +48,20 @@ def index():
     env_id = get_env_id()
     build_version = get_build_version()
     return render_template("index.html", env_id=env_id, build_version=build_version)
+
+@app.route("/chat")
+def chat():
+    # Provide env_id if needed for chat.html
+    return render_template("chat.html", build_version=build_version, env_id=env_id)
+
+@app.route("/readme")
+def readme():
+    # Serve README.md as plain text
+    readme_path = os.path.join(os.path.dirname(__file__), 'README.md')
+    if os.path.exists(readme_path):
+        with open(readme_path, encoding='utf-8') as f:
+            return Response(f.read(), mimetype='text/plain')
+    return Response('README.md not found.', mimetype='text/plain')
 
 @app.route("/health")
 def health():

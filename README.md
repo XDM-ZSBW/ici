@@ -45,6 +45,44 @@ The main page (`/`) features three textboxes with different sharing scopes:
 - **User-driven reset**: Protection flags clear immediately when user starts typing
 - **Console logging**: Restoration process is logged for debugging
 
+## Collaborative Memory & Client Management
+
+This app supports collaborative memory and client management for shared environments. It features:
+- **Join via QR code**: `/join` page generates a QR code for easy device onboarding.
+- **Client info page**: `/client/<private-id>` page for entering and updating email, with explicit save logic.
+- **In-memory client table**: Tracks all client sessions, emails, IDs, timestamps, and history.
+- **Live-updating tables**: `/join` and `/recovery` pages show real-time client tables using Server-Sent Events (SSE).
+- **Recovery & admin tools**: `/recovery` page for reporting lost memory, viewing, and deleting client records (individually or all at once).
+- **Robust offline/merge logic**: All memory is restored after server restarts using localStorage backup and auto-repopulation.
+
+### Client Table Fields
+- `email`: Client's email address (set on explicit save only, must be valid)
+- `client_id`: Unique client identifier
+- `timestamp`: Last update time
+- `env_id`: Environment ID
+- `env_id_elements`: Details used to generate env_id
+- `private_id`: Private identifier for the client
+- `private_id_elements`: Details used to generate private_id
+- `previous_email`, `previous_client_id`: History of previous values
+
+### QR Code Join Flow
+- Visit `/join` to generate a QR code for the `/client/<private-id>` page.
+- Scan the QR code to open the client info page on another device.
+- Enter a valid email and save to create/update a client record.
+
+### Live-updating Client Table (SSE)
+- `/client-table-events` provides real-time updates to the client table using SSE (no polling).
+- Both `/join` and `/recovery` pages display the table and update instantly on changes.
+
+### Recovery & Admin Features
+- `/recovery` page allows users to file a lost memory report and view all current clients for the environment.
+- Each row has a delete button; a "Delete All" button removes all client records (no confirmation required).
+- All deletions and updates are reflected live via SSE.
+
+### Memory Restoration
+- If the server restarts and loses in-memory data, clients automatically restore their memory from localStorage backup.
+- Restoration is triggered on both `/join` and `/client/<id>` pages.
+
 ## Endpoints
 
 ## API Endpoints
@@ -78,6 +116,36 @@ The main page (`/`) features three textboxes with different sharing scopes:
   API for the IP-scoped textbox (shared by env-id + public IP).
   - GET: Requires `env_id` and `public_ip` query parameters
   - POST: Accepts JSON: `{"env_id": "...", "public_ip": "...", "value": "content"}`
+
+- **GET /join**
+  - Returns the join page with a QR code for `/client/<private-id>` and a live-updating client table.
+
+- **GET /join/<client_id>**
+  - Returns the join page for a specific client.
+
+- **GET /client/<private-id>**
+  - Returns the client info page for entering/updating email. Only valid emails are accepted, and records are created/updated on explicit save.
+
+- **POST /client-remember**
+  - Creates or updates a client record. Requires valid email and private-id.
+
+- **GET /client-table**
+  - Returns the full in-memory client table as JSON.
+
+- **POST /client-table-restore**
+  - Accepts a client-side backup of the client table and restores it on the server.
+
+- **GET /client-table-events**
+  - Server-Sent Events endpoint for live client table updates.
+
+- **GET /recovery**
+  - Returns the recovery page with a lost memory report form and live client table.
+
+- **POST /delete-client-row**
+  - Deletes a single client record by private-id.
+
+- **POST /delete-all-client-rows**
+  - Deletes all client records for the current environment.
 
 ## Technical Implementation
 
@@ -148,6 +216,15 @@ gcloud builds submit --config cloudbuild.yaml \
 - See [Creating a Cloud Storage bucket](https://cloud.google.com/storage/docs/creating-buckets) for instructions.
 
 ## Changelog
+
+### [2025-05-25] - Collaborative Memory & Recovery Features
+- **Collaborative memory system**: In-memory client table with full history, explicit email save, and robust merge logic
+- **Join page with QR code**: Easy onboarding for new devices, live-updating client table (SSE)
+- **Client info page**: Email entry, explicit save, and history tracking
+- **Recovery page**: Lost memory reporting, live client table, and admin delete tools
+- **SSE for live updates**: No polling required for join/recovery tables
+- **Memory restoration**: Automatic repopulation from localStorage after server restart
+- **UI/UX improvements**: Clickable client URLs, delete buttons, and improved feedback
 
 ### [2025-05-24] - Current Prototype
 - **Complete textbox system implementation**: Three textboxes with different sharing scopes
