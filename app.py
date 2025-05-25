@@ -5,6 +5,7 @@ import platform
 import hashlib
 import os
 import time
+import re
 
 app = Flask(__name__)
 
@@ -95,6 +96,12 @@ def join():
 def join_with_client_id(client_id):
     # Placeholder: could show a confirmation or info page
     return f"Joined with client-id: {client_id}"
+
+@app.route("/client/<path:rest>")
+def client_id_page(rest):
+    match = re.match(r"([A-Za-z0-9]+)", rest)
+    client_id = match.group(1) if match else ""
+    return render_template("client.html", client_id=client_id)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
