@@ -278,9 +278,9 @@
         if (storedJson) {
             try {
                 let obj = JSON.parse(storedJson);
+                // Only restore and push if the server value is empty or default, and only update the textbox if it is empty or default
                 if (obj.envBox && (!envBox.value || envBox.value === envId)) {
                     envBox.value = obj.envBox;
-                    // Push to server
                     fetch('/env-box', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -289,7 +289,6 @@
                 }
                 if (obj.clientBox && (!clientBox.value || clientBox.value === publicIp)) {
                     clientBox.value = obj.clientBox;
-                    // Push to server
                     fetch('/client-box', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -300,7 +299,13 @@
         }
     }
     // After loading from server, if empty, restore from privateBox
-    setTimeout(restoreFromPrivateBoxIfServerEmpty, 1500);
+    setTimeout(restoreFromPrivateBoxIfServerEmpty, 500); // Run sooner to minimize flicker
+    setTimeout(restoreFromPrivateBoxIfServerEmpty, 2000);
+
+    // Prevent default value overwrite on load if there is a value in the textbox already
+    // Only set default if the box is truly empty
+    if (!envBox.value) envBox.value = envId;
+    if (!clientBox.value) clientBox.value = publicIp;
 });
     </script>
 </body>
