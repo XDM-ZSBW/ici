@@ -24,4 +24,40 @@
     </div>
     <div style="font-size:0.9em;color:#888;margin-top:8px;">&copy; 2025 ICI Project. Open source under the MIT License.</div>
   </div>
+  <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;width:100%;background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 0;text-align:center;z-index:1000;box-shadow:0 -2px 8px #0001;">
+    <span style="font-size:1em;color:#374151;">This site uses cookies for session management and analytics. By using this site, you agree to our <a href="/policies" style="color:#2563eb;text-decoration:underline;">Policies</a>.</span>
+    <button id="cookie-accept-btn" style="margin-left:18px;padding:8px 18px;border-radius:6px;border:1px solid #2563eb;background:#2563eb;color:#fff;font-weight:500;cursor:pointer;">Accept</button>
+  </div>
+  <script>
+  (function() {
+    function setCookie(name, value, days) {
+      var expires = '';
+      if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = '; expires=' + date.toUTCString();
+      }
+      document.cookie = name + '=' + (value || '')  + expires + '; path=/';
+    }
+    function getCookie(name) {
+      var nameEQ = name + '=';
+      var ca = document.cookie.split(';');
+      for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+      }
+      return null;
+    }
+    var banner = document.getElementById('cookie-banner');
+    var btn = document.getElementById('cookie-accept-btn');
+    if (banner && !getCookie('ici_cookie_consent')) {
+      banner.style.display = '';
+      btn.onclick = function() {
+        setCookie('ici_cookie_consent', '1', 365);
+        banner.style.display = 'none';
+      };
+    }
+  })();
+  </script>
 </footer>

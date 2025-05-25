@@ -17,16 +17,151 @@
         .chat-input-row input { flex: 1; padding: 8px; font-size: 1em; }
         .chat-input-row button { padding: 8px 18px; font-size: 1em; }
         .auth-prompt { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 18px; margin-bottom: 24px; text-align: center; }
-        .qr-code { margin: 16px auto; display: block; }
-        #memory-section { margin-top: 24px; }
-        #memory-section h2 { font-size: 1.5em; margin-bottom: 12px; }
-        #memory-section textarea { border: 1px solid #ccc; border-radius: 4px; padding: 10px; font-size: 1em; }
+        .qr-code { margin: 16px auto; display: block; }        #memory-section { margin-top: 24px; }
+        #memory-section h2 { font-size: 1.5em; margin-bottom: 20px; color: #2a5298; }
+        
+        /* Memory textarea styling */
+        .memory-textarea { 
+            border: 2px solid #e0e6ed; 
+            border-radius: 12px; 
+            padding: 16px; 
+            font-size: 0.95em; 
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #fafbfc;
+            transition: all 0.3s ease;
+            resize: vertical;
+            min-height: 60px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .memory-textarea:focus { 
+            outline: none; 
+            border-color: #6db3f2; 
+            box-shadow: 0 0 0 3px rgba(109, 179, 242, 0.1);
+            background: #fff;
+        }
+        
+        /* Specific heights for different memory areas */
+        #env-box { height: 200px; }  /* All users - tallest */
+        #client-box { height: 120px; }  /* IP-shared */
+        #private-box { height: 120px; }  /* Private */
+        
+        /* Offline styling */
+        .memory-textarea.offline {
+            background: #fff5f5;
+            border-color: #ef4444;
+            outline: 2px solid #fecaca;
+        }
+        
+        /* Memory labels */
+        .memory-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .memory-label:first-child { margin-top: 0; }
+        .memory-label .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+        .memory-label .status-indicator.offline {
+            background: #ef4444;
+        }
+        
+        /* Modern form styling */
+        .memory-controls {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+        
+        .memory-input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .memory-input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+        .memory-input-group input:focus {
+            outline: none;
+            border-color: #6db3f2;
+            box-shadow: 0 0 0 3px rgba(109, 179, 242, 0.1);
+        }
+        
+        .memory-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .memory-btn {
+            padding: 10px 16px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .memory-btn.private { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
+        .memory-btn.private:hover { background: #e5e7eb; border-color: #9ca3af; }
+        
+        .memory-btn.ip-shared { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+        .memory-btn.ip-shared:hover { background: #bfdbfe; border-color: #60a5fa; }
+        
+        .memory-btn.shared { background: #dcfce7; color: #166534; border-color: #86efac; }
+        .memory-btn.shared:hover { background: #bbf7d0; border-color: #4ade80; }
+        
+        .debug-buttons {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 8px;
+        }
+        
+        .debug-btn {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .debug-btn:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+        }
     </style>
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
     {% include '_header.html' %}
     <main>
+        <noscript>
+            <div style="background:#fee;color:#900;padding:16px;border-radius:8px;margin-bottom:16px;">
+                <b>JavaScript is required for ICI Chat to function.</b><br>
+                Please enable JavaScript in your browser.
+            </div>
+        </noscript>
+        <div id="js-init-debug" style="display:none;background:#fffbe6;color:#b45309;padding:12px;border-radius:8px;margin-bottom:16px;font-size:1.1em;"></div>
         <h1>ICI Chat</h1>
         <div id="auth-section" class="auth-prompt" style="display:none;">
             <b>Authenticate to join the chat</b><br>
@@ -44,24 +179,44 @@
             <form id="chat-form" class="chat-input-row" autocomplete="off">
                 <input type="text" id="chat-input" placeholder="Ask a question..." required aria-label="Ask a question">
                 <button type="submit">Send</button>
-            </form>
-        </div>        <div id="memory-section" style="display:none;">
-            <h2>Collaborative Memory</h2>            <form id="memory-form" class="chat-input-row" autocomplete="off" style="margin-bottom: 18px;">
-                <input type="text" id="memory-input" placeholder="Add a memory or question..." required aria-label="Add a memory or question">
-                <button type="button" id="add-to-private">Private</button>
-                <button type="button" id="add-to-shared">Shared</button>
-                <button type="button" id="add-to-ip">IP-Shared</button>
-            </form>
-            <div style="margin-bottom: 12px;">
-                <button type="button" id="debug-test-sync" style="font-size: 0.9em; padding: 4px 8px;">🔧 Test Sync</button>
-                <button type="button" id="debug-clear-all" style="font-size: 0.9em; padding: 4px 8px;">🗑️ Clear All</button>
+            </form>        </div>        <div id="memory-section" style="display:none;">
+            <h2>Collaborative Memory</h2>
+            
+            <!-- Memory Display Areas -->
+            <div class="memory-label">
+                <span class="status-indicator" id="shared-status"></span>
+                Shared Memory - All Users
             </div>
-            <textarea id="env-box" style="width:100%;height:80px;" placeholder="Shared for all clients with the same env-id" readonly></textarea>
-            <br>
-            <textarea id="client-box" style="width:100%;height:40px;" placeholder="Shared for all with the same public IP and env-id" readonly></textarea>
-            <br>
-            <textarea id="private-box" style="width:100%;height:40px;" placeholder="Private for this browser, env-id, and public IP" readonly></textarea>
-            <br>
+            <textarea id="env-box" class="memory-textarea" placeholder="Shared memories for all clients with the same env-id will appear here..." readonly></textarea>
+            
+            <div class="memory-label">
+                <span class="status-indicator" id="ip-status"></span>
+                IP-Shared Memory - Same Network
+            </div>
+            <textarea id="client-box" class="memory-textarea" placeholder="Shared memories for users with the same public IP and env-id will appear here..." readonly></textarea>
+            
+            <div class="memory-label">
+                <span class="status-indicator"></span>
+                Private Memory - This Browser
+            </div>
+            <textarea id="private-box" class="memory-textarea" placeholder="Private memories for this browser, env-id, and public IP will appear here..." readonly></textarea>
+            
+            <!-- Memory Controls at Bottom -->
+            <div class="memory-controls">
+                <div class="memory-input-group">
+                    <input type="text" id="memory-input" placeholder="Add a memory or question..." required aria-label="Add a memory or question">
+                </div>
+                <div class="memory-buttons">
+                    <button type="button" id="add-to-private" class="memory-btn private">💾 Add to Private</button>
+                    <button type="button" id="add-to-ip" class="memory-btn ip-shared">🌐 Add to IP-Shared</button>
+                    <button type="button" id="add-to-shared" class="memory-btn shared">🌍 Add to Shared</button>
+                </div>                <div class="debug-buttons">
+                    <button type="button" id="debug-test-sync" class="debug-btn">🔧 Test Sync</button>
+                    <button type="button" id="debug-clear-all" class="debug-btn">🗑️ Clear All</button>
+                    <button type="button" id="debug-refresh" class="debug-btn">🔄 Refresh Display</button>
+                    <button type="button" id="debug-test-api" class="debug-btn">🌐 Test API</button>
+                </div>
+            </div>
         </div>
     </main>
     {% include '_footer.html' %}

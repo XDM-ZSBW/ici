@@ -366,6 +366,10 @@ def get_lost_memory_reports():
     reports_sorted = sorted(reports, key=lambda r: -r["timestamp"])
     return jsonify({"status": "ok", "reports": reports_sorted})
 
+@app.route("/policies")
+def policies():
+    return render_template("policies.html")
+
 if __name__ == "__main__":
     import eventlet
     import eventlet.wsgi
