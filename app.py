@@ -87,10 +87,30 @@ def env_box_api():
     env_id = get_env_id()
     if request.method == "POST":
         data = request.get_json()
-        shared_env_box[env_id] = data.get("value", "")
+        # Always treat shared_env_box[env_id] as a list of messages
+        value = data.get("value", [])
+        if not isinstance(value, list):
+            value = [value]
+        # Append to existing array, or set if empty
+        if env_id not in shared_env_box or not isinstance(shared_env_box[env_id], list):
+            shared_env_box[env_id] = []
+        # Only append new messages (avoid duplicates by timestamp+q)
+        existing_keys = set()
+        for msg in shared_env_box[env_id]:
+            if isinstance(msg, dict) and 'ts' in msg and 'q' in msg:
+                existing_keys.add(str(msg['ts']) + ':' + str(msg['q']))
+        for msg in value:
+            if isinstance(msg, dict) and 'ts' in msg and 'q' in msg:
+                key = str(msg['ts']) + ':' + str(msg['q'])
+                if key not in existing_keys:
+                    shared_env_box[env_id].append(msg)
+                    existing_keys.add(key)
         return jsonify({"status": "ok"})
     # GET
-    return jsonify({"value": shared_env_box.get(env_id, "")})
+    arr = shared_env_box.get(env_id, [])
+    if not isinstance(arr, list):
+        arr = [arr]
+    return jsonify({"value": arr})
 
 @app.route("/client-box", methods=["GET", "POST"])
 def client_box_api():

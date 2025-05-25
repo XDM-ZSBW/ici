@@ -87,7 +87,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   function renderPrivateChat() {
     const arr = getPrivateChat();
-    privateChatHistory.innerHTML = '<b>Private Memory</b><br>' + arr.map(msg => `<div class="chat-message private"><b>You:</b> ${msg.q}<br><b>Memory:</b> ${msg.a}</div>`).join('');
+    privateChatHistory.innerHTML = '<b>Private Memory</b><br>' + arr.map(msg => {
+      let html = `<div class="chat-message private"><b>You:</b> ${msg.q}`;
+      if (msg.a && msg.a.trim()) {
+        html += `<br><b>Memory:</b> ${msg.a}`;
+      }
+      html += '</div>';
+      return html;
+    }).join('');
   }
 
   // Shared chat via server
@@ -98,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
       .catch(() => []);
   }
   function setSharedChat(arr) {
+    // Always POST the full array (running total)
     return fetch('/env-box', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -106,7 +114,14 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   function renderSharedChat() {
     getSharedChat().then(arr => {
-      sharedChatHistory.innerHTML = '<b>Shared Memory</b><br>' + arr.map(msg => `<div class="chat-message shared"><b>${msg.user||'User'}:</b> ${msg.q}<br><b>Memory:</b> ${msg.a}</div>`).join('');
+      sharedChatHistory.innerHTML = '<b>Shared Memory</b><br>' + arr.map(msg => {
+        let html = `<div class="chat-message shared"><b>${msg.user||'User'}:</b> ${msg.q}`;
+        if (msg.a && msg.a.trim()) {
+          html += `<br><b>Memory:</b> ${msg.a}`;
+        }
+        html += '</div>';
+        return html;
+      }).join('');
     });
   }
 
@@ -190,15 +205,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Update private chat (localStorage) ---
     const privateChat = getPrivateChat();
-    privateChat.push({ q: msg, a: '', ts: Date.now() });
+    const newMsg = { q: msg, a: '', ts: Date.now() };
+    privateChat.push(newMsg);
     setPrivateChat(privateChat);
     renderPrivateChat();
 
-    // --- Update shared chat (server) ---
-    const sharedMsg = { user: '', q: msg, a: '', ts: Date.now() };
-    setSharedChat([sharedMsg]).then(() => {
-      // Refresh shared chat display
-      renderSharedChat();
+    // --- Update shared chat (server, running total) ---
+    getSharedChat().then(sharedArr => {
+      const updatedArr = [...sharedArr, newMsg];
+      setSharedChat(updatedArr).then(() => {
+        renderSharedChat();
+      });
     });
 
     // --- Send message to server for processing ---
@@ -217,14 +234,49 @@ document.addEventListener('DOMContentLoaded', function() {
           renderPrivateChat();
 
           // Update shared chat with AI answer
-          const sharedMsg = { user: 'AI', q: msg, a: data.answer, ts: Date.now() };
-          setSharedChat([sharedMsg]).then(() => {
-            // Refresh shared chat display
-            renderSharedChat();
+          getSharedChat().then(sharedArr => {
+            const aiMsg = { user: 'AI', q: msg, a: data.answer, ts: Date.now() };
+            const updatedArr = [...sharedArr, aiMsg];
+            setSharedChat(updatedArr).then(() => {
+              renderSharedChat();
+            });
           });
         }
       });
   });
+
+  // Helper: merge private chat into shared chat (no duplicates)
+  function mergePrivateToShared(privateArr, sharedArr) {
+    const seen = new Set(sharedArr.map(msg => msg.ts + ':' + msg.q));
+    for (const msg of privateArr) {
+      const key = msg.ts + ':' + msg.q;
+      if (!seen.has(key)) {
+        sharedArr.push(msg);
+        seen.add(key);
+      }
+    }
+    return sharedArr;
+  }
+
+  // On load, if shared memory is empty, reshare private memory
+  function ensureSharedMemory() {
+    getSharedChat().then(sharedArr => {
+      const privateArr = getPrivateChat();
+      if ((!sharedArr || sharedArr.length === 0) && privateArr.length > 0) {
+        // Shared memory lost, reshare private memory
+        setSharedChat([...privateArr]).then(renderSharedChat);
+      } else if (privateArr.length > 0) {
+        // Ensure shared memory is a running total of all private chats
+        const merged = mergePrivateToShared(privateArr, sharedArr || []);
+        if (merged.length !== sharedArr.length) {
+          setSharedChat(merged).then(renderSharedChat);
+        }
+      }
+    });
+  }
+
+  // Call on load
+  ensureSharedMemory();
 
   // Initial render
   renderPrivateChat();
