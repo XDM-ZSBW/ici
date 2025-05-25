@@ -27,5 +27,12 @@
       window.SERVER_EMAIL_VALUE = "{{ email|default('') }}";
     </script>
     <script src="/static/client.js" defer></script>
-</body>
+    <script src="/static/client-table.js" defer></script>
+    <hr>
+    <div id="client-table-section">
+      <h2>Current In-Memory Client Table</h2>
+      <pre id="client-table-json" style="background:#f4f4f4;padding:1em;overflow-x:auto;"></pre>
+      <table id="client-table-html" border="1" style="margin-top:1em;width:100%;border-collapse:collapse;"></table>
+    </div>
+  </body>
 </html>

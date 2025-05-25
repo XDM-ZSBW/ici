@@ -228,6 +228,13 @@ def client_table_restore():
     notify_client_table_sse()
     return jsonify({"status": "ok", "restored": len(client_json_table)})
 
+@app.route("/recovery")
+def recovery():
+    env_id = get_env_id()
+    # Filter client_json_table for current env_id
+    clients = [row for row in client_json_table if row.get('env_id') == env_id]
+    return render_template("recovery.html", env_id=env_id, clients=clients)
+
 # For SSE: keep a list of listeners (simple, not production-grade)
 client_table_sse_listeners = []
 client_table_sse_lock = threading.Lock()

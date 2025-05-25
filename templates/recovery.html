@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Recovery Report</title>
+    <link rel="stylesheet" href="/static/join.css">
+</head>
+<body>
+    <h1>Memory Recovery Report</h1>
+    <p><b>Environment ID:</b> <span style="font-family:monospace">{{ env_id }}</span></p>
+    <form method="post" action="#">
+        <label for="recovery-details">Describe what memory was lost and any details that may help recovery:</label><br>
+        <textarea id="recovery-details" name="recovery-details" rows="5" style="width:100%;margin-top:0.5em;"></textarea><br>
+        <button type="submit" style="margin-top:1em;">File Recovery Report</button>
+    </form>
+    <hr>
+    <h2>Current Clients in This Environment</h2>
+    {% if clients and clients|length > 0 %}
+    <table border="1" style="width:100%;border-collapse:collapse;">
+        <tr>
+            <th>Client ID</th>
+            <th>Email</th>
+            <th>Timestamp</th>
+            <th>Private ID</th>
+        </tr>
+        {% for c in clients %}
+        <tr>
+            <td style="font-family:monospace">{{ c.client_id }}</td>
+            <td>{{ c.email }}</td>
+            <td>{{ c.timestamp|round|int }}</td>
+            <td style="font-family:monospace">{{ c.private_id }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No clients found for this environment.</p>
+    {% endif %}
+</body>
+</html>
