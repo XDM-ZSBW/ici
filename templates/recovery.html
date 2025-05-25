@@ -17,7 +17,8 @@
     <hr>
     <h2>Current Clients in This Environment</h2>
     {% if clients and clients|length > 0 %}
-    <table border="1" style="width:100%;border-collapse:collapse;">
+    <button id="delete-all-btn" style="margin-bottom:1em;">Delete All</button>
+    <table id="recovery-clients-table" border="1" style="width:100%;border-collapse:collapse;">
         <tr>
             <th>Client ID</th>
             <th>Email</th>
@@ -40,27 +41,63 @@
         {% endfor %}
     </table>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    function renderRecoveryTable(clients) {
+        const table = document.querySelector('#recovery-clients-table');
+        if (!table) return;
+        if (!Array.isArray(clients) || clients.length === 0) {
+            table.innerHTML = '<tr><td>No records</td></tr>';
+            return;
+        }
+        let html = `<tr>
+            <th>Client ID</th>
+            <th>Email</th>
+            <th>Timestamp</th>
+            <th>Private ID</th>
+            <th>Previous Email</th>
+            <th>Previous Client ID</th>
+            <th>Delete</th>
+        </tr>`;
+        for (const c of clients) {
+            html += `<tr data-client-id="${c.client_id}" data-private-id="${c.private_id}">
+                <td style="font-family:monospace">${c.client_id}</td>
+                <td>${c.email}</td>
+                <td>${Math.round(c.timestamp)}</td>
+                <td style="font-family:monospace">${c.private_id}</td>
+                <td>${c.previous_email || ''}</td>
+                <td>${c.previous_client_id || ''}</td>
+                <td><button class="delete-row-btn" data-client-id="${c.client_id}" data-private-id="${c.private_id}">Delete</button></td>
+            </tr>`;
+        }
+        table.innerHTML = html;
         document.querySelectorAll('.delete-row-btn').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
-                if (!confirm('Are you sure you want to delete this client record?')) return;
                 const clientId = btn.getAttribute('data-client-id');
                 const privateId = btn.getAttribute('data-private-id');
                 fetch('/delete-client-row', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ client_id: clientId, private_id: privateId })
-                }).then(r => r.json()).then(resp => {
-                    if (resp.status === 'ok') {
-                        btn.closest('tr').remove();
-                    } else {
-                        alert('Delete failed: ' + (resp.reason || 'unknown error'));
-                    }
                 });
             });
         });
+    }
+    document.getElementById('delete-all-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        fetch('/delete-all-client-rows', { method: 'POST' });
     });
+    if (!!window.EventSource) {
+        const sse = new EventSource('/client-table-events');
+        sse.onmessage = function(event) {
+            try {
+                const allClients = JSON.parse(event.data);
+                // Filter for current env_id
+                const envId = '{{ env_id }}';
+                const filtered = allClients.filter(c => c.env_id === envId);
+                renderRecoveryTable(filtered);
+            } catch (e) {}
+        };
+    }
     </script>
     {% else %}
     <p>No clients found for this environment.</p>

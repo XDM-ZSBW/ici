@@ -95,22 +95,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  emailBox.addEventListener('input', function() {
+  // Only save on button click
+  document.getElementById('save-email-btn').addEventListener('click', function(e) {
+    e.preventDefault();
     const email = emailBox.value.trim();
     if (isValidEmail(email)) {
+      saveEmail(email);
       emailStatus.textContent = 'Valid email';
       emailStatus.style.color = '#007700';
-      saveEmail(email);
       infoEmail.textContent = email;
       localStorage.setItem(EMAIL_STORAGE_KEY, email);
-      // Do not call lookupClient here to avoid race with user typing
-    } else if (email.length > 0) {
+    } else {
       emailStatus.textContent = 'Invalid email';
       emailStatus.style.color = '#bb0000';
-      infoEmail.textContent = '';
-      localStorage.removeItem(EMAIL_STORAGE_KEY);
-    } else {
-      emailStatus.textContent = '';
       infoEmail.textContent = '';
       localStorage.removeItem(EMAIL_STORAGE_KEY);
     }

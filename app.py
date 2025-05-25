@@ -274,6 +274,16 @@ def delete_client_row():
     else:
         return jsonify({"status": "not_found", "reason": "No such row"}), 404
 
+@app.route("/delete-all-client-rows", methods=["POST"])
+def delete_all_client_rows():
+    env_id = get_env_id()
+    global client_json_table
+    before = len(client_json_table)
+    client_json_table = [row for row in client_json_table if row.get('env_id') != env_id]
+    after = len(client_json_table)
+    notify_client_table_sse()
+    return jsonify({"status": "ok", "deleted": before - after})
+
 # For SSE: keep a list of listeners (simple, not production-grade)
 client_table_sse_listeners = []
 client_table_sse_lock = threading.Lock()
