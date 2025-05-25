@@ -86,23 +86,33 @@ document.addEventListener('DOMContentLoaded', function() {
     localStorage.setItem(PRIVATE_CHAT_KEY, JSON.stringify(arr));
   }
   function renderPrivateChat() {
-    const arr = getPrivateChat();
-    // For private memory, treat user as 'You' if not set
-    const arrWithUser = arr.map(msg => ({...msg, user: msg.user || 'You'}));
-    const groups = aggregateAndWeaveChats(arrWithUser);
-    privateChatHistory.innerHTML = '<b>Private Memory (Grouped by Minute)</b><br>' +
-      groups.map(group => {
-        let html = `<div class=\"chat-group\"><span style='font-weight:bold;color:#2a5298;'>${group.user}</span> <span style='color:#888;'>[${group.minute}]</span><ul style='margin:0 0 8px 18px;padding:0;'>`;
-        for (const msg of group.messages) {
-          html += `<li><span style='color:#333;'>Q:</span> ${msg.q}`;
-          if (msg.a && msg.a.trim()) {
-            html += ` <span style='color:#007700;'>A:</span> ${msg.a}`;
+    try {
+      const arr = getPrivateChat();
+      // For private memory, treat user as 'You' if not set
+      const arrWithUser = arr.map(msg => ({...msg, user: msg.user || 'You'}));
+      const groups = aggregateAndWeaveChats(arrWithUser);
+      privateChatHistory.innerHTML = '<b>Private Memory (Grouped by Minute)</b><br>' +
+        groups.map(group => {
+          let html = `<div class=\"chat-group\"><span style='font-weight:bold;color:#2a5298;'>${group.user}</span> <span style='color:#888;'>[${group.minute}]</span><ul style='margin:0 0 8px 18px;padding:0;'>`;
+          for (const msg of group.messages) {
+            html += `<li><span style='color:#333;'>Q:</span> ${msg.q}`;
+            if (msg.a && msg.a.trim()) {
+              html += ` <span style='color:#007700;'>A:</span> ${msg.a}`;
+            }
+            html += '</li>';
           }
-          html += '</li>';
-        }
-        html += '</ul></div>';
-        return html;
-      }).join('');
+          html += '</ul></div>';
+          return html;
+        }).join('');
+      var errEl = document.getElementById('private-chat-error');
+      if (errEl) errEl.style.display = 'none';
+    } catch (e) {
+      var errEl = document.getElementById('private-chat-error');
+      if (errEl) {
+        errEl.textContent = 'Failed to load private memory.';
+        errEl.style.display = '';
+      }
+    }
   }
 
   // Shared chat via server
@@ -122,23 +132,54 @@ document.addEventListener('DOMContentLoaded', function() {
       body: JSON.stringify({ value: arrWithUser })
     });
   }
-  function renderSharedChat() {
-    getSharedChat().then(arr => {
-      // Use aggregation and weaving for display
-      const groups = aggregateAndWeaveChats(arr);
-      sharedChatHistory.innerHTML = '<b>Shared Memory (Grouped by User & Minute)</b><br>' +
-        groups.map(group => {
-          let html = `<div class="chat-group"><span style='font-weight:bold;color:#2a5298;'>${group.user}</span> <span style='color:#888;'>[${group.minute}]</span><ul style='margin:0 0 8px 18px;padding:0;'>`;
-          for (const msg of group.messages) {
-            html += `<li><span style='color:#333;'>Q:</span> ${msg.q}`;
-            if (msg.a && msg.a.trim()) {
-              html += ` <span style='color:#007700;'>A:</span> ${msg.a}`;
-            }
-            html += '</li>';
+
+  // --- Robust sync lock/debounce for private-to-shared memory sync ---
+  let syncInProgress = false;
+  let syncQueued = false;
+
+  function uploadMissingPrivateToShared(force) {
+    if (!sharedMemoryOnline && !force) return;
+    if (syncInProgress) {
+      syncQueued = true;
+      return;
+    }
+    syncInProgress = true;
+    getSharedChat().then(sharedArr => {
+      const privateArr = getPrivateChat();
+      const sharedKeys = new Set((sharedArr || []).map(msg => msg.ts + ':' + msg.q));
+      const missing = privateArr.filter(msg => !sharedKeys.has(msg.ts + ':' + msg.q));
+      if (missing.length > 0) {
+        const updatedArr = [...(sharedArr || []), ...missing.map(m => ({...m, user: m.user || userId || 'You'}))];
+        setSharedChat(updatedArr).then(() => {
+          renderSharedChat();
+          syncInProgress = false;
+          if (syncQueued) {
+            syncQueued = false;
+            uploadMissingPrivateToShared();
           }
-          html += '</ul></div>';
-          return html;
-        }).join('');
+        });
+      } else {
+        syncInProgress = false;
+        if (syncQueued) {
+          syncQueued = false;
+          uploadMissingPrivateToShared();
+        }
+      }
+    }).catch(() => {
+      syncInProgress = false;
+      if (syncQueued) {
+        syncQueued = false;
+        uploadMissingPrivateToShared();
+      }
+    });
+  }
+
+  function getSharedChatWithSync() {
+    return getSharedChat().then(arr => {
+      if (sharedMemoryOnline) {
+        uploadMissingPrivateToShared();
+      }
+      return arr;
     });
   }
 
@@ -262,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   });
 
-  // Helper: merge private chat into shared chat (no duplicates)
+  // --- Helper: merge private chat into shared chat (no duplicates) ---
   function mergePrivateToShared(privateArr, sharedArr) {
     const seen = new Set(sharedArr.map(msg => msg.ts + ':' + msg.q));
     for (const msg of privateArr) {
@@ -275,29 +316,65 @@ document.addEventListener('DOMContentLoaded', function() {
     return sharedArr;
   }
 
-  // On load, if shared memory is empty, reshare private memory
-  function ensureSharedMemory() {
-    getSharedChat().then(sharedArr => {
-      const privateArr = getPrivateChat();
-      if ((!sharedArr || sharedArr.length === 0) && privateArr.length > 0) {
-        // Shared memory lost, reshare private memory
-        setSharedChat([...privateArr]).then(renderSharedChat);
-      } else if (privateArr.length > 0) {
-        // Ensure shared memory is a running total of all private chats
-        const merged = mergePrivateToShared(privateArr, sharedArr || []);
-        if (merged.length !== sharedArr.length) {
-          setSharedChat(merged).then(renderSharedChat);
-        }
+  // --- Initial render
+  renderPrivateChat();
+  renderSharedChat();
+
+  // --- Group and weave chat messages by user and minute ---
+  function aggregateAndWeaveChats(arr) {
+    if (!Array.isArray(arr)) return [];
+    // Sort by timestamp ascending
+    arr = arr.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    // Group by user and minute
+    const groups = [];
+    let lastUser = null, lastMinute = null, currentGroup = null;
+    for (const msg of arr) {
+      const user = msg.user || 'Unknown';
+      const d = new Date(msg.ts || 0);
+      const minute = d.getFullYear() + '-' + (d.getMonth()+1).toString().padStart(2,'0') + '-' + d.getDate().toString().padStart(2,'0') + ' ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+      if (!currentGroup || user !== lastUser || minute !== lastMinute) {
+        currentGroup = { user, minute, messages: [] };
+        groups.push(currentGroup);
+        lastUser = user;
+        lastMinute = minute;
+      }
+      currentGroup.messages.push(msg);
+    }
+    return groups;
+  }
+
+  function renderSharedChat() {
+    getSharedChatWithSync().then(arr => {
+      // Always show the title, even if arr is empty or null
+      let html = '<b>Shared Memory (Grouped by User & Minute)</b><br>';
+      const groups = aggregateAndWeaveChats(arr || []);
+      if (groups.length === 0) {
+        html += '<span style="color:#888;">No shared memory yet.</span>';
+      } else {
+        html += groups.map(group => {
+          let ghtml = `<div class=\"chat-group\"><span style='font-weight:bold;color:#2a5298;'>${group.user}</span> <span style='color:#888;'>[${group.minute}]</span><ul style='margin:0 0 8px 18px;padding:0;'>`;
+          for (const msg of group.messages) {
+            ghtml += `<li><span style='color:#333;'>Q:</span> ${msg.q}`;
+            if (msg.a && msg.a.trim()) {
+              ghtml += ` <span style='color:#007700;'>A:</span> ${msg.a}`;
+            }
+            ghtml += '</li>';
+          }
+          ghtml += '</ul></div>';
+          return ghtml;
+        }).join('');
+      }
+      if (sharedChatHistory) sharedChatHistory.innerHTML = html;
+      var errEl = document.getElementById('shared-chat-error');
+      if (errEl) errEl.style.display = 'none';
+    }).catch(e => {
+      var errEl = document.getElementById('shared-chat-error');
+      if (errEl) {
+        errEl.textContent = 'Failed to load shared memory.';
+        errEl.style.display = '';
       }
     });
   }
-
-  // Call on load
-  ensureSharedMemory();
-
-  // Initial render
-  renderPrivateChat();
-  renderSharedChat();
 
   // --- Socket.IO for real-time shared memory updates ---
   if (window.io) {
@@ -308,27 +385,196 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Utility: Aggregate chat messages by user and minute, weave by time
-  function aggregateAndWeaveChats(messages) {
-    // messages: array of {user, q, a, ts}
-    // 1. Group by user and minute
-    const grouped = {};
-    for (const msg of messages) {
-        if (!msg.user || !msg.ts) continue;
-        const date = new Date(msg.ts);
-        const minuteKey = `${msg.user}|${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
-        if (!grouped[minuteKey]) grouped[minuteKey] = [];
-        grouped[minuteKey].push(msg);
+  // --- Offline/online logic for shared memory ---
+  let sharedMemoryOnline = true;
+  let lastSharedArr = [];
+  let sharedChatBox = null;
+  document.addEventListener('DOMContentLoaded', function() {
+    sharedChatBox = document.getElementById('shared-chat-history');
+
+    function setSharedMemoryOfflineUI(isOffline) {
+      if (!sharedChatBox) return;
+      if (isOffline) {
+        sharedChatBox.style.outline = '2px solid red';
+        sharedChatBox.setAttribute('aria-label', 'Shared Memory Chat History (Offline)');
+      } else {
+        sharedChatBox.style.outline = '';
+        sharedChatBox.setAttribute('aria-label', 'Shared Memory Chat History');
+      }
     }
-    // 2. Flatten to array, sort by earliest ts in each group
-    const groups = Object.entries(grouped).map(([key, arr]) => ({
-        user: arr[0].user,
-        minute: key.split('|')[1],
-        messages: arr,
-        earliest: Math.min(...arr.map(m => m.ts))
-    }));
-    groups.sort((a, b) => a.earliest - b.earliest);
-    // 3. Weave: interleave groups by time
-    return groups;
-}
+
+    function trySharedFetch(fn) {
+      // Helper to wrap shared memory fetches and handle offline UI
+      return fn().then(
+        (result) => {
+          if (!sharedMemoryOnline) {
+            sharedMemoryOnline = true;
+            setSharedMemoryOfflineUI(false);
+          }
+          return result;
+        },
+        (err) => {
+          if (sharedMemoryOnline) {
+            sharedMemoryOnline = false;
+            setSharedMemoryOfflineUI(true);
+          }
+          return null;
+        }
+      );
+    }
+
+    // --- Get env_id from localStorage or fallback ---
+    function getEnvId() {
+      return 'ici-demo';
+    }
+
+    // Patch getSharedChat and setSharedChat to send env_id
+    function getSharedChat() {
+      const envId = getEnvId();
+      return trySharedFetch(() => fetch('/env-box' + (envId ? ('?env_id=' + encodeURIComponent(envId)) : ''), { method: 'GET' })
+        .then(r => r.json())
+        .then(data => Array.isArray(data.value) ? data.value : []));
+    }
+    function setSharedChat(arr) {
+      if (!sharedMemoryOnline) return Promise.resolve(); // Don't try to update if offline
+      const arrWithUser = arr.map(msg => ({...msg, user: msg.user || userId || 'Anonymous'}));
+      const envId = getEnvId();
+      return trySharedFetch(() => fetch('/env-box' + (envId ? ('?env_id=' + encodeURIComponent(envId)) : ''), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: arrWithUser, env_id: envId })
+      }));
+    }
+
+    // --- After any successful shared memory fetch, if we were previously offline, sync private to shared ---
+    function getSharedChatWithSync() {
+      return getSharedChat().then(arr => {
+        if (sharedMemoryOnline) {
+          uploadMissingPrivateToShared();
+        }
+        return arr;
+      });
+    }
+
+    // --- Message sending and handling (patch for offline) ---
+    chatForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const msg = chatInput.value.trim();
+      if (!msg) return;
+      chatInput.value = '';
+
+      // --- Update private chat (localStorage) ---
+      const privateChat = getPrivateChat();
+      const newMsg = { q: msg, a: '', ts: Date.now(), user: userId || 'You' };
+      privateChat.push(newMsg);
+      setPrivateChat(privateChat);
+      renderPrivateChat();
+
+      // --- Update shared chat (server, running total) ---
+      if (sharedMemoryOnline) {
+        getSharedChat().then(sharedArr => {
+          const updatedArr = [...sharedArr, {...newMsg, user: userId || 'Anonymous'}];
+          setSharedChat(updatedArr).then(() => {
+            renderSharedChat();
+          });
+        });
+      } // else: skip shared memory update
+
+      // --- Send message to server for processing ---
+      fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: msg, user_id: userId })
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.answer) {
+            // Update private chat with AI answer
+            const privateChat = getPrivateChat();
+            privateChat[privateChat.length - 1].a = data.answer;
+            setPrivateChat(privateChat);
+            renderPrivateChat();
+
+            // Update shared chat with AI answer
+            if (sharedMemoryOnline) {
+              getSharedChat().then(sharedArr => {
+                const aiMsg = { user: 'AI', q: msg, a: data.answer, ts: Date.now() };
+                const updatedArr = [...sharedArr, aiMsg];
+                setSharedChat(updatedArr).then(() => {
+                  renderSharedChat();
+                });
+              });
+            }
+          }
+        });
+    });
+
+    // Listen for online/offline events
+    window.addEventListener('online', function() {
+      setTimeout(() => {
+        getSharedChat().then(arr => {
+          if (arr && arr.length > 0) {
+            sharedMemoryOnline = true;
+            setSharedMemoryOfflineUI(false);
+            // Try to upload any missing private messages to shared
+            uploadMissingPrivateToShared(true);
+          }
+        });
+      }, 1000);
+    });
+    window.addEventListener('offline', function() {
+      sharedMemoryOnline = false;
+      setSharedMemoryOfflineUI(true);
+    });
+
+    // --- Debugging / manual control ---
+    window.debugForceOnline = function() {
+      sharedMemoryOnline = true;
+      setSharedMemoryOfflineUI(false);
+    }
+    window.debugForceOffline = function() {
+      sharedMemoryOnline = false;
+      setSharedMemoryOfflineUI(true);
+    }
+    window.debugResharePrivateMemory = function() {
+      const privateArr = getPrivateChat();
+      setSharedChat([...privateArr]).then(renderSharedChat);
+    }
+    window.debugClearPrivateMemory = function() {
+      setPrivateChat([]);
+      renderPrivateChat();
+    }
+    window.debugClearSharedMemory = function() {
+      setSharedChat([]).then(renderSharedChat);
+    }
+    window.debugShowPrivateMemory = function() {
+      const privateArr = getPrivateChat();
+      alert('Private Memory:\n' + JSON.stringify(privateArr, null, 2));
+    }
+    window.debugShowSharedMemory = function() {
+      getSharedChat().then(arr => {
+        alert('Shared Memory:\n' + JSON.stringify(arr, null, 2));
+      });
+    }
+
+    // --- Service worker registration (for push notifications, etc) ---
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then(registration => {
+        console.log('Service Worker registered with scope:', registration.scope);
+      }).catch(error => {
+        console.error('Service Worker registration failed:', error);
+      });
+    }
+
+    // Ensure env_id exists in localStorage for this user
+    (function ensureEnvId() {
+      if (!localStorage.getItem('ici-env-id')) {
+        // Generate a random env_id (10-char hex)
+        const arr = new Uint8Array(8);
+        window.crypto.getRandomValues(arr);
+        const hex = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+        localStorage.setItem('ici-env-id', hex);
+      }
+    })();
+  });
 });

@@ -86,7 +86,12 @@ def env_id_html():
 
 @app.route("/env-box", methods=["GET", "POST"])
 def env_box_api():
-    env_id = get_env_id()
+    # Use env_id from request (query param or POST body) if present
+    env_id = request.args.get("env_id")
+    if not env_id and request.is_json:
+        env_id = (request.get_json() or {}).get("env_id")
+    if not env_id:
+        env_id = get_env_id()
     if request.method == "POST":
         data = request.get_json()
         # Always treat shared_env_box[env_id] as a list of messages
@@ -320,6 +325,24 @@ def ask():
     # Dummy AI answer for demo
     answer = f"Echo: {question} (AI demo answer)"
     return jsonify({"answer": answer})
+
+@app.route("/env-box-aggregate", methods=["GET"])
+def env_box_aggregate():
+    # Merge all shared_env_box values (all env_ids) into one deduplicated list
+    all_msgs = []
+    seen_keys = set()
+    for env_id, msgs in shared_env_box.items():
+        if not isinstance(msgs, list):
+            continue
+        for msg in msgs:
+            if isinstance(msg, dict) and 'ts' in msg and 'q' in msg:
+                key = str(msg['ts']) + ':' + str(msg['q'])
+                if key not in seen_keys:
+                    all_msgs.append(msg)
+                    seen_keys.add(key)
+    # Sort by timestamp ascending for canonical order
+    all_msgs.sort(key=lambda m: m.get('ts', 0))
+    return jsonify({"value": all_msgs})
 
 if __name__ == "__main__":
     import eventlet

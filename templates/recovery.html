@@ -22,20 +22,16 @@
     <table id="recovery-clients-table" border="1" style="width:100%;border-collapse:collapse;">
         <tr>
             <th>Client ID</th>
-            <th>Email</th>
             <th>Timestamp</th>
             <th>Private ID</th>
-            <th>Previous Email</th>
             <th>Previous Client ID</th>
             <th>Delete</th>
         </tr>
         {% for c in clients %}
         <tr data-client-id="{{ c.client_id }}" data-private-id="{{ c.private_id }}">
             <td style="font-family:monospace">{{ c.client_id }}</td>
-            <td>{{ c.email }}</td>
             <td>{{ c.timestamp|round|int }}</td>
             <td style="font-family:monospace">{{ c.private_id }}</td>
-            <td>{{ c.previous_email if c.previous_email is defined else '' }}</td>
             <td>{{ c.previous_client_id if c.previous_client_id is defined else '' }}</td>
             <td><button class="delete-row-btn" data-client-id="{{ c.client_id }}" data-private-id="{{ c.private_id }}">Delete</button></td>
         </tr>
@@ -51,20 +47,16 @@
         }
         let html = `<tr>
             <th>Client ID</th>
-            <th>Email</th>
             <th>Timestamp</th>
             <th>Private ID</th>
-            <th>Previous Email</th>
             <th>Previous Client ID</th>
             <th>Delete</th>
         </tr>`;
         for (const c of clients) {
             html += `<tr data-client-id="${c.client_id}" data-private-id="${c.private_id}">
                 <td style="font-family:monospace">${c.client_id}</td>
-                <td>${c.email}</td>
                 <td>${Math.round(c.timestamp)}</td>
                 <td style="font-family:monospace">${c.private_id}</td>
-                <td>${c.previous_email || ''}</td>
                 <td>${c.previous_client_id || ''}</td>
                 <td><button class="delete-row-btn" data-client-id="${c.client_id}" data-private-id="${c.private_id}">Delete</button></td>
             </tr>`;
