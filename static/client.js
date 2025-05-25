@@ -22,6 +22,17 @@ document.addEventListener('DOMContentLoaded', function() {
   const infoClientId = document.getElementById('info-client-id');
   const infoEmail = document.getElementById('info-email');
 
+  // Restore last valid email from localStorage if present
+  const EMAIL_STORAGE_KEY = 'ici-client-email-' + CLIENT_ID_VALUE;
+  let lastEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || '';
+  if (lastEmail && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(lastEmail)) {
+    emailBox.value = lastEmail;
+    infoEmail.textContent = lastEmail;
+    lookupClient(lastEmail, CLIENT_ID_VALUE);
+  } else {
+    lookupClient('', CLIENT_ID_VALUE);
+  }
+
   // Populate known data
   fetchEnvId().then(envId => { infoEnvId.textContent = envId; });
   fetchClientIp().then(ip => { infoClientIp.textContent = ip; });
@@ -46,6 +57,8 @@ document.addEventListener('DOMContentLoaded', function() {
       emailStatus.textContent = 'Saved!';
       emailStatus.style.color = '#007700';
       infoEmail.textContent = email;
+      // Save to localStorage
+      localStorage.setItem(EMAIL_STORAGE_KEY, email);
     }).catch(() => {
       emailStatus.textContent = 'Error saving email.';
       emailStatus.style.color = '#bb0000';
@@ -77,14 +90,18 @@ document.addEventListener('DOMContentLoaded', function() {
       emailStatus.style.color = '#007700';
       saveEmail(email);
       infoEmail.textContent = email;
+      // Save to localStorage
+      localStorage.setItem(EMAIL_STORAGE_KEY, email);
       lookupClient(email, CLIENT_ID_VALUE);
     } else if (email.length > 0) {
       emailStatus.textContent = 'Invalid email';
       emailStatus.style.color = '#bb0000';
       infoEmail.textContent = '';
+      localStorage.removeItem(EMAIL_STORAGE_KEY);
     } else {
       emailStatus.textContent = '';
       infoEmail.textContent = '';
+      localStorage.removeItem(EMAIL_STORAGE_KEY);
     }
   });
 });
