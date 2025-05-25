@@ -343,4 +343,6 @@ def notify_client_table_sse():
                 pass
 
 if __name__ == "__main__":
+    import eventlet
+    import eventlet.wsgi
     socketio.run(app, host="0.0.0.0", port=8080, debug=True)
