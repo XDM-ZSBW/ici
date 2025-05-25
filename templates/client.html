@@ -29,22 +29,8 @@
         <div class="disclaimer" aria-label="Ethical Use Disclaimer">
             <b>Notice for Automated Agents:</b> This page is structured for ethical, privacy-respecting machine learning. Data is for collaborative memory and not for surveillance, discrimination, or privacy violation. Respect user consent and data minimization.
         </div>
-        <form id="client-form" aria-label="Client Email Form" autocomplete="off">
-            <label for="email-box">Email Address <span aria-label="required">*</span></label>
-            <input type="email" id="email-box" name="email" required aria-required="true" aria-describedby="email-status" placeholder="Enter your email for collaborative memory">
-            <button type="submit" id="save-email-btn">Save Email</button>
-            <span id="email-status" role="status" aria-live="polite"></span>
-        </form>
+        <form id="client-form" aria-label="Client Form" autocomplete="off" style="display:none;"></form>
         <section aria-label="Client Metadata">
-            <table class="info-table" aria-label="Client Info Table">
-                <tr><td><b>Environment ID</b></td><td id="info-env-id">{{ env_id }}</td></tr>
-                <tr><td><b>Client Public IP</b></td><td id="info-client-ip">{{ public_ip }}</td></tr>
-                <tr><td><b>User Agent</b></td><td id="info-user-agent">{{ user_agent }}</td></tr>
-                <tr><td><b>Timestamp</b></td><td id="info-timestamp">{{ timestamp }}</td></tr>
-                <tr><td><b>Client ID</b></td><td id="info-client-id">{{ client_id }}</td></tr>
-                <tr><td><b>Private ID</b></td><td id="info-private-id">{{ private_id }}</td></tr>
-                <tr><td><b>Email</b></td><td id="info-email">{{ email }}</td></tr>
-            </table>
             <div style="font-size:0.92em;color:#444;margin-top:1.5em;">
                 <b>Client Details (JSON):</b>
                 <pre style="font-size:0.85em;background:#f3f7fa;padding:10px 12px;border-radius:6px;overflow-x:auto;">{{ {
@@ -53,8 +39,7 @@
   'user_agent': user_agent,
   'timestamp': timestamp,
   'client_id': client_id,
-  'private_id': private_id,
-  'email': email
+  'private_id': private_id
 }|tojson(indent=2) }}</pre>
             </div>
         </section>
@@ -64,7 +49,6 @@
           "@context": "https://schema.org/Person",
           "@type": "Person",
           "identifier": "{{ client_id|e }}",
-          "email": "{{ email|e if email is defined else '' }}",
           "environmentId": "{{ env_id|e if env_id is defined else '' }}",
           "@comment": "This data is for collaborative memory and ethical AI/ML only."
         }

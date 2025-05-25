@@ -122,9 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(data => {
         let details = '';
         if (data.status === 'ok' && data.record) {
-          if (data.record.email) {
-            details += `<b>Email:</b> ${data.record.email} `;
-          }
           if (data.record.client_id) {
             details += `<b>Client ID:</b> ${data.record.client_id} `;
           }

@@ -138,7 +138,6 @@ def client_id_page(rest):
         user_agent = request.headers.get('User-Agent', '')
         private_id = get_private_id(env_id, public_ip, user_agent)
         record = {
-            "email": "",
             "client_id": client_id,
             "timestamp": time.time(),
             "env_id": env_id,
@@ -149,14 +148,11 @@ def client_id_page(rest):
                 'public_ip': public_ip,
                 'user_agent': user_agent
             },
-            "previous_email": None,
             "previous_client_id": None
         }
         client_json_table.append(record)
-    email = record["email"] if record else ""
     return render_template("client.html",
         client_id=client_id,
-        email=email,
         env_id=record.get('env_id', ''),
         public_ip=record.get('private_id_elements', {}).get('public_ip', ''),
         user_agent=record.get('private_id_elements', {}).get('user_agent', ''),
@@ -185,7 +181,6 @@ def get_private_id(env_id, public_ip, user_agent):
 @app.route("/client-remember", methods=["POST"])
 def client_remember():
     data = request.get_json() or {}
-    email = data.get('email', '').strip().lower()
     client_id = data.get('client_id', '').strip()
     user_agent = request.headers.get('User-Agent', '')
     public_ip = request.remote_addr or ''
@@ -199,10 +194,23 @@ def client_remember():
         if row.get('private_id') == private_id:
             last_record = row
             break
-    # If email changed for this private_id, create a new record
-    if last_record and last_record.get('email') != email:
+    # Always update or add the row for this client_id (no email logic)
+    found = False
+    for row in reversed(client_json_table):
+        if row.get('client_id') == client_id:
+            row['timestamp'] = time.time()
+            row['env_id'] = env_id
+            row['env_id_elements'] = env_elements
+            row['private_id'] = private_id
+            row['private_id_elements'] = {
+                'env_id': env_id,
+                'public_ip': public_ip,
+                'user_agent': user_agent
+            }
+            found = True
+            break
+    if not found:
         client_json_table.append({
-            "email": email,
             "client_id": client_id,
             "timestamp": time.time(),
             "env_id": env_id,
@@ -212,41 +220,8 @@ def client_remember():
                 'env_id': env_id,
                 'public_ip': public_ip,
                 'user_agent': user_agent
-            },
-            "previous_email": last_record.get('email'),
-            "previous_client_id": last_record.get('client_id')
+            }
         })
-    else:
-        # Update or add the row for this client_id
-        found = False
-        for row in reversed(client_json_table):
-            if row.get('client_id') == client_id:
-                row['email'] = email
-                row['timestamp'] = time.time()
-                row['env_id'] = env_id
-                row['env_id_elements'] = env_elements
-                row['private_id'] = private_id
-                row['private_id_elements'] = {
-                    'env_id': env_id,
-                    'public_ip': public_ip,
-                    'user_agent': user_agent
-                }
-                found = True
-                break
-        if not found:
-            client_json_table.append({
-                "email": email,
-                "client_id": client_id,
-                "timestamp": time.time(),
-                "env_id": env_id,
-                "env_id_elements": env_elements,
-                "private_id": private_id,
-                "private_id_elements": {
-                    'env_id': env_id,
-                    'public_ip': public_ip,
-                    'user_agent': user_agent
-                }
-            })
     notify_client_table_sse()
     return jsonify({"status": "ok", "key": client_id})
 
