@@ -37,12 +37,26 @@
         </form>
         <section aria-label="Client Metadata">
             <table class="info-table" aria-label="Client Info Table">
-                <tr><td><b>Environment ID</b></td><td id="info-env-id"></td></tr>
-                <tr><td><b>Client Public IP</b></td><td id="info-client-ip"></td></tr>
-                <tr><td><b>Server IP</b></td><td id="info-server-ip"></td></tr>
-                <tr><td><b>Client ID</b></td><td id="info-client-id"></td></tr>
-                <tr><td><b>Email</b></td><td id="info-email"></td></tr>
+                <tr><td><b>Environment ID</b></td><td id="info-env-id">{{ env_id }}</td></tr>
+                <tr><td><b>Client Public IP</b></td><td id="info-client-ip">{{ public_ip }}</td></tr>
+                <tr><td><b>User Agent</b></td><td id="info-user-agent">{{ user_agent }}</td></tr>
+                <tr><td><b>Timestamp</b></td><td id="info-timestamp">{{ timestamp }}</td></tr>
+                <tr><td><b>Client ID</b></td><td id="info-client-id">{{ client_id }}</td></tr>
+                <tr><td><b>Private ID</b></td><td id="info-private-id">{{ private_id }}</td></tr>
+                <tr><td><b>Email</b></td><td id="info-email">{{ email }}</td></tr>
             </table>
+            <div style="font-size:0.92em;color:#444;margin-top:1.5em;">
+                <b>Client Details (JSON):</b>
+                <pre style="font-size:0.85em;background:#f3f7fa;padding:10px 12px;border-radius:6px;overflow-x:auto;">{{ {
+  'env_id': env_id,
+  'public_ip': public_ip,
+  'user_agent': user_agent,
+  'timestamp': timestamp,
+  'client_id': client_id,
+  'private_id': private_id,
+  'email': email
+}|tojson(indent=2) }}</pre>
+            </div>
         </section>
         <!-- Machine-readable JSON-LD for agents -->
         <script type="application/ld+json">

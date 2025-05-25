@@ -103,23 +103,35 @@ document.addEventListener('DOMContentLoaded', function() {
     return email && isValidEmail(email);
   }
 
+  // On page load, always show metadata, but only display memory if the URL matches a record in memory
+  fetchEnvId().then(envId => { infoEnvId.textContent = envId; });
+  fetchClientIp().then(ip => { infoClientIp.textContent = ip; });
+  fetchServerIp().then(ip => { infoServerIp.textContent = ip; });
+  infoClientId.textContent = CLIENT_ID_VALUE;
+
+  function enableEmailInput() {
+    emailBox.disabled = false;
+    document.getElementById('save-email-btn').disabled = false;
+  }
+  function disableEmailInput() {
+    emailBox.disabled = true;
+    document.getElementById('save-email-btn').disabled = true;
+  }
+
   function displayMemoryIfMatch(clientId) {
     if (hasMemoryForClient(clientId)) {
       // Show memory as usual
       lookupClient(clientId);
-      emailBox.disabled = false;
-      document.getElementById('save-email-btn').disabled = false;
+      enableEmailInput();
     } else {
-      // No memory: clear display and disable input
+      // No memory: clear display and disable input, but always show metadata
       emailBox.value = '';
       infoEmail.textContent = '';
       emailStatus.textContent = '';
-      emailBox.disabled = true;
-      document.getElementById('save-email-btn').disabled = true;
+      disableEmailInput();
     }
   }
 
-  // On page load, only display memory if the URL matches a record in memory
   displayMemoryIfMatch(CLIENT_ID_VALUE);
 
   // Only save on button click
@@ -132,21 +144,13 @@ document.addEventListener('DOMContentLoaded', function() {
       emailStatus.style.color = '#007700';
       infoEmail.textContent = email;
       localStorage.setItem(EMAIL_STORAGE_KEY, email);
+      enableEmailInput(); // Re-enable input after save
     } else {
       emailStatus.textContent = 'Invalid email';
       emailStatus.style.color = '#bb0000';
       infoEmail.textContent = '';
       localStorage.removeItem(EMAIL_STORAGE_KEY);
+      disableEmailInput();
     }
   });
-
-  // Populate known data
-  fetchEnvId().then(envId => { infoEnvId.textContent = envId; });
-  fetchClientIp().then(ip => { infoClientIp.textContent = ip; });
-  // For demo, use /data endpoint as a placeholder for server IP (replace with real server IP in production)
-  fetchServerIp().then(ip => { infoServerIp.textContent = ip; });
-  infoClientId.textContent = CLIENT_ID_VALUE;
-  infoEmail.textContent = '';
-
-  // Remove the unconditional lookupClient(CLIENT_ID_VALUE) at the end
 });

@@ -131,8 +131,38 @@ def client_id_page(rest):
     client_id = match.group(1) if match else ""
     # Try to find the record by client_id
     record = find_client_record(client_id)
+    if not record:
+        # If no record, create a new one with minimal info
+        env_id, env_elements = get_env_id_full()
+        public_ip = request.remote_addr or ''
+        user_agent = request.headers.get('User-Agent', '')
+        private_id = get_private_id(env_id, public_ip, user_agent)
+        record = {
+            "email": "",
+            "client_id": client_id,
+            "timestamp": time.time(),
+            "env_id": env_id,
+            "env_id_elements": env_elements,
+            "private_id": private_id,
+            "private_id_elements": {
+                'env_id': env_id,
+                'public_ip': public_ip,
+                'user_agent': user_agent
+            },
+            "previous_email": None,
+            "previous_client_id": None
+        }
+        client_json_table.append(record)
     email = record["email"] if record else ""
-    return render_template("client.html", client_id=client_id, email=email)
+    return render_template("client.html",
+        client_id=client_id,
+        email=email,
+        env_id=record.get('env_id', ''),
+        public_ip=record.get('private_id_elements', {}).get('public_ip', ''),
+        user_agent=record.get('private_id_elements', {}).get('user_agent', ''),
+        timestamp=record.get('timestamp', ''),
+        private_id=record.get('private_id', ''),
+    )
 
 def get_env_id_elements():
     return {
