@@ -53,8 +53,7 @@ def data():
 @app.route("/env-id")
 def env_id():
     env_id = get_env_id()
-    build_version = get_build_version()
-    return render_template("index.html", env_id=env_id, build_version=build_version)
+    return jsonify({"env_id": env_id})
 
 @app.route("/env-id-html")
 def env_id_html():
