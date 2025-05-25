@@ -105,6 +105,18 @@ The ICI Collaborative Memory Web App includes a dedicated area for policies, ter
 
 This area is designed to be easily extensible for additional compliance, privacy, or governance requirements.
 
+## Browser Console Error Note
+
+If you see an error like the following in your browser's developer console:
+
+```
+recovery:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+```
+
+This error is **not caused by ICI Chat**. It is a known issue from certain browser extensions (such as ad blockers, password managers, or privacy tools) that inject scripts into web pages. It does not affect the functionality of the app and can be safely ignored. To confirm, try running ICI Chat in a private/incognito window with all extensions disabled—the error will disappear.
+
+You do not need to take any action regarding this error.
+
 ---
 
 Open source. Contributions welcome!
