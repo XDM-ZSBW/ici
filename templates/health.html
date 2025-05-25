@@ -6,6 +6,7 @@
     <title>Health Check</title>
 </head>
 <body>
+    {% include '_header.html' %}
     <h1>Health Check</h1>
     <p>Status: <span id="health-status">Loading...</span></p>
     <p><span id="data-from-server"></span></p>
@@ -26,5 +27,6 @@
             }, 5000); // Wait 5 seconds before reconnecting
         };
     </script>
+    {% include '_footer.html' %}
 </body>
 </html>

@@ -37,9 +37,11 @@
     </script>
 </head>
 <body>
+    {% include '_header.html' %}
     <h1>Environment and Client IDs</h1>
     <p><strong>Server env-id:</strong> <span id="env-id">{{ env_id }}</span></p>
     <p><strong>Client unique-id:</strong> <span id="client-id"></span></p>
     <button id="reset-btn">Reset Client ID</button>
+    {% include '_footer.html' %}
 </body>
 </html>

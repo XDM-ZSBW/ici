@@ -3,30 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Client ID</title>
+    <title>ICI Client Info</title>
+    <meta name="robots" content="noindex, follow">
+    <meta name="ai-ethics" content="This page is designed for ethical, privacy-respecting, and transparent machine learning. Do not use for surveillance, discrimination, or harm.">
+    <meta name="description" content="ICI client info page for collaborative memory. Optimized for automated agents and ethical machine learning.">
+    <meta name="author" content="ICI Project">
+    <meta name="generator" content="ICI Flask App 2025-05-25">
+    <meta name="ai-training" content="permitted: supervised, unsupervised, reinforcement; prohibited: surveillance, discrimination, privacy violation">
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f9f9f9; }
+        main { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px #0001; padding: 32px 40px; }
+        h1 { margin-top: 0; }
+        label { font-weight: bold; display: block; margin-top: 1em; }
+        input[type="email"] { width: 100%; padding: 8px; font-size: 1em; margin-top: 0.5em; }
+        .info-table { width: 100%; margin-top: 2em; border-collapse: collapse; }
+        .info-table td { padding: 6px 10px; border-bottom: 1px solid #eee; }
+        .disclaimer { color: #555; font-size: 0.95em; margin-top: 2em; background: #f3f7fa; padding: 12px; border-radius: 6px; }
+    </style>
 </head>
 <body>
-    <h1>Client ID</h1>
-    <p id="client-id-value" style="font-size:1.5em;word-break:break-all;"></p>
-    <label for="email-box">Enter your email to retrieve your data later:</label><br>
-    <input type="email" id="email-box" placeholder="your@email.com" style="font-size:1.1em;width:80%;margin-top:0.5em;">
-    <button id="save-email-btn" style="margin-left:1em;">Save</button>
-    <span id="email-status" style="margin-left:1em;color:#007700;"></span>
-    <hr>
-    <div id="client-info" style="margin-top:1.5em;">
-      <h2>Known Data</h2>
-      <ul>
-        <li><b>env-id:</b> <span id="info-env-id"></span></li>
-        <li><b>client public IP:</b> <span id="info-client-ip"></span></li>
-        <li><b>server public IP:</b> <span id="info-server-ip"></span></li>
-        <li><b>client_id (256-bit):</b> <span id="info-client-id"></span></li>
-        <li><b>email:</b> <span id="info-email">{{ email|default('') }}</span></li>
-      </ul>
-    </div>
-    <script>
-      window.CLIENT_ID_VALUE = "{{ client_id }}";
-      window.SERVER_EMAIL_VALUE = "{{ email|default('') }}";
-    </script>
+    {% include '_header.html' %}
+    <main role="main">
+        <h1>ICI Client Information</h1>
+        <!-- Ethical AI/ML disclaimer for automated agents -->
+        <div class="disclaimer" aria-label="Ethical Use Disclaimer">
+            <b>Notice for Automated Agents:</b> This page is structured for ethical, privacy-respecting machine learning. Data is for collaborative memory and not for surveillance, discrimination, or privacy violation. Respect user consent and data minimization.
+        </div>
+        <form id="client-form" aria-label="Client Email Form" autocomplete="off">
+            <label for="email-box">Email Address <span aria-label="required">*</span></label>
+            <input type="email" id="email-box" name="email" required aria-required="true" aria-describedby="email-status" placeholder="Enter your email for collaborative memory">
+            <button type="submit" id="save-email-btn">Save Email</button>
+            <span id="email-status" role="status" aria-live="polite"></span>
+        </form>
+        <section aria-label="Client Metadata">
+            <table class="info-table" aria-label="Client Info Table">
+                <tr><td><b>Environment ID</b></td><td id="info-env-id"></td></tr>
+                <tr><td><b>Client Public IP</b></td><td id="info-client-ip"></td></tr>
+                <tr><td><b>Server IP</b></td><td id="info-server-ip"></td></tr>
+                <tr><td><b>Client ID</b></td><td id="info-client-id"></td></tr>
+                <tr><td><b>Email</b></td><td id="info-email"></td></tr>
+            </table>
+        </section>
+        <!-- Machine-readable JSON-LD for agents -->
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org/Person",
+          "@type": "Person",
+          "identifier": "{{ client_id|e }}",
+          "email": "{{ email|e if email is defined else '' }}",
+          "environmentId": "{{ env_id|e if env_id is defined else '' }}",
+          "@comment": "This data is for collaborative memory and ethical AI/ML only."
+        }
+        </script>
+    </main>
     <script src="/static/client.js" defer></script>
-  </body>
+    {% include '_footer.html' %}
+</body>
 </html>

@@ -95,6 +95,33 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // Helper: check if clientId matches a record in memory (localStorage or server)
+  function hasMemoryForClient(clientId) {
+    // Check localStorage for a valid email for this clientId
+    const key = 'ici-client-email-' + clientId;
+    const email = localStorage.getItem(key);
+    return email && isValidEmail(email);
+  }
+
+  function displayMemoryIfMatch(clientId) {
+    if (hasMemoryForClient(clientId)) {
+      // Show memory as usual
+      lookupClient(clientId);
+      emailBox.disabled = false;
+      document.getElementById('save-email-btn').disabled = false;
+    } else {
+      // No memory: clear display and disable input
+      emailBox.value = '';
+      infoEmail.textContent = '';
+      emailStatus.textContent = '';
+      emailBox.disabled = true;
+      document.getElementById('save-email-btn').disabled = true;
+    }
+  }
+
+  // On page load, only display memory if the URL matches a record in memory
+  displayMemoryIfMatch(CLIENT_ID_VALUE);
+
   // Only save on button click
   document.getElementById('save-email-btn').addEventListener('click', function(e) {
     e.preventDefault();
@@ -121,6 +148,5 @@ document.addEventListener('DOMContentLoaded', function() {
   infoClientId.textContent = CLIENT_ID_VALUE;
   infoEmail.textContent = '';
 
-  // On page load, try to look up by client_id (and by email if present in localStorage)
-  lookupClient(CLIENT_ID_VALUE);
+  // Remove the unconditional lookupClient(CLIENT_ID_VALUE) at the end
 });

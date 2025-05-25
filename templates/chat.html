@@ -12,6 +12,7 @@
     </style>
 </head>
 <body>
+    {% include '_header.html' %}
     <h1>ICI Chat {{ build_version if build_version is defined else '' }}</h1>
     <p id="app-description">Collaborative memory chat and textbox demo.</p>
     <p>Data from server: <span id="data-from-server"></span></p>
@@ -27,5 +28,6 @@
     </script>
     {% endif %}
     <script src="/static/index.js" defer></script>
+    {% include '_footer.html' %}
 </body>
 </html>

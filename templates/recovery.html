@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/join.css">
 </head>
 <body>
+    {% include '_header.html' %}
     <h1>Memory Recovery Report</h1>
     <p><b>Environment ID:</b> <span style="font-family:monospace">{{ env_id }}</span></p>
     <form method="post" action="#">
@@ -102,5 +103,6 @@
     {% else %}
     <p>No clients found for this environment.</p>
     {% endif %}
+    {% include '_footer.html' %}
 </body>
 </html>

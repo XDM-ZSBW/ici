@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/join.css">
 </head>
 <body>
+    {% include '_header.html' %}
     <h1>Join ICI</h1>
     <div id="qr-container">
         <canvas id="qr-code"></canvas>
@@ -14,10 +15,9 @@
     <p id="qr-url"></p>
     <hr>
     <div id="client-table-section">
-      <h2>Current In-Memory Client Table</h2>
-      <pre id="client-table-json" style="background:#f4f4f4;padding:1em;overflow-x:auto;"></pre>
       <table id="client-table-html" border="1" style="margin-top:1em;width:100%;border-collapse:collapse;"></table>
     </div>
     <script src="/static/join.js" defer></script>
+    {% include '_footer.html' %}
 </body>
 </html>
