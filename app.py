@@ -15,6 +15,8 @@ shared_client_box = {}  # key: (env_id, public_ip)
 
 # In-memory record for client data by email or client_id
 client_memory = {}
+# In-memory table for all email/client_id pairs and their data
+client_json_table = []
 
 def get_env_id():
     info = f"{sys.executable}|{sys.version}|{platform.platform()}|{platform.python_implementation()}"
@@ -106,6 +108,13 @@ def client_id_page(rest):
     client_id = match.group(1) if match else ""
     return render_template("client.html", client_id=client_id)
 
+def find_client_record(email, client_id):
+    # Find the most recent record by email or client_id
+    for row in reversed(client_json_table):
+        if (email and row.get('email') == email) or (client_id and row.get('client_id') == client_id):
+            return row
+    return None
+
 @app.route("/client-remember", methods=["POST"])
 def client_remember():
     data = request.get_json() or {}
@@ -114,9 +123,21 @@ def client_remember():
     key = email if email and re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) else client_id
     if not key:
         return jsonify({"status": "error", "reason": "No valid email or client_id"}), 400
-    # Save or update the record
+    # Save or update the record in the dict for fast lookup
     client_memory[key] = {"email": email, "client_id": client_id}
+    # Add a row to the JSON table for every new session/email combo
+    client_json_table.append({"email": email, "client_id": client_id, "timestamp": time.time()})
     return jsonify({"status": "ok", "key": key})
+
+@app.route("/client-lookup", methods=["POST"])
+def client_lookup():
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    client_id = data.get('client_id', '').strip()
+    record = find_client_record(email, client_id)
+    if record:
+        return jsonify({"status": "ok", "record": record})
+    return jsonify({"status": "not_found"})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
