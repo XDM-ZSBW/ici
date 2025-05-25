@@ -17,7 +17,10 @@ document.addEventListener('DOMContentLoaded', function() {
   fetchEnvId().then(envId => { document.getElementById('info-env-id').textContent = envId; });
   fetchClientIp().then(ip => { document.getElementById('info-client-ip').textContent = ip; });
   fetchServerIp().then(ip => { document.getElementById('info-server-ip').textContent = ip; });
-  document.getElementById('info-client-id').textContent = CLIENT_ID_VALUE;
+  var clientIdCell = document.getElementById('info-client-id');
+  if (clientIdCell && clientIdCell.dataset && clientIdCell.dataset.clientId) {
+    clientIdCell.textContent = clientIdCell.dataset.clientId;
+  }
   // Hide email field if present
   var emailBox = document.getElementById('email-box');
   if (emailBox) emailBox.style.display = 'none';

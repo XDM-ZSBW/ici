@@ -42,6 +42,12 @@
   'private_id': private_id
 }|tojson(indent=2) }}</pre>
             </div>
+            <table class="info-table">
+                <tr><td>Env ID</td><td id="info-env-id"></td></tr>
+                <tr><td>Client IP</td><td id="info-client-ip"></td></tr>
+                <tr><td>Server Key</td><td id="info-server-ip"></td></tr>
+                <tr><td>Client ID</td><td id="info-client-id" data-client-id="{{ client_id|e }}"></td></tr>
+            </table>
         </section>
         <!-- Machine-readable JSON-LD for agents -->
         <script type="application/ld+json">
