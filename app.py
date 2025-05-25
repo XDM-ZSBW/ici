@@ -22,6 +22,8 @@ client_memory = {}
 # In-memory table for all email/client_id pairs and their data
 client_json_table = []
 
+lost_memory_reports = {}  # key: env_id, value: list of dicts (reports)
+
 def get_env_id():
     info = f"{sys.executable}|{sys.version}|{platform.platform()}|{platform.python_implementation()}"
     return hashlib.sha256(info.encode()).hexdigest()
@@ -343,6 +345,26 @@ def env_box_aggregate():
     # Sort by timestamp ascending for canonical order
     all_msgs.sort(key=lambda m: m.get('ts', 0))
     return jsonify({"value": all_msgs})
+
+@app.route("/file-lost-memory-report", methods=["POST"])
+def file_lost_memory_report():
+    data = request.get_json() or {}
+    env_id = data.get("env_id") or get_env_id()
+    details = data.get("details", "").strip()
+    ts = int(time.time())
+    if not details:
+        return jsonify({"status": "error", "reason": "Missing details"}), 400
+    report = {"details": details, "timestamp": ts}
+    lost_memory_reports.setdefault(env_id, []).append(report)
+    return jsonify({"status": "ok", "report": report})
+
+@app.route("/get-lost-memory-reports", methods=["GET"])
+def get_lost_memory_reports():
+    env_id = request.args.get("env_id") or get_env_id()
+    reports = lost_memory_reports.get(env_id, [])
+    # Return sorted by timestamp descending (most recent first)
+    reports_sorted = sorted(reports, key=lambda r: -r["timestamp"])
+    return jsonify({"status": "ok", "reports": reports_sorted})
 
 if __name__ == "__main__":
     import eventlet

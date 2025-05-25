@@ -95,6 +95,58 @@
     {% else %}
     <p>No clients found for this environment.</p>
     {% endif %}
+    <hr>
+    <h2>Lost Memory Reports (This Environment)</h2>
+    <table id="lost-memory-reports-table" border="1" style="width:100%;border-collapse:collapse;margin-bottom:1em;">
+        <thead>
+            <tr><th>Timestamp</th><th>Details</th></tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="2">Loading...</td></tr>
+        </tbody>
+    </table>
+    <script>
+    function renderLostMemoryReportsTable(reports) {
+        const table = document.getElementById('lost-memory-reports-table').getElementsByTagName('tbody')[0];
+        if (!table) return;
+        if (!Array.isArray(reports) || reports.length === 0) {
+            table.innerHTML = '<tr><td colspan="2">No lost memory reports for this environment.</td></tr>';
+            return;
+        }
+        let html = '';
+        for (const r of reports) {
+            const d = new Date(r.timestamp * 1000);
+            html += `<tr><td>${d.toLocaleString()}</td><td style='white-space:pre-wrap;'>${r.details}</td></tr>`;
+        }
+        table.innerHTML = html;
+    }
+    function fetchAndRenderLostMemoryReports() {
+        fetch('/get-lost-memory-reports?env_id={{ env_id }}').then(r => r.json()).then(data => {
+            if (data.status === 'ok') {
+                renderLostMemoryReportsTable(data.reports);
+            }
+        });
+    }
+    fetchAndRenderLostMemoryReports();
+    // Intercept form submit for lost memory report
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const details = document.getElementById('recovery-details').value.trim();
+        if (!details) return;
+        fetch('/file-lost-memory-report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ env_id: '{{ env_id }}', details })
+        }).then(r => r.json()).then(data => {
+            if (data.status === 'ok') {
+                document.getElementById('recovery-details').value = '';
+                fetchAndRenderLostMemoryReports();
+            } else {
+                alert('Failed to file report: ' + (data.reason || 'Unknown error'));
+            }
+        });
+    });
+    </script>
     {% include '_footer.html' %}
 </body>
 </html>

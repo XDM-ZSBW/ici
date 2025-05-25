@@ -45,14 +45,22 @@
                 <input type="text" id="chat-input" placeholder="Ask a question..." required aria-label="Ask a question">
                 <button type="submit">Send</button>
             </form>
-        </div>
-        <div id="memory-section" style="display:none;">
-            <h2>Collaborative Memory</h2>
-            <textarea id="env-box" style="width:100%;height:80px;" placeholder="Shared for all clients with the same env-id"></textarea>
+        </div>        <div id="memory-section" style="display:none;">
+            <h2>Collaborative Memory</h2>            <form id="memory-form" class="chat-input-row" autocomplete="off" style="margin-bottom: 18px;">
+                <input type="text" id="memory-input" placeholder="Add a memory or question..." required aria-label="Add a memory or question">
+                <button type="button" id="add-to-private">Private</button>
+                <button type="button" id="add-to-shared">Shared</button>
+                <button type="button" id="add-to-ip">IP-Shared</button>
+            </form>
+            <div style="margin-bottom: 12px;">
+                <button type="button" id="debug-test-sync" style="font-size: 0.9em; padding: 4px 8px;">🔧 Test Sync</button>
+                <button type="button" id="debug-clear-all" style="font-size: 0.9em; padding: 4px 8px;">🗑️ Clear All</button>
+            </div>
+            <textarea id="env-box" style="width:100%;height:80px;" placeholder="Shared for all clients with the same env-id" readonly></textarea>
             <br>
-            <textarea id="client-box" style="width:100%;height:40px;" placeholder="Shared for all with the same public IP and env-id"></textarea>
+            <textarea id="client-box" style="width:100%;height:40px;" placeholder="Shared for all with the same public IP and env-id" readonly></textarea>
             <br>
-            <textarea id="private-box" style="width:100%;height:40px;" placeholder="Private for this browser, env-id, and public IP"></textarea>
+            <textarea id="private-box" style="width:100%;height:40px;" placeholder="Private for this browser, env-id, and public IP" readonly></textarea>
             <br>
         </div>
     </main>
