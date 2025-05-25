@@ -1,0 +1,381 @@
+// ...all JavaScript code from the previous index.js in templates moved here...
+// Debounce function to delay execution
+function debounce(func, delay) {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+}
+
+// Helper function to generate client ID
+function getPrivateClientId(envId, publicIp) {
+    const info = `${envId}|${publicIp}|${navigator.userAgent}`;
+    return btoa(info).slice(0, 16); // Base64 encode and take first 16 chars
+}
+
+// Helper function to generate private box key for localStorage
+function getPrivateBoxKey(envId, publicIp, clientId) {
+    return `private-box-json-${envId}-${publicIp}-${clientId}`;
+}
+
+// Fetch public IP using a public API
+function fetchPublicIp() {
+    return fetch('https://api.ipify.org?format=json').then(r => r.json()).then(d => d.ip).catch(() => "unknown-ip");
+}
+// Use env_id from server if available, otherwise fetch
+var envIdFromServer = window.env_id_from_server || null;
+function fetchEnvId() {
+    if (envIdFromServer) {
+        return Promise.resolve(envIdFromServer);
+    }
+    return fetch('/env-id').then(r => r.json()).then(d => d.env_id).catch(() => "unknown-env-id");
+}
+
+Promise.all([fetchEnvId(), fetchPublicIp()]).then(([envId, publicIp]) => {
+    const envBox = document.getElementById('env-box');
+    const clientBox = document.getElementById('client-box');
+    const privateBox = document.getElementById('private-box');
+
+    let envBoxHidden = document.createElement('textarea');
+    envBoxHidden.style.display = 'none';
+    envBox.parentNode.insertBefore(envBoxHidden, envBox.nextSibling);
+
+    let clientBoxHidden = document.createElement('textarea');
+    clientBoxHidden.style.display = 'none';
+    clientBox.parentNode.insertBefore(clientBoxHidden, clientBox.nextSibling);
+
+    const privateClientId = getPrivateClientId(envId, publicIp);
+    const privateBoxKey = getPrivateBoxKey(envId, publicIp, privateClientId); // Key for the JSON blob
+
+    // Helper to get all values
+    function getAllBoxValues() {
+        return {
+            envBox: envBox.value,
+            clientBox: clientBox.value,
+            privateBox: privateBox.value
+        };
+    }
+
+    // Save all values to privateBox (localStorage JSON)
+    function saveAllToPrivateBox() {
+        const obj = getAllBoxValues();
+        const json = JSON.stringify(obj);
+        localStorage.setItem(privateBoxKey, json);
+    }
+
+    // Initial load from localStorage
+    let initialEnvValue = envId; // Default
+    let initialClientValue = publicIp; // Default
+    let initialPrivateValue = privateClientId; // Default
+
+    let storedJson = localStorage.getItem(privateBoxKey);
+    if (storedJson) {
+        try {
+            let obj = JSON.parse(storedJson);
+            initialEnvValue = obj.envBox !== undefined ? obj.envBox : initialEnvValue;
+            initialClientValue = obj.clientBox !== undefined ? obj.clientBox : initialClientValue;
+            initialPrivateValue = obj.privateBox !== undefined ? obj.privateBox : initialPrivateValue;
+        } catch (e) {
+            console.error("Failed to parse stored JSON:", e);
+            storedJson = null; 
+        }
+    }
+
+    envBox.value = initialEnvValue;
+    clientBox.value = initialClientValue;
+    privateBox.value = initialPrivateValue; 
+
+    if (!storedJson) { 
+        saveAllToPrivateBox();
+    }
+    // Event listeners for input - these will call saveAllToPrivateBox
+    envBox.addEventListener('input', debounce(function() {
+        envBoxLastUserChange = Date.now(); // Track user change time
+        envBoxJustRestored = false; // Clear restoration flag when user actually types
+        if (envBoxServerOnline) {
+            fetch('/env-box', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({value: envBox.value})
+            }).then(() => { envBoxPendingSync = false; })
+              .catch(() => {
+                envBoxPendingSync = true;
+                if (!envBoxOfflineQueue.includes(envBox.value)) envBoxOfflineQueue.push(envBox.value);
+              });
+        } else {
+            if (!envBoxOfflineQueue.includes(envBox.value)) envBoxOfflineQueue.push(envBox.value);
+        }
+        saveAllToPrivateBox();
+    }, 400));
+    clientBox.addEventListener('input', debounce(function() {
+        clientBoxLastUserChange = Date.now(); // Track user change time
+        clientBoxJustRestored = false; // Clear restoration flag when user actually types
+        if (clientBoxServerOnline) {
+            fetch('/client-box', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({env_id: envId, public_ip: publicIp, value: clientBox.value})
+            }).then(() => { clientBoxPendingSync = false; })
+              .catch(() => {
+                clientBoxPendingSync = true;
+                if (!clientBoxOfflineQueue.includes(clientBox.value)) clientBoxOfflineQueue.push(clientBox.value);
+              });
+        } else {
+             if (!clientBoxOfflineQueue.includes(clientBox.value)) clientBoxOfflineQueue.push(clientBox.value);
+        }
+        saveAllToPrivateBox();
+    }, 400));
+
+    privateBox.addEventListener('input', debounce(function() {
+        localStorage.setItem('private-box-content-' + privateClientId, privateBox.value); 
+        saveAllToPrivateBox();
+    }, 400));
+    
+    const specificPrivateContent = localStorage.getItem('private-box-content-' + privateClientId);
+    if (specificPrivateContent !== null) {
+        privateBox.value = specificPrivateContent;
+    }
+
+    // Storage event listener
+    window.addEventListener('storage', function(e) {
+        if (e.key === privateBoxKey) { 
+            let newJsonState = e.newValue;
+            if (newJsonState) {
+                try {
+                    let newObj = JSON.parse(newJsonState);
+                    if (privateBox.value !== newObj.privateBox) {
+                       privateBox.value = newObj.privateBox !== undefined ? newObj.privateBox : privateClientId;
+                       localStorage.setItem('private-box-content-' + privateClientId, privateBox.value);
+                    }
+                } catch (err) { console.error("Error processing storage event for shared JSON", err); }
+            }
+        } else if (e.key === 'private-box-content-' + privateClientId) { 
+             if (privateBox.value !== e.newValue) {
+                privateBox.value = e.newValue !== null ? e.newValue : privateClientId;
+             }
+        }
+    });
+    // Env-box (shared across all clients with same env-id)
+    // Uses envBox and envBoxHidden defined at the top of this Promise.all block.
+    let isEditingEnvBox = false;
+    let envBoxPendingSync = false;
+    let envBoxLastServerValue = null;
+    let envBoxOfflineQueue = [];
+    let envBoxServerOnline = true;
+    let envBoxLastUserChange = 0; // Timestamp of last user input
+    let envBoxJustRestored = false; // Flag to prevent polling overwrites after restoration
+
+    function setEnvBoxDisabled(disabled) {
+        envBox.disabled = disabled;
+        if (disabled) {
+            envBox.classList.add('offline');
+            envBoxHidden.value = envBox.value;
+        } else {
+            envBox.classList.remove('offline');
+            if (envBoxHidden.value !== undefined && envBoxHidden.value !== null && envBoxHidden.value !== "") {
+                envBox.value = envBoxHidden.value;
+            }
+        }
+    }
+    function loadEnvBox() {
+        fetch('/env-box').then(r => r.json()).then(d => {
+            const wasOffline = !envBoxServerOnline;
+            envBoxServerOnline = true; 
+            setEnvBoxDisabled(false);                const currentServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : envId;
+            envBoxLastServerValue = currentServerValue;                // Check if server was restarted (empty response) and we have stored data
+            if (!wasOffline && currentServerValue === envId) {
+                let storedJson = localStorage.getItem(privateBoxKey);
+                if (storedJson) {
+                    try {
+                        let obj = JSON.parse(storedJson);
+                        if (obj.envBox && obj.envBox !== envId && obj.envBox.trim() !== "") {                                console.log('Server restart detected for envBox, restoring:', obj.envBox);
+                            envBox.value = obj.envBox;
+                            envBoxLastUserChange = Date.now(); // Mark as recent user change to protect from polling
+                            envBoxJustRestored = true; // Prevent polling overwrites
+                            setTimeout(() => {
+                                envBoxJustRestored = false; // Allow normal polling after 15 seconds
+                            }, 15000);
+                            // Immediately POST to server to restore the value
+                            fetch('/env-box', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({value: obj.envBox})
+                            }).then(() => {
+                                console.log('Successfully restored envBox to server');
+                                envBoxLastServerValue = obj.envBox;
+                            }).catch((err) => {
+                                console.error('Failed to restore envBox to server:', err);
+                            });
+                            return; // Skip normal processing
+                        }
+                    } catch (e) {
+                        console.error("Error parsing stored JSON for envBox restoration:", e);
+                    }
+                }
+            }
+
+            if (wasOffline) {
+                let clientState = envBox.value;
+                if (envBoxOfflineQueue.length > 0) {
+                    const uniqueQueueItems = envBoxOfflineQueue.filter(item => item !== clientState);
+                    let combined = [...uniqueQueueItems];
+                    if (!combined.includes(clientState)) { 
+                        combined.push(clientState);
+                    }
+                    clientState = combined.join('\\n');
+                }
+                envBox.value = clientState; 
+
+                fetch('/env-box', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({value: clientState})
+                })
+                .then(response => response.json())
+                .then(postResponse => { 
+                    envBoxOfflineQueue = []; 
+                    envBoxPendingSync = false;
+                })
+                .catch(() => { 
+                    envBoxServerOnline = false;
+                    setEnvBoxDisabled(true); 
+                    if (!envBoxOfflineQueue.includes(clientState)) {
+                        envBoxOfflineQueue.push(clientState);
+                    }
+                });                } else { 
+                // Only update from server if no recent user changes (within last 10 seconds) and not just restored
+                const timeSinceLastChange = Date.now() - envBoxLastUserChange;
+                if (!isEditingEnvBox && !envBoxPendingSync && !envBoxJustRestored && timeSinceLastChange > 10000) {
+                    envBox.value = currentServerValue; 
+                }
+            }
+        }).catch(() => {
+            const كان_متصلا = envBoxServerOnline; // Preserving Arabic variable name as it was
+            envBoxServerOnline = false;
+            setEnvBoxDisabled(true); 
+        });
+    }
+    if (!envBox.value) envBox.value = envId;
+    envBox.addEventListener('focus', function() { isEditingEnvBox = true; });
+    envBox.addEventListener('blur', function() { isEditingEnvBox = false; });
+    // The main input listener for envBox is already defined above (around line 103)
+    loadEnvBox();
+    setInterval(loadEnvBox, 5000); // Increased interval to 5 seconds        // Client-box (shared for all with same public IP and env-id, server API)
+    // Uses clientBox and clientBoxHidden defined at the top of this Promise.all block.
+    let isEditingClientBox = false;
+    let clientBoxPendingSync = false;
+    let clientBoxLastServerValue = null;
+    let clientBoxOfflineQueue = [];
+    let clientBoxServerOnline = true;        let clientBoxLastUserChange = 0; // Timestamp of last user input
+    let clientBoxJustRestored = false; // Flag to prevent polling overwrites after restoration
+
+    clientBox.addEventListener('focus', function() { isEditingClientBox = true; });
+    clientBox.addEventListener('blur', function() { isEditingClientBox = false; });
+
+    function setClientBoxDisabled(disabled) {
+        clientBox.disabled = disabled;
+        if (disabled) {
+            clientBox.classList.add('offline');
+            clientBoxHidden.value = clientBox.value;
+        } else {
+            clientBox.classList.remove('offline');
+            if (clientBoxHidden.value !== undefined && clientBoxHidden.value !== null && clientBoxHidden.value !== "") {
+                clientBox.value = clientBoxHidden.value;
+            }
+        }
+    }
+    function loadClientBox() {
+        fetch(`/client-box?env_id=${encodeURIComponent(envId)}&public_ip=${encodeURIComponent(publicIp)}`)
+          .then(r => r.json()).then(d => {
+            const wasOffline = !clientBoxServerOnline;
+            clientBoxServerOnline = true; 
+            setClientBoxDisabled(false);                const currentServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : publicIp;
+            clientBoxLastServerValue = currentServerValue;                // Check if server was restarted (empty response) and we have stored data
+            if (!wasOffline && currentServerValue === publicIp) {
+                let storedJson = localStorage.getItem(privateBoxKey);
+                if (storedJson) {
+                    try {
+                        let obj = JSON.parse(storedJson);
+                        if (obj.clientBox && obj.clientBox !== publicIp && obj.clientBox.trim() !== "") {                                console.log('Server restart detected for clientBox, restoring:', obj.clientBox);
+                            clientBox.value = obj.clientBox;
+                            clientBoxLastUserChange = Date.now(); // Mark as recent user change to protect from polling
+                            clientBoxJustRestored = true; // Prevent polling overwrites
+                            setTimeout(() => {
+                                clientBoxJustRestored = false; // Allow normal polling after 15 seconds
+                            }, 15000);
+                            // Immediately POST to server to restore the value
+                            fetch('/client-box', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({env_id: envId, public_ip: publicIp, value: obj.clientBox})
+                            }).then(() => {
+                                console.log('Successfully restored clientBox to server');
+                                clientBoxLastServerValue = obj.clientBox;
+                            }).catch((err) => {
+                                console.error('Failed to restore clientBox to server:', err);
+                            });
+                            return; // Skip normal processing
+                        }
+                    } catch (e) {
+                        console.error("Error parsing stored JSON for clientBox restoration:", e);
+                    }
+                }
+            }
+
+            if (wasOffline) {
+                let clientState = clientBox.value;
+                if (clientBoxOfflineQueue.length > 0) {
+                    const uniqueQueueItems = clientBoxOfflineQueue.filter(item => item !== clientState);
+                    let combined = [...uniqueQueueItems];
+                    if(!combined.includes(clientState)) {
+                        combined.push(clientState);
+                    }
+                    clientState = combined.join('\\n');
+                }
+                clientBox.value = clientState; 
+
+                fetch('/client-box', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({env_id: envId, public_ip: publicIp, value: clientState})
+                })
+                .then(response => response.json())
+                .then(postResponse => { 
+                    clientBoxOfflineQueue = []; 
+                    clientBoxPendingSync = false;
+                })
+                .catch(() => { 
+                    clientBoxServerOnline = false;
+                    setClientBoxDisabled(true);
+                    if (!clientBoxOfflineQueue.includes(clientState)) {
+                        clientBoxOfflineQueue.push(clientState);
+                    }
+                });                } else { 
+                // Only update from server if no recent user changes (within last 10 seconds) and not just restored
+                const timeSinceLastChange = Date.now() - clientBoxLastUserChange;
+                if (!isEditingClientBox && !clientBoxPendingSync && !clientBoxJustRestored && timeSinceLastChange > 10000) {
+                    clientBox.value = currentServerValue;
+                }
+            }
+        }).catch(() => {
+            const كان_متصلا = clientBoxServerOnline; // Preserving Arabic variable name
+            clientBoxServerOnline = false;
+            setClientBoxDisabled(true); 
+        });
+    }
+    // The main input listener for clientBox is already defined above (around line 115)
+    if (!clientBox.value) clientBox.value = publicIp; // Default value if empty
+    loadClientBox();
+    setInterval(loadClientBox, 5000); // Increased interval to 5 seconds
+    
+    // Private-box logic is mostly handled by its input listener and storage listener defined earlier.
+    // The redundant block for private-box, including its own getAllBoxValues, saveAllToPrivateBox,
+    // localStorage load, and input listeners has been removed.        // The old restoreFromPrivateBoxIfServerEmpty function has been replaced
+    // with inline server restart detection in loadEnvBox() and loadClientBox()
+    // This provides more immediate and reliable restoration of values.
+
+    // Final check for default values if boxes are still empty after all loading logic
+    // This was already done for envBox and clientBox after their specific load functions.
+    // privateBox gets its default from initialPrivateValue or specificPrivateContent.
+});
