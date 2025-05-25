@@ -47,3 +47,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     tryRenderOrRestoreClientTable();
 });
+
+function isValidEmail(email) {
+    return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+}
+
+// Only allow record creation when the email is a valid address
+// (This logic should be in client.js, not here. Remove any auto-submission of incomplete emails from join/client page logic.)

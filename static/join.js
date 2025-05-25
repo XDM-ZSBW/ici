@@ -63,7 +63,9 @@ document.addEventListener('DOMContentLoaded', function() {
         function setQrWithPrivateId(pid) {
             const baseUrl = window.location.origin;
             const clientUrl = `${baseUrl}/client/${pid}`;
-            document.getElementById('qr-url').textContent = clientUrl;
+            // Make the URL clickable and open in new tab
+            const qrUrlElem = document.getElementById('qr-url');
+            qrUrlElem.innerHTML = `<a href="${clientUrl}" target="_blank" rel="noopener noreferrer">${clientUrl}</a>`;
             makeQrCode(clientUrl, document.getElementById('qr-code'));
         }
         if (window.crypto && window.crypto.subtle && window.TextEncoder) {

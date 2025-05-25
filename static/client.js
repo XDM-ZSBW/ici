@@ -47,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function saveEmail(email) {
+    if (!isValidEmail(email)) return; // Prevent submission of invalid/incomplete emails
     fetch('/client-remember', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -259,6 +259,21 @@ def recovery():
     clients = [row for row in client_json_table if row.get('env_id') == env_id]
     return render_template("recovery.html", env_id=env_id, clients=clients)
 
+@app.route("/delete-client-row", methods=["POST"])
+def delete_client_row():
+    data = request.get_json() or {}
+    client_id = data.get('client_id')
+    private_id = data.get('private_id')
+    global client_json_table
+    before = len(client_json_table)
+    client_json_table = [row for row in client_json_table if not (row.get('client_id') == client_id and row.get('private_id') == private_id)]
+    after = len(client_json_table)
+    notify_client_table_sse()
+    if after < before:
+        return jsonify({"status": "ok"})
+    else:
+        return jsonify({"status": "not_found", "reason": "No such row"}), 404
+
 # For SSE: keep a list of listeners (simple, not production-grade)
 client_table_sse_listeners = []
 client_table_sse_lock = threading.Lock()
