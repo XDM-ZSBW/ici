@@ -56,6 +56,30 @@ function renderClientTable(table) {
     tbl.innerHTML = html;
 }
 
+// Utility: Aggregate chat messages by user and minute, weave by time
+function aggregateAndWeaveChats(messages) {
+    // messages: array of {user, q, a, ts}
+    // 1. Group by user and minute
+    const grouped = {};
+    for (const msg of messages) {
+        if (!msg.user || !msg.ts) continue;
+        const date = new Date(msg.ts);
+        const minuteKey = `${msg.user}|${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
+        if (!grouped[minuteKey]) grouped[minuteKey] = [];
+        grouped[minuteKey].push(msg);
+    }
+    // 2. Flatten to array, sort by earliest ts in each group
+    const groups = Object.entries(grouped).map(([key, arr]) => ({
+        user: arr[0].user,
+        minute: key.split('|')[1],
+        messages: arr,
+        earliest: Math.min(...arr.map(m => m.ts))
+    }));
+    groups.sort((a, b) => a.earliest - b.earliest);
+    // 3. Weave: interleave groups by time
+    return groups;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     Promise.all([fetchEnvId(), fetchPublicIp()]).then(([envId, publicIp]) => {
         // Generate full 256-bit private-id (SHA-256 hex of info string)

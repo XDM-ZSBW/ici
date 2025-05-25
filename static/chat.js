@@ -87,14 +87,22 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   function renderPrivateChat() {
     const arr = getPrivateChat();
-    privateChatHistory.innerHTML = '<b>Private Memory</b><br>' + arr.map(msg => {
-      let html = `<div class="chat-message private"><b>You:</b> ${msg.q}`;
-      if (msg.a && msg.a.trim()) {
-        html += `<br><b>Memory:</b> ${msg.a}`;
-      }
-      html += '</div>';
-      return html;
-    }).join('');
+    // For private memory, treat user as 'You' if not set
+    const arrWithUser = arr.map(msg => ({...msg, user: msg.user || 'You'}));
+    const groups = aggregateAndWeaveChats(arrWithUser);
+    privateChatHistory.innerHTML = '<b>Private Memory (Grouped by Minute)</b><br>' +
+      groups.map(group => {
+        let html = `<div class=\"chat-group\"><span style='font-weight:bold;color:#2a5298;'>${group.user}</span> <span style='color:#888;'>[${group.minute}]</span><ul style='margin:0 0 8px 18px;padding:0;'>`;
+        for (const msg of group.messages) {
+          html += `<li><span style='color:#333;'>Q:</span> ${msg.q}`;
+          if (msg.a && msg.a.trim()) {
+            html += ` <span style='color:#007700;'>A:</span> ${msg.a}`;
+          }
+          html += '</li>';
+        }
+        html += '</ul></div>';
+        return html;
+      }).join('');
   }
 
   // Shared chat via server
@@ -106,22 +114,31 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   function setSharedChat(arr) {
     // Always POST the full array (running total)
+    // Ensure every message has a user field
+    const arrWithUser = arr.map(msg => ({...msg, user: msg.user || userId || 'Anonymous'}));
     return fetch('/env-box', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ value: arr })
+      body: JSON.stringify({ value: arrWithUser })
     });
   }
   function renderSharedChat() {
     getSharedChat().then(arr => {
-      sharedChatHistory.innerHTML = '<b>Shared Memory</b><br>' + arr.map(msg => {
-        let html = `<div class="chat-message shared"><b>${msg.user||'User'}:</b> ${msg.q}`;
-        if (msg.a && msg.a.trim()) {
-          html += `<br><b>Memory:</b> ${msg.a}`;
-        }
-        html += '</div>';
-        return html;
-      }).join('');
+      // Use aggregation and weaving for display
+      const groups = aggregateAndWeaveChats(arr);
+      sharedChatHistory.innerHTML = '<b>Shared Memory (Grouped by User & Minute)</b><br>' +
+        groups.map(group => {
+          let html = `<div class="chat-group"><span style='font-weight:bold;color:#2a5298;'>${group.user}</span> <span style='color:#888;'>[${group.minute}]</span><ul style='margin:0 0 8px 18px;padding:0;'>`;
+          for (const msg of group.messages) {
+            html += `<li><span style='color:#333;'>Q:</span> ${msg.q}`;
+            if (msg.a && msg.a.trim()) {
+              html += ` <span style='color:#007700;'>A:</span> ${msg.a}`;
+            }
+            html += '</li>';
+          }
+          html += '</ul></div>';
+          return html;
+        }).join('');
     });
   }
 
@@ -205,14 +222,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Update private chat (localStorage) ---
     const privateChat = getPrivateChat();
-    const newMsg = { q: msg, a: '', ts: Date.now() };
+    const newMsg = { q: msg, a: '', ts: Date.now(), user: userId || 'You' };
     privateChat.push(newMsg);
     setPrivateChat(privateChat);
     renderPrivateChat();
 
     // --- Update shared chat (server, running total) ---
     getSharedChat().then(sharedArr => {
-      const updatedArr = [...sharedArr, newMsg];
+      const updatedArr = [...sharedArr, {...newMsg, user: userId || 'Anonymous'}];
       setSharedChat(updatedArr).then(() => {
         renderSharedChat();
       });
@@ -290,4 +307,28 @@ document.addEventListener('DOMContentLoaded', function() {
       renderSharedChat();
     });
   }
+
+  // Utility: Aggregate chat messages by user and minute, weave by time
+  function aggregateAndWeaveChats(messages) {
+    // messages: array of {user, q, a, ts}
+    // 1. Group by user and minute
+    const grouped = {};
+    for (const msg of messages) {
+        if (!msg.user || !msg.ts) continue;
+        const date = new Date(msg.ts);
+        const minuteKey = `${msg.user}|${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
+        if (!grouped[minuteKey]) grouped[minuteKey] = [];
+        grouped[minuteKey].push(msg);
+    }
+    // 2. Flatten to array, sort by earliest ts in each group
+    const groups = Object.entries(grouped).map(([key, arr]) => ({
+        user: arr[0].user,
+        minute: key.split('|')[1],
+        messages: arr,
+        earliest: Math.min(...arr.map(m => m.ts))
+    }));
+    groups.sort((a, b) => a.earliest - b.earliest);
+    // 3. Weave: interleave groups by time
+    return groups;
+}
 });

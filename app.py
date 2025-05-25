@@ -312,6 +312,15 @@ def delete_all_client_rows():
 def notify_client_table_update():
     socketio.emit('client_table_updated', client_json_table)
 
+@app.route("/ask", methods=["POST"])
+def ask():
+    data = request.get_json() or {}
+    question = data.get("question", "")
+    user_id = data.get("user_id", "Anonymous")
+    # Dummy AI answer for demo
+    answer = f"Echo: {question} (AI demo answer)"
+    return jsonify({"answer": answer})
+
 if __name__ == "__main__":
     import eventlet
     import eventlet.wsgi
