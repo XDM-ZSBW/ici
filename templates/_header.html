@@ -1,7 +1,14 @@
 <!-- _header.html: Common navigation header for all pages -->
-<div class="ici-header" style="background:#f3f7fa;border-bottom:1px solid #e0e6ed;padding:18px 0 10px 0;margin-bottom:32px;">
-  <div style="max-width:900px;margin:0 auto;display:flex;align-items:center;gap:24px;">
-    <a href="/" style="text-decoration:none;color:#1a2a3a;font-weight:bold;font-size:1.2em;display:flex;align-items:center;gap:10px;">
+<style>
+  .ici-header { background:#f3f7fa; border-bottom:1px solid #e0e6ed; padding:18px 0 10px 0; margin-bottom:32px; }
+  .ici-header-inner { max-width:900px; margin:0 auto; display:flex; align-items:center; gap:24px; }
+  .ici-header-logo { text-decoration:none; color:#1a2a3a; font-weight:bold; font-size:1.2em; display:flex; align-items:center; gap:10px; }
+  .ici-header nav a { margin-right:18px; color:inherit; text-decoration:none; }
+  .ici-header nav a:last-child { margin-right:0; }
+</style>
+<header class="ici-header" role="banner">
+  <div class="ici-header-inner">
+    <a href="/" class="ici-header-logo" aria-label="ICI Portal Home">
       <span style="display:inline-block;vertical-align:middle;">
         <svg width="32" height="32" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
           <ellipse cx="30" cy="54" rx="22" ry="5" fill="#b3b3b3"/>
@@ -21,11 +28,11 @@
       </span>
       ICI Portal
     </a>
-    <nav style="flex:1;">
-      <a href="/chat" style="margin-right:18px;">Chat Demo</a>
-      <a href="/join" style="margin-right:18px;">Join</a>
-      <a href="/recovery" style="margin-right:18px;">Recovery/Admin</a>
-      <a href="/" style="margin-right:18px;">Home</a>
+    <nav aria-label="Main navigation">
+      <a href="/chat">Chat Demo</a>
+      <a href="/join">Join</a>
+      <a href="/recovery">Recovery/Admin</a>
+      <a href="/">Home</a>
     </nav>
   </div>
-</div>
+</header>
