@@ -86,5 +86,15 @@ def client_box_api():
     key = (env_id, public_ip)
     return jsonify({"value": shared_client_box.get(key, "")})
 
+@app.route("/join")
+def join():
+    env_id = get_env_id()
+    return render_template("join.html", env_id=env_id)
+
+@app.route("/join/<client_id>")
+def join_with_client_id(client_id):
+    # Placeholder: could show a confirmation or info page
+    return f"Joined with client-id: {client_id}"
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
