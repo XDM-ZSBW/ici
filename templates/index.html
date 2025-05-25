@@ -89,7 +89,6 @@
             envBoxServerOnline = true;
             setEnvBoxDisabled(false);
             envBoxLastServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : envId;
-            // Only merge and update the textbox if we were offline and have queued changes
             if (wasOffline && envBoxOfflineQueue.length > 0) {
                 // Merge: client changes first, then server value
                 let merged = envBoxOfflineQueue.join('\n') + (envBoxLastServerValue ? ('\n' + envBoxLastServerValue) : '');
@@ -105,7 +104,7 @@
             } else if (wasOffline && envBoxOfflineQueue.length === 0) {
                 // If we were offline but no changes were queued, preserve the current value
                 // Do not overwrite the textbox
-            } else if (!isEditingEnvBox && !envBoxPendingSync) {
+            } else if (!wasOffline && !isEditingEnvBox && !envBoxPendingSync) {
                 // Only update the textbox if not editing and not pending sync, and not just coming back online
                 envBox.value = envBoxLastServerValue;
             }
@@ -164,7 +163,6 @@
             clientBoxServerOnline = true;
             setClientBoxDisabled(false);
             clientBoxLastServerValue = d.value !== undefined && d.value !== null && d.value !== "" ? d.value : publicIp;
-            // Only merge and update the textbox if we were offline and have queued changes
             if (wasOffline && clientBoxOfflineQueue.length > 0) {
                 // Merge: client changes first, then server value
                 let merged = clientBoxOfflineQueue.join('\n') + (clientBoxLastServerValue ? ('\n' + clientBoxLastServerValue) : '');
@@ -180,7 +178,7 @@
             } else if (wasOffline && clientBoxOfflineQueue.length === 0) {
                 // If we were offline but no changes were queued, preserve the current value
                 // Do not overwrite the textbox
-            } else if (!isEditingClientBox && !clientBoxPendingSync) {
+            } else if (!wasOffline && !isEditingClientBox && !clientBoxPendingSync) {
                 // Only update the textbox if not editing and not pending sync, and not just coming back online
                 clientBox.value = clientBoxLastServerValue;
             }
