@@ -8,6 +8,9 @@
 <body>
     <h1>Client ID</h1>
     <p id="client-id-value" style="font-size:1.5em;word-break:break-all;"></p>
+    <label for="email-box">Enter your email to retrieve your data later:</label><br>
+    <input type="email" id="email-box" placeholder="your@email.com" style="font-size:1.1em;width:80%;margin-top:0.5em;">
+    <span id="email-status" style="margin-left:1em;color:#007700;"></span>
     <script>
       window.CLIENT_ID_VALUE = "{{ client_id }}";
     </script>

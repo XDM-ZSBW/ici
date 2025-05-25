@@ -13,6 +13,9 @@ app = Flask(__name__)
 shared_env_box = {}
 shared_client_box = {}  # key: (env_id, public_ip)
 
+# In-memory record for client data by email or client_id
+client_memory = {}
+
 def get_env_id():
     info = f"{sys.executable}|{sys.version}|{platform.platform()}|{platform.python_implementation()}"
     return hashlib.sha256(info.encode()).hexdigest()
@@ -102,6 +105,18 @@ def client_id_page(rest):
     match = re.match(r"([A-Za-z0-9]+)", rest)
     client_id = match.group(1) if match else ""
     return render_template("client.html", client_id=client_id)
+
+@app.route("/client-remember", methods=["POST"])
+def client_remember():
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    client_id = data.get('client_id', '').strip()
+    key = email if email and re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) else client_id
+    if not key:
+        return jsonify({"status": "error", "reason": "No valid email or client_id"}), 400
+    # Save or update the record
+    client_memory[key] = {"email": email, "client_id": client_id}
+    return jsonify({"status": "ok", "key": key})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
