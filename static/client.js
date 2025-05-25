@@ -65,6 +65,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  let isEditingEmail = false;
+  emailBox.addEventListener('focus', function() { isEditingEmail = true; });
+  emailBox.addEventListener('blur', function() { isEditingEmail = false; });
+
   function lookupClient(clientId) {
     fetch('/client-lookup', {
       method: 'POST',
@@ -73,11 +77,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }).then(r => r.json()).then(data => {
       if (data.status === 'ok' && data.record) {
         if (data.record.email) {
-          emailBox.value = data.record.email;
+          // Only update the textbox if not editing or value is different
+          if (!isEditingEmail && emailBox.value !== data.record.email) {
+            emailBox.value = data.record.email;
+          }
           infoEmail.textContent = data.record.email;
           localStorage.setItem(EMAIL_STORAGE_KEY, data.record.email);
         } else {
-          emailBox.value = '';
+          if (!isEditingEmail) {
+            emailBox.value = '';
+          }
           infoEmail.textContent = '';
           localStorage.removeItem(EMAIL_STORAGE_KEY);
         }
@@ -93,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
       saveEmail(email);
       infoEmail.textContent = email;
       localStorage.setItem(EMAIL_STORAGE_KEY, email);
-      lookupClient(CLIENT_ID_VALUE);
+      // Do not call lookupClient here to avoid race with user typing
     } else if (email.length > 0) {
       emailStatus.textContent = 'Invalid email';
       emailStatus.style.color = '#bb0000';
