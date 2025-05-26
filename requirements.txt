@@ -7,3 +7,5 @@ numpy
 eth-account
 transformers
 torch
+psutil
+markdown

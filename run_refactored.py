@@ -7,9 +7,11 @@ import sys
 import os
 import subprocess
 from backend.app import create_app
+from graceful_shutdown import get_shutdown_manager
 
 CERT_FILE = "cert.pem"
 KEY_FILE = "key.pem"
+PORT = 8080
 
 # Auto-generate self-signed cert if not present
 if not (os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)):
@@ -29,11 +31,34 @@ if not (os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)):
 
 if __name__ == "__main__":
     print("Starting ICI Chat with refactored backend...")
+    
+    # Get the shutdown manager and prepare for startup
+    shutdown_mgr = get_shutdown_manager()
+    shutdown_mgr.prepare_for_startup()
+    
     app, socketio = create_app()
+    
+    # Register app instances for cleanup
+    shutdown_mgr.register_app(app, socketio)
+    
     use_ssl = CERT_FILE and KEY_FILE and os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)
     if use_ssl:
         print("[SSL] Running with HTTPS at https://localhost:8080 ...")
-        socketio.run(app, host="0.0.0.0", port=8080, debug=True, keyfile=KEY_FILE, certfile=CERT_FILE)
+        try:
+            socketio.run(app, host="0.0.0.0", port=PORT, debug=True, keyfile=KEY_FILE, certfile=CERT_FILE)
+        except KeyboardInterrupt:
+            print("\n[SHUTDOWN] Received keyboard interrupt")
+        except Exception as e:
+            print(f"[ERROR] Server error: {e}")
+        finally:
+            shutdown_mgr.cleanup()
     else:
         print("[SSL] Running without HTTPS (no certs found or generated). Use HTTP only.")
-        socketio.run(app, host="0.0.0.0", port=8080, debug=True)
+        try:
+            socketio.run(app, host="0.0.0.0", port=PORT, debug=True)
+        except KeyboardInterrupt:
+            print("\n[SHUTDOWN] Received keyboard interrupt")
+        except Exception as e:
+            print(f"[ERROR] Server error: {e}")
+        finally:
+            shutdown_mgr.cleanup()

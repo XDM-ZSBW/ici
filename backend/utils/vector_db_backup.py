@@ -30,16 +30,17 @@ class VectorDatabase:
         self.model_name = model_name
         self.dimension = dimension
         self.model = None
+        self.index = None
         self.entries: Dict[str, VectorEntry] = {}
-        self.user_indices: Dict[str, faiss.IndexFlatIP] = {}
+        self.user_indices: Dict[str, faiss.IndexIDMap2] = {}
         self.user_entry_order: Dict[str, list] = {}  # Maps user_id to list of entry_ids in FAISS order
         self.lock = threading.Lock()
         
-        # Initialize model
+        # Initialize model and index
         self._initialize()
     
     def _initialize(self):
-        """Initialize the sentence transformer model"""
+        """Initialize the sentence transformer model and FAISS index"""
         try:
             print(f"Loading sentence transformer model: {self.model_name}")
             self.model = SentenceTransformer(self.model_name)
@@ -49,10 +50,11 @@ class VectorDatabase:
             # Fallback to dummy implementation
             self.model = None
     
-    def _get_user_index(self, user_id: str) -> faiss.IndexFlatIP:
+    def _get_user_index(self, user_id: str) -> faiss.IndexIDMap2:
         """Get or create FAISS index for a specific user"""
         if user_id not in self.user_indices:
-            self.user_indices[user_id] = faiss.IndexFlatIP(self.dimension)
+            base_index = faiss.IndexFlatIP(self.dimension)
+            self.user_indices[user_id] = faiss.IndexIDMap2(base_index)
             self.user_entry_order[user_id] = []
         return self.user_indices[user_id]
     
@@ -78,8 +80,7 @@ class VectorDatabase:
         embedding = self.generate_embedding(text_content)
         if embedding is None:
             return False
-        
-        with self.lock:
+          with self.lock:
             try:
                 # Create vector entry
                 vector_entry = VectorEntry(
@@ -89,12 +90,12 @@ class VectorDatabase:
                     embedding=embedding,
                     metadata=metadata
                 )
-                
-                # Add to user's FAISS index
+                  # Add to user's FAISS index (simplified approach)
                 user_index = self._get_user_index(user_id)
+                eid_int = len(self.user_entry_order[user_id])  # Use simple incrementing index
                 embedding_np = np.array([embedding]).astype(np.float32)
                 user_index.add(embedding_np)
-                self.user_entry_order[user_id].append(entry_id)
+                self.user_entry_order[user_id].append((eid_int, entry_id))
                 
                 # Store entry
                 self.entries[entry_id] = vector_entry
@@ -121,20 +122,26 @@ class VectorDatabase:
                 user_index = self.user_indices[user_id]
                 if user_index.ntotal == 0:
                     return []
-                
-                # Search similar vectors
+                  # Search similar vectors using simple IndexFlatIP search
                 k = min(limit, user_index.ntotal)
                 query_np = np.array([query_embedding]).astype(np.float32)
-                scores, indices = user_index.search(query_np, k)
+                # For IndexFlatIP, higher scores mean more similar
+                try:
+                    scores, indices = user_index.search(query_np, k)
+                except Exception as search_error:
+                    print(f"FAISS search error: {search_error}")
+                    return []
                 
-                # Map indices back to entry IDs
+                # Map FAISS indices back to entry IDs
+                id_map = dict(self.user_entry_order[user_id])
                 results = []
                 for i in range(k):
-                    if indices[0][i] >= 0 and indices[0][i] < len(self.user_entry_order[user_id]):
-                        entry_id = self.user_entry_order[user_id][indices[0][i]]
-                        score = float(scores[0][i])
-                        if score >= threshold:
-                            results.append((entry_id, score))
+                    if indices[0][i] == -1:
+                        continue
+                    faiss_id = indices[0][i]
+                    entry_id = id_map.get(faiss_id)
+                    if entry_id and scores[0][i] >= threshold:
+                        results.append((entry_id, float(scores[0][i])))
                 
                 return sorted(results, key=lambda x: x[1], reverse=True)
                 
@@ -154,19 +161,27 @@ class VectorDatabase:
         with self.lock:
             user_index = self._get_user_index(user_id)
             if user_index.ntotal == 0:
-                return []
-
-            try:
+                return []            try:
                 query_np = np.array([query_embedding]).astype(np.float32).reshape(1, -1)
-                scores, indices = user_index.search(query_np, k)
+                try:
+                    scores, indices = user_index.search(query_np, k)
+                except Exception as search_error:
+                    print(f"FAISS search error: {search_error}")
+                    return []
+                    
                 results = []
-                
+                # Map FAISS index IDs back to entry_ids
+                id_map = dict(self.user_entry_order[user_id])
                 for i in range(k):
-                    if indices[0][i] >= 0 and indices[0][i] < len(self.user_entry_order[user_id]):
-                        entry_id = self.user_entry_order[user_id][indices[0][i]]
-                        entry = self.entries.get(entry_id)
-                        if entry:
-                            results.append((entry.entry_id, float(scores[0][i]), entry.metadata))
+                    if indices[0][i] == -1:
+                        continue
+                    faiss_id = indices[0][i]
+                    entry_id = id_map.get(faiss_id)
+                    if entry_id is None:
+                        continue
+                    entry = self.entries.get(entry_id)
+                    if entry:
+                        results.append((entry.entry_id, float(scores[0][i]), entry.metadata))
                 return results
             except Exception as e:
                 print(f"Failed to search entries for user {user_id}: {e}")
@@ -185,9 +200,6 @@ class VectorDatabase:
             if user_id in self.user_indices:
                 del self.user_indices[user_id]
             
-            if user_id in self.user_entry_order:
-                del self.user_entry_order[user_id]
-            
             # Remove user's entries
             entries_to_remove = [entry_id for entry_id, entry in self.entries.items() if entry.user_id == user_id]
             for entry_id in entries_to_remove:
@@ -200,17 +212,15 @@ class VectorDatabase:
         with self.lock:
             if entry_id not in self.entries or self.entries[entry_id].user_id != user_id:
                 return False
-            
-            # Remove from order list
-            if user_id in self.user_entry_order:
-                try:
-                    self.user_entry_order[user_id].remove(entry_id)
-                except ValueError:
-                    pass
-            
-            # Remove from entries
+            eid_int = abs(hash(entry_id)) % (2**63)
+            user_index = self._get_user_index(user_id)
+            try:
+                user_index.remove_ids(np.array([eid_int], dtype=np.int64))
+            except Exception as e:
+                print(f"FAISS remove_ids failed: {e}")
+            self.user_entry_order[user_id] = [(i, eid) for i, eid in self.user_entry_order[user_id] if eid != entry_id]
             del self.entries[entry_id]
-            print(f"Removed entry {entry_id} for user {user_id}.")
+            print(f"Removed entry {entry_id} from internal store and FAISS for user {user_id}.")
             return True
     
     def get_stats(self) -> Dict:
@@ -242,6 +252,52 @@ def get_vector_database_instance():
                 _vector_db_instance = VectorDatabase()
     return _vector_db_instance
 
-# For compatibility with the previous import
+# For compatibility with the previous import, though get_vector_database_instance is preferred
 def get_vector_database():
     return get_vector_database_instance()
+
+# Example usage (optional, for testing)
+if __name__ == "__main__":
+    db = get_vector_database_instance()
+    
+    # Test embedding
+    sample_text = "This is a test sentence."
+    embedding = db.generate_embedding(sample_text)
+    if embedding is not None:
+        print(f"Generated embedding for '{sample_text}': {embedding[:5]}...") # Print first 5 dimensions
+    else:
+        print(f"Failed to generate embedding for '{sample_text}'")
+
+    # Test adding entry
+    user1 = "user_test_123"
+    entry1_id = "entry_test_001"
+    text1 = "Hello world, this is a test entry."
+    meta1 = {"url": "http://example.com/page1"}
+    
+    if db.add_entry(entry_id=entry1_id, user_id=user1, text_content=text1, metadata=meta1):
+        print(f"Successfully added entry {entry1_id}")
+    else:
+        print(f"Failed to add entry {entry1_id}")
+
+    # Test searching
+    query_text = "test entry"
+    results = db.search_entries(user_id=user1, query_text=query_text, k=1)
+    if results:
+        print(f"Search results for '{query_text}':")
+        for res_id, score, meta in results:
+            print(f"  ID: {res_id}, Score: {score:.4f}, Meta: {meta}")
+    else:
+        print(f"No results found for '{query_text}'")
+    
+    # Test removing entry
+    if db.remove_entry(entry1_id, user1):
+        print(f"Successfully removed entry {entry1_id}")
+    else:
+        print(f"Failed to remove entry {entry1_id}")
+
+    # Test persistence (if implemented)
+    # db.save_database("my_vector_db.json")
+    # new_db = get_vector_database_instance()
+    # new_db.load_database("my_vector_db.json")
+    # results_after_load = new_db.search_entries(user_id=user1, query_text="test entry", k=1)
+    # print(f"Results after loading: {results_after_load}")
