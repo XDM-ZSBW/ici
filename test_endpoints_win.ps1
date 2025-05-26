@@ -16,6 +16,10 @@ Write-Host "Base URL: $BaseUrl" -ForegroundColor White
 Write-Host "Testing with certificate bypass for older PowerShell" -ForegroundColor Yellow
 Write-Host ""
 
+# Initialize success counters
+$script:TotalTests = 0
+$script:SuccessfulTests = 0
+
 # Disable certificate validation for older PowerShell versions
 [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
@@ -26,12 +30,18 @@ function Test-GetEndpoint {
         [string]$Endpoint,
         [string]$Description
     )
-    
-    Write-Host "Testing GET: $Endpoint - $Description" -ForegroundColor Blue
+      Write-Host "Testing GET: $Endpoint - $Description" -ForegroundColor Blue
+    $script:TotalTests++
     
     try {
-        $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method GET -ContentType "application/json" -TimeoutSec 10
+        # Try PowerShell 6+ method first, fallback to older method
+        if ($PSVersionTable.PSVersion.Major -ge 6) {
+            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method GET -ContentType "application/json" -TimeoutSec 10 -SkipCertificateCheck
+        } else {
+            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method GET -ContentType "application/json" -TimeoutSec 10
+        }
         Write-Host "SUCCESS: Response received" -ForegroundColor Green
+        $script:SuccessfulTests++
         if ($response -is [string] -and $response.Length -gt 200) {
             Write-Host "Response: [HTML/Large content - ${($response.Length)} chars]" -ForegroundColor Gray
         } else {
@@ -54,13 +64,18 @@ function Test-PostEndpoint {
         [object]$Data,
         [string]$Description
     )
-    
-    Write-Host "Testing POST: $Endpoint - $Description" -ForegroundColor Blue
+      Write-Host "Testing POST: $Endpoint - $Description" -ForegroundColor Blue
+    $script:TotalTests++
     
     try {
         $jsonData = $Data | ConvertTo-Json -Depth 3 -Compress
-        $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method POST -Body $jsonData -ContentType "application/json" -TimeoutSec 10
+        # Try PowerShell 6+ method first, fallback to older method
+        if ($PSVersionTable.PSVersion.Major -ge 6) {
+            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method POST -Body $jsonData -ContentType "application/json" -TimeoutSec 10 -SkipCertificateCheck        } else {
+            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method POST -Body $jsonData -ContentType "application/json" -TimeoutSec 10
+        }
         Write-Host "SUCCESS: Response received" -ForegroundColor Green
+        $script:SuccessfulTests++
         $response | ConvertTo-Json -Depth 2 -Compress | Write-Host
     }
     catch {
@@ -78,12 +93,17 @@ function Test-DeleteEndpoint {
         [string]$Endpoint,
         [string]$Description
     )
-    
-    Write-Host "Testing DELETE: $Endpoint - $Description" -ForegroundColor Blue
+      Write-Host "Testing DELETE: $Endpoint - $Description" -ForegroundColor Blue
+    $script:TotalTests++
     
     try {
-        $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method DELETE -ContentType "application/json" -TimeoutSec 10
+        # Try PowerShell 6+ method first, fallback to older method
+        if ($PSVersionTable.PSVersion.Major -ge 6) {
+            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method DELETE -ContentType "application/json" -TimeoutSec 10 -SkipCertificateCheck
+        } else {
+            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method DELETE -ContentType "application/json" -TimeoutSec 10        }
         Write-Host "SUCCESS: Response received" -ForegroundColor Green
+        $script:SuccessfulTests++
         $response | ConvertTo-Json -Depth 2 -Compress | Write-Host
     }
     catch {
@@ -239,6 +259,18 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host "ENDPOINT TESTING COMPLETED" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
+
+# Calculate and display success rate
+$successRate = if ($script:TotalTests -gt 0) { [math]::Round(($script:SuccessfulTests / $script:TotalTests) * 100, 1) } else { 0 }
+$color = if ($successRate -ge 95) { "Green" } elseif ($successRate -ge 80) { "Yellow" } else { "Red" }
+
+Write-Host "=== TESTING RESULTS ===" -ForegroundColor Cyan
+Write-Host "Total Tests: $($script:TotalTests)" -ForegroundColor White
+Write-Host "Successful: $($script:SuccessfulTests)" -ForegroundColor Green
+Write-Host "Failed: $($script:TotalTests - $script:SuccessfulTests)" -ForegroundColor Red
+Write-Host "Success Rate: $successRate%" -ForegroundColor $color
+Write-Host ""
+
 Write-Host "Summary:" -ForegroundColor White
 Write-Host "- Tested core endpoint categories" -ForegroundColor White
 Write-Host "- Used certificate bypass for self-signed certs" -ForegroundColor White
