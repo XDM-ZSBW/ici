@@ -1,3 +1,6 @@
 flask
 flask-socketio
 eventlet
+sentence-transformers
+faiss-cpu
+numpy
