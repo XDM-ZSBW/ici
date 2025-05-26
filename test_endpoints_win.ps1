@@ -32,13 +32,12 @@ function Test-GetEndpoint {
     )
       Write-Host "Testing GET: $Endpoint - $Description" -ForegroundColor Blue
     $script:TotalTests++
-    
-    try {
+      try {
         # Try PowerShell 6+ method first, fallback to older method
         if ($PSVersionTable.PSVersion.Major -ge 6) {
-            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method GET -ContentType "application/json" -TimeoutSec 10 -SkipCertificateCheck
+            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method GET -TimeoutSec 10 -SkipCertificateCheck
         } else {
-            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method GET -ContentType "application/json" -TimeoutSec 10
+            $response = Invoke-RestMethod -Uri "$BaseUrl$Endpoint" -Method GET -TimeoutSec 10
         }
         Write-Host "SUCCESS: Response received" -ForegroundColor Green
         $script:SuccessfulTests++
