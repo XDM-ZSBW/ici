@@ -201,3 +201,11 @@ def get_build_version():
             return get_env_id()[:10]
     except Exception:
         return get_env_id()[:10]
+
+@chat_bp.route("/")
+def index():
+    return render_template("index.html")
+
+@chat_bp.route("/chat")
+def chat_page():
+    return render_template("chat.html")

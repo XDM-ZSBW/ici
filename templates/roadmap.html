@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ roadmap.project_name }} - Roadmap</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h1 { text-align: center; }
+        .last-updated { text-align: center; font-style: italic; color: #7f8c8d; margin-bottom: 20px; }
+        .phase { margin-bottom: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background-color: #fdfdfd; }
+        .phase-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .phase-header h3 { margin: 0; color: #34495e; font-size: 1.4em; }
+        .phase-status, .feature-status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+            color: white;
+        }
+        .status-planned { background-color: #f39c12; }
+        .status-in-progress { background-color: #3498db; }
+        .status-completed { background-color: #2ecc71; }
+        .status-on-hold { background-color: #95a5a6; }
+        .gantt-chart-container { overflow-x: auto; padding-bottom: 10px; margin-top: 20px; }
+        .gantt-chart { display: flex; flex-direction: column; min-width: 800px; }
+        .gantt-header { display: flex; background-color: #ecf0f1; border-bottom: 1px solid #bdc3c7; font-weight: bold; }
+        .gantt-header-item { padding: 10px; box-sizing: border-box; text-align: left; }
+        .gantt-feature-name { flex: 0 0 250px; border-right: 1px solid #bdc3c7;}
+        .gantt-timeline-header { flex-grow: 1; display: flex; }
+        .gantt-month-marker { flex-grow: 1; text-align: center; border-right: 1px dashed #dadedf; font-size:0.9em; color: #7f8c8d;}
+        .gantt-month-marker:last-child { border-right: none; }
+        .gantt-row { display: flex; border-bottom: 1px solid #e0e0e0; align-items: center; }
+        .gantt-row:hover { background-color: #f9f9f9; }
+        .gantt-row .gantt-feature-name { padding: 10px; font-size: 0.95em; }
+        .gantt-bar-area { flex-grow: 1; position: relative; height: 30px; background-color: #f8f9fa; }
+        .gantt-bar {
+            position: absolute;
+            height: 20px;
+            top: 5px;
+            border-radius: 3px;
+            color: white;
+            font-size: 0.8em;
+            line-height: 20px;
+            padding: 0 5px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .bar-ui-ux { background-color: #9b59b6; }
+        .bar-backend-it { background-color: #1abc9c; }
+        .bar-policy { background-color: #e74c3c; }
+        .bar-default { background-color: #7f8c8d; }
+        .feature-details { margin-top: 5px; padding-left: 10px; font-size: 0.9em; color: #555; }
+        .feature-details p { margin: 3px 0; }
+        .feature-details strong { color: #333; }
+        .impact-areas span {
+            background-color: #ecf0f1; color: #34495e; padding: 2px 6px; border-radius: 3px; margin-right: 5px; font-size: 0.85em;
+        }
+        .legend { margin-top: 30px; padding: 15px; background-color: #ecf0f1; border-radius: 5px; }
+        .legend h3 { margin-top: 0; color: #34495e; }
+        .legend-item { display: inline-block; margin-right: 20px; font-size: 0.9em; }
+        .legend-color { display: inline-block; width: 15px; height: 15px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
+        #demoSiteBanner {
+            background-color: #FFC0CB; color: #333333; padding: 12px; text-align: center; position: relative; z-index: 10000; font-family: Arial, sans-serif; font-size: 14px; border-bottom: 1px solid #FFB6C1;
+        }
+        #demoSiteBanner p { margin: 0; padding-right: 40px; }
+        #demoSiteBanner button { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); background: none; border: none; font-size: 24px; font-weight: bold; color: #333333; cursor: pointer; padding: 0 5px; line-height: 1; }
+    </style>
+</head>
+<body>
+    <div id="demoSiteBanner">
+        <p>
+            <strong>Live Demo Site:</strong> For demonstration purposes only. Features and content may change. Provided 'as-is' without warranties. Data security/integrity not guaranteed. 
+            <a href="/policies#site-status" style="color: #0056b3; text-decoration: underline; font-weight: bold;">More Info & Policies</a>.
+        </p>
+        <button title="Dismiss" onclick="this.parentElement.style.display='none'; sessionStorage.setItem('demoBannerDismissed_ici', 'true');">&times;</button>
+    </div>
+    <script>
+        if (sessionStorage.getItem('demoBannerDismissed_ici') === 'true') {
+            var banner = document.getElementById('demoSiteBanner');
+            if (banner) { banner.style.display = 'none'; }
+        }
+    </script>
+    <div class="container">
+        <h1>{{ roadmap.project_name }} - Roadmap</h1>
+        <p class="last-updated">Last Updated: {{ roadmap.last_updated }}</p>
+        <div class="legend">
+            <h3>Legend (Feature Types)</h3>
+            <span class="legend-item"><span class="legend-color bar-ui-ux"></span> UI/UX Impacting</span>
+            <span class="legend-item"><span class="legend-color bar-backend-it"></span> Backend/IT</span>
+            <span class="legend-item"><span class="legend-color bar-policy"></span> Policy</span>
+            <span class="legend-item"><span class="legend-color bar-default"></span> Other</span>
+            <br>
+            <span class="legend-item"><span class="legend-color status-planned" style="color:black;padding:1px 3px; border-radius:3px;"></span> Planned</span>
+            <span class="legend-item"><span class="legend-color status-in-progress" style="color:white;padding:1px 3px; border-radius:3px;"></span> In Progress</span>
+            <span class="legend-item"><span class="legend-color status-completed" style="color:white;padding:1px 3px; border-radius:3px;"></span> Completed</span>
+            <span class="legend-item"><span class="legend-color status-on-hold" style="color:white;padding:1px 3px; border-radius:3px;"></span> On Hold</span>
+        </div>
+        {% set overall_min_date = min_date %}
+        {% set overall_max_date = max_date %}
+        {% set total_days = (overall_max_date - overall_min_date).days + 1 %}
+        {% if total_days <= 0 %}{% set total_days = 365 %}{% endif %}
+        {% for phase in roadmap.phases %}
+        <div class="phase">
+            <div class="phase-header">
+                <h3>{{ phase.name }}</h3>
+                <div>
+                    <span class="phase-status status-{{ phase.status.lower().replace(' ', '-') if phase.status else 'planned' }}">{{ phase.status }}</span>
+                    {% if phase.target_completion %}
+                    <span style="margin-left: 10px; font-size: 0.9em; color: #555;">Target: {{ phase.target_completion }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="gantt-chart-container">
+                <div class="gantt-chart">
+                    <div class="gantt-header">
+                        <div class="gantt-header-item gantt-feature-name">Feature / Task</div>
+                        <div class="gantt-header-item gantt-timeline-header">
+                            {% set current_month_year = namespace(value=None) %}
+                            {% for i in range(total_days) %}
+                                {% set day_date = overall_min_date + timedelta(days=i) %}
+                                {% set month_year_str = day_date.strftime('%b %Y') %}
+                                {% if current_month_year.value != month_year_str %}
+                                    {% if loop.index0 % total_days / 12 < 1 or loop.first %}
+                                    <div class="gantt-month-marker">{{ month_year_str }}</div>
+                                    {% set current_month_year.value = month_year_str %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                             {% if not all_dates %}
+                                <div class="gantt-month-marker">Timeline (Conceptual)</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% for feature in phase.features %}
+                    <div class="gantt-row">
+                        <div class="gantt-feature-name">
+                            {{ feature.title }}
+                            <div class="feature-details">
+                                <p><strong>Status:</strong> <span class="feature-status status-{{ feature.status.lower().replace(' ', '-') if feature.status else 'planned' }}">{{ feature.status }}</span></p>
+                                <p><strong>Type:</strong> {{ feature.type }}</p>
+                                {% if feature.description %}<p>{{ feature.description }}</p>{% endif %}
+                                {% if feature.impact_areas %}
+                                <p><strong>Impacts:</strong> 
+                                    {% for area in feature.impact_areas %}
+                                    <span class="impact-areas"><span>{{ area }}</span></span>
+                                    {% endfor %}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="gantt-bar-area">
+                            {% if feature.start_date and feature.end_date %}
+                                {% set start = datetime.strptime(feature.start_date, '%Y-%m-%d') %}
+                                {% set end = datetime.strptime(feature.end_date, '%Y-%m-%d') %}
+                                {% if start and end and start <= end and total_days > 0 %}
+                                    {% set offset_days = (start - overall_min_date).days %}
+                                    {% set duration_days = (end - start).days + 1 %}
+                                    {% set bar_left = (offset_days / total_days) * 100 %}
+                                    {% set bar_width = (duration_days / total_days) * 100 %}
+                                    {% if bar_left < 0 %}{% set bar_left = 0 %}{% endif %}
+                                    {% if bar_width < 0.5 %}{% set bar_width = 0.5 %}{% endif %}
+                                    {% if bar_left + bar_width > 100 %}{% set bar_width = 100 - bar_left %}{% endif %}
+                                    <div class="gantt-bar 
+                                        {% if feature.type == 'UI/UX' %}bar-ui-ux
+                                        {% elif feature.type == 'Backend/IT' %}bar-backend-it
+                                        {% elif feature.type == 'Policy' %}bar-policy
+                                        {% else %}bar-default{% endif %}"
+                                         style="left: {{ bar_left }}%; width: {{ bar_width }}%;"
+                                         title="{{ feature.title }} ({{ feature.start_date }} to {{ feature.end_date }})">
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                 <div class="gantt-bar bar-default" style="left: 2%; width: 5%; opacity:0.7;" title="{{ feature.title }} (Dates TBD)"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        // Python's datetime and timedelta are used in the template via Jinja2
+        // No specific JS needed for this Gantt rendering logic as it's CSS + Jinja
+    </script>
+</body>
+</html>

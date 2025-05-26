@@ -5,11 +5,57 @@ import markdown
 from backend.utils.id_utils import get_env_id
 import json
 import os
+from datetime import datetime, timedelta
 
 admin_bp = Blueprint('admin', __name__)
 
 # In-memory store for lost memory reports
 lost_memory_reports = {}  # key: env_id, value: list of dicts (reports)
+
+# Roadmap Data (for /roadmap endpoint)
+roadmap_data_store = {
+    "project_name": "ICI Chat - Intelligent Contextual Interface",
+    "phases": [
+        {
+            "name": "Phase 1: Core Refactor & Foundation",
+            "id": "phase1_core",
+            "status": "In Progress",
+            "target_completion": "Q2 2025",
+            "features": [
+                {"id": "P1F1", "title": "Decouple Pre-trained LLM", "description": "Remove dependency on external/pre-trained generative LLMs (e.g., distilgpt2) for core chat.", "type": "Backend/IT", "status": "In Progress", "start_date": "2025-05-20", "end_date": "2025-06-10", "impact_areas": ["AI Core", "Performance"]},
+                {"id": "P1F2", "title": "Implement Per-env-id 'Learning' KB", "description": "Develop a persistent, per-env-id knowledge base using the vector database. 'Learning' means populating and querying this KB.", "type": "Backend/IT", "status": "In Progress", "start_date": "2025-05-22", "end_date": "2025-06-15", "impact_areas": ["AI Core", "Data Storage", "Privacy"]},
+                {"id": "P1F3", "title": "Client-Side env-id Integration", "description": "Ensure client consistently sends env-id for shared context.", "type": "UI/UX", "status": "Planned", "start_date": "2025-06-01", "end_date": "2025-06-10", "impact_areas": ["User Interface", "API"]},
+                {"id": "P1F4", "title": "Policy Updates for Shared Learning", "description": "Update policies.html to explain shared learning, env-id context, and data use.", "type": "Policy", "status": "In Progress", "start_date": "2025-05-25", "end_date": "2025-06-05", "impact_areas": ["Legal", "User Trust"]},
+                {"id": "P1F5", "title": "Project File Layout Refactor", "description": "Optimize file structure for Cloud Run and developer clarity (src/, __INIT_MYL_APP__/, _DEV_ONLY/).", "type": "Backend/IT", "status": "In Progress", "start_date": "2025-05-24", "end_date": "2025-06-05", "impact_areas": ["DevOps", "Maintainability"]},
+                {"id": "P1F6", "title": "Add 'Live Demo' Banner", "description": "Implement a dismissible banner on all pages indicating demo status.", "type": "UI/UX", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["User Interface", "Transparency"]}
+            ]
+        },
+        {
+            "name": "Phase 2: Usability & Observability",
+            "id": "phase2_usability",
+            "status": "Planned",
+            "target_completion": "Q3 2025",
+            "features": [
+                {"id": "P2F1", "title": "Roadmap Endpoint & Visualization", "description": "This current feature: /roadmap endpoint with JSON and HTML Gantt-like view.", "type": "UI/UX", "status": "In Progress", "start_date": "2025-05-26", "end_date": "2025-06-05", "impact_areas": ["Transparency", "Project Management", "API"]},
+                {"id": "P2F2", "title": "Refine KB Response Generation", "description": "Improve templates and logic for responses from the per-env-id KB.", "type": "Backend/IT", "status": "Planned", "impact_areas": ["AI Core", "User Experience"]},
+                {"id": "P2F3", "title": "Basic Admin View for KB Content", "description": "Allow admins to view (read-only) content stored per env-id for debugging/oversight.", "type": "UI/UX", "status": "Planned", "impact_areas": ["Admin Tools", "Support"]}
+            ]
+        },
+        {
+            "name": "Phase 3: Advanced Features & Scalability",
+            "id": "phase3_advanced",
+            "status": "Planned",
+            "target_completion": "Q4 2025 / Q1 2026",
+            "features": [
+                {"id": "P3F1", "title": "Cross-env-id Search (Permissioned)", "description": "Allow users to search across multiple env-ids they own or are a client of.", "type": "Backend/IT", "status": "Planned", "impact_areas": ["Search", "Permissions", "Data Access"]},
+                {"id": "P3F2", "title": "Cross-env-id Search UI", "description": "User interface for initiating and viewing cross-env-id search results.", "type": "UI/UX", "status": "Planned", "impact_areas": ["User Interface", "Search"]},
+                {"id": "P3F3", "title": "Advanced Fact Extraction & Relationship Mapping", "description": "Enhance KB to understand relationships between stored facts within an env-id.", "type": "Backend/IT", "status": "Planned", "impact_areas": ["AI Core", "Knowledge Representation"]},
+                {"id": "P3F4", "title": "User Roles & Permissions for env-ids", "description": "Detailed role management (admin, member) for env-ids.", "type": "UI/UX", "status": "Planned", "impact_areas": ["Security", "User Management", "Admin Tools"]},
+                {"id": "P3F5", "title": "User-Managed KB Contributions", "description": "Allow users to view, and potentially edit/delete their contributions to an env-id's KB.", "type": "UI/UX", "status": "Planned", "impact_areas": ["Data Privacy", "User Control", "Policy"]}
+            ]
+        }
+    ]
+}
 
 @admin_bp.route("/recovery")
 def recovery():
@@ -170,3 +216,27 @@ def admin_dashboard():
     """Admin dashboard page"""
     env_id = get_env_id()
     return render_template("admin.html", env_id=env_id)
+
+@admin_bp.route("/roadmap")
+def roadmap_view():
+    current_roadmap_data = roadmap_data_store.copy()
+    current_roadmap_data["last_updated"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+        return jsonify(current_roadmap_data)
+    # For HTML view, calculate min/max dates for Gantt scaling
+    all_dates = []
+    for phase in current_roadmap_data.get("phases", []):
+        for feature in phase.get("features", []):
+            if feature.get("start_date"):
+                all_dates.append(datetime.strptime(feature["start_date"], "%Y-%m-%d"))
+            if feature.get("end_date"):
+                all_dates.append(datetime.strptime(feature["end_date"], "%Y-%m-%d"))
+    min_date = min(all_dates) if all_dates else datetime(2025, 1, 1)
+    max_date = max(all_dates) if all_dates else datetime(2025, 12, 31)
+    if max_date <= min_date and all_dates:
+        max_date = min_date + timedelta(days=30)
+    elif not all_dates:
+        min_date = datetime(datetime.now().year, 1, 1)
+        max_date = datetime(datetime.now().year, 12, 31)
+    return render_template("roadmap.html", roadmap=current_roadmap_data, min_date=min_date, max_date=max_date)
