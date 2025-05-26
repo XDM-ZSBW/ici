@@ -31,16 +31,19 @@ if not (os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)):
 
 if __name__ == "__main__":
     print("Starting ICI Chat with refactored backend...")
-    
-    # Get the shutdown manager and prepare for startup
-    shutdown_mgr = get_shutdown_manager()
-    shutdown_mgr.prepare_for_startup()
-    
+
+    # Only run shutdown/cleanup logic if not in a Flask code reload
+    is_reloader = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
+    shutdown_mgr = None
+    if not is_reloader:
+        shutdown_mgr = get_shutdown_manager()
+        shutdown_mgr.prepare_for_startup()
+
     app, socketio = create_app()
-    
-    # Register app instances for cleanup
-    shutdown_mgr.register_app(app, socketio)
-    
+
+    if shutdown_mgr:
+        shutdown_mgr.register_app(app, socketio)
+
     use_ssl = CERT_FILE and KEY_FILE and os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)
     if use_ssl:
         print("[SSL] Running with HTTPS at https://localhost:8080 ...")
@@ -51,7 +54,8 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"[ERROR] Server error: {e}")
         finally:
-            shutdown_mgr.cleanup()
+            if shutdown_mgr:
+                shutdown_mgr.cleanup()
     else:
         print("[SSL] Running without HTTPS (no certs found or generated). Use HTTP only.")
         try:
@@ -61,4 +65,5 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"[ERROR] Server error: {e}")
         finally:
-            shutdown_mgr.cleanup()
+            if shutdown_mgr:
+                shutdown_mgr.cleanup()

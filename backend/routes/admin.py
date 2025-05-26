@@ -159,26 +159,21 @@ def system_info():
 @admin_bp.route("/debug/env-box")
 def debug_env_box():
     """Debug endpoint to view all env-box data"""
-    from backend.routes.chat import shared_env_box
+    from backend.utils.memory_utils import get_all_env_boxes
+    env_boxes = get_all_env_boxes()
     return jsonify({
-        "env_boxes": shared_env_box,
-        "total_environments": len(shared_env_box)
+        "env_boxes": env_boxes,
+        "total_environments": len(env_boxes)
     })
 
 @admin_bp.route("/debug/ip-box")
 def debug_ip_box():
     """Debug endpoint to view all IP-box data"""
-    from backend.routes.chat import shared_client_box
-    
-    # Convert tuple keys to strings for JSON serialization
-    serializable_data = {}
-    for (env_id, public_ip), value in shared_client_box.items():
-        key = f"{env_id}:{public_ip}"
-        serializable_data[key] = value
-    
+    from backend.utils.memory_utils import get_all_ip_boxes
+    ip_boxes = get_all_ip_boxes()
     return jsonify({
-        "ip_boxes": serializable_data,
-        "total_ip_environments": len(shared_client_box)
+        "ip_boxes": ip_boxes,
+        "total_ip_environments": len(ip_boxes)
     })
 
 @admin_bp.route("/debug/clients")
@@ -195,16 +190,12 @@ def debug_clients():
 @admin_bp.route("/debug/clear-all", methods=["POST"])
 def debug_clear_all():
     """Debug endpoint to clear all data (use with caution)"""
-    from backend.routes.chat import shared_env_box, shared_client_box
+    from backend.utils.memory_utils import clear_all_memory
     from backend.routes.client import client_memory, client_json_table
-    
-    # Clear all data stores
-    shared_env_box.clear()
-    shared_client_box.clear()
+    clear_all_memory()
     client_memory.clear()
     client_json_table.clear()
     lost_memory_reports.clear()
-    
     return jsonify({
         "success": True,
         "message": "All data cleared",
@@ -239,4 +230,11 @@ def roadmap_view():
     elif not all_dates:
         min_date = datetime(datetime.now().year, 1, 1)
         max_date = datetime(datetime.now().year, 12, 31)
-    return render_template("roadmap.html", roadmap=current_roadmap_data, min_date=min_date, max_date=max_date)
+    return render_template(
+        "roadmap.html",
+        roadmap=current_roadmap_data,
+        min_date=min_date,
+        max_date=max_date,
+        timedelta=timedelta,
+        datetime=datetime
+    )
