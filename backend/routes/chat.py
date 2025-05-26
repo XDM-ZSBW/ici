@@ -20,7 +20,7 @@ chat_bp = Blueprint('chat_bp', __name__)
 
 @chat_bp.route('/ai-chat', methods=['POST'])
 def ai_chat():
-    data = request.json
+    data = request.json or {}
     user_message = data.get('message')
     user_id = data.get('user_id', 'anonymous')
 
@@ -69,9 +69,18 @@ def ai_chat():
                     f"You can also include web URLs, screenshots, or files to help me assist you and stay true to the solution's mission and vision."
                 )
         else:
-            response_text = "I couldn't find anything relevant in memory."
+            response_text = ("I couldn't find anything relevant in memory. "
+                             "You can ask me to remember facts (e.g., 'Tommy should go at 2pm'), "
+                             "or ask about things I've learned (e.g., 'When should Tommy go?'). "
+                             "You can also include web URLs, screenshots, or files to help me assist you.")
     else:
-        response_text = "I'm not sure how to respond to that."
+        # Try to provide a more helpful fallback for general questions
+        response_text = (
+            "I'm not sure how to respond to that. "
+            "You can ask me to remember facts (e.g., 'Tommy should go at 2pm'), "
+            "or ask about things I've learned (e.g., 'When should Tommy go?'). "
+            "You can also include web URLs, screenshots, or files to help me assist you."
+        )
 
     return jsonify({
         "response": response_text,
@@ -82,7 +91,7 @@ def ai_chat():
 # Enhanced AI chat endpoint with file/screenshot support and memory search
 @chat_bp.route('/ai-chat-enhanced', methods=['POST'])
 def ai_chat_enhanced():
-    data = request.json
+    data = request.json or {}
     user_message = data.get('message', '')
     user_id = data.get('user_id', 'anonymous')
 
@@ -114,10 +123,26 @@ def ai_chat_enhanced():
             if context_for_prompt:
                 memory_context_found = True
                 response_text = f"Based on our previous conversation: {context_for_prompt}"
+                match = re.match(r"when should (\w+) go", user_message, re.IGNORECASE)
+                if match:
+                    subject = match.group(1)
+                    response_text += (
+                        f"\nWould you like me to remind {subject}? If so, how should I remind them? "
+                        f"(e.g., email, SMS, Google Chat, Slack, Teams)\n"
+                        f"Also, could you clarify your relationship to {subject}? "
+                        f"(e.g., colleague, friend, acquaintance, family, private)\n"
+                        f"You can also include web URLs, screenshots, or files to help me assist you and stay true to the solution's mission and vision."
+                    )
             else:
-                response_text = "I couldn't find anything relevant in memory."
+                response_text = ("I couldn't find anything relevant in memory. "
+                                 "You can ask me to remember facts (e.g., 'Tommy should go at 2pm'), "
+                                 "or ask about things I've learned (e.g., 'When should Tommy go?'). "
+                                 "You can also include web URLs, screenshots, or files to help me assist you.")
         else:
-            response_text = "I'm not sure how to respond to that."
+            response_text = ("I'm not sure how to respond to that. "
+                             "You can ask me to remember facts (e.g., 'Tommy should go at 2pm'), "
+                             "or ask about things I've learned (e.g., 'When should Tommy go?'). "
+                             "You can also include web URLs, screenshots, or files to help me assist you.")
     
     return jsonify({
         "response": response_text,
