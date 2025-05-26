@@ -118,7 +118,7 @@
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    {% include '_header.html' %}
+    {% extends "_header.html" %}
     <main>
         <noscript>
             <div style="background:#fee;color:#900;padding:16px;border-radius:8px;margin-bottom:16px;">
@@ -164,7 +164,7 @@
         <div style="text-align:center;margin:32px 0 0 0;">
           <a href="/learn" style="color:#2563eb;text-decoration:underline;font-weight:500;">📚 Learn: Deployment & Dev Tips</a>
         </div>
-    {% include '_footer.html' %}
+    {% include "_footer.html" %}
       <!-- Load modular JavaScript files -->
     <script src="/static/js/debug.js" defer></script>
     <script src="/static/js/api.js" defer></script>

@@ -9,10 +9,12 @@
     </style>
 </head>
 <body>
-    {% include '_header.html' %}
+    {% extends "_header.html" %}
+    {% block content %}
     <div class="markdown-body">
         {{ content|safe }}
     </div>
-    {% include '_footer.html' %}
+    {% endblock %}
+    {% include "_footer.html" %}
 </body>
 </html>

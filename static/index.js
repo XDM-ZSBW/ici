@@ -1,5 +1,6 @@
 // index.js
 // For the landing page: fetch and render README.md as HTML
+// This file was moved from templates/ to static/ for proper static asset management.
 
 document.addEventListener('DOMContentLoaded', function() {
   const readmeDiv = document.getElementById('readme-content');

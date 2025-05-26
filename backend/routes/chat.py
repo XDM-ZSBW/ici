@@ -1,6 +1,6 @@
 # Chat-related routes for ICI Chat backend
 
-from flask import Blueprint, render_template, jsonify, request, Response
+from flask import Blueprint, render_template, jsonify, request, Response, send_file
 from backend.utils.id_utils import get_env_id, get_private_id
 from backend.utils.vector_db import get_vector_database
 import json
@@ -176,3 +176,15 @@ def index():
 @chat_bp.route("/chat")
 def chat_page():
     return render_template("chat.html")
+
+@chat_bp.route('/readme')
+def readme():
+    import markdown
+    import os
+    readme_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'README.md'))
+    if not os.path.exists(readme_path):
+        return render_template('markdown_render.html', html_content='<h2>README.md not found.</h2>')
+    with open(readme_path, 'r', encoding='utf-8') as f:
+        md_content = f.read()
+    html_content = markdown.markdown(md_content, extensions=['fenced_code', 'tables'])
+    return render_template('markdown_render.html', html_content=html_content)

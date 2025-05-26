@@ -119,6 +119,8 @@
     </style>
 </head>
 <body>
+    {% extends "_header.html" %}
+    {% block content %}
     <div class="container">
         <div class="hero-section">
             <div class="logo" style="margin: 0 auto 20px auto;">
@@ -205,7 +207,8 @@
             </div>
         </div>
     </div>
-    {% include '_footer.html' %}
+    {% endblock %}
+    {% include "_footer.html" %}
     <script src="/static/index.js" defer></script>
 </body>
 </html>
