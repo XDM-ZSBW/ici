@@ -3,8 +3,13 @@
 from flask import Blueprint, render_template, jsonify, request, Response
 from backend.utils.id_utils import get_env_id, get_private_id
 import json
+import time
+from transformers import pipeline
 
 chat_bp = Blueprint('chat', __name__)
+
+# Load the local LLM once at startup
+local_llm = pipeline("text-generation", model="distilgpt2")
 
 # In-memory store for env-box values by env_id (for demo; use persistent storage in production)
 shared_env_box = {}
@@ -100,6 +105,30 @@ def ip_box_api():
 def client_auth(client_id):
     # Authentication endpoint for QR code scanning
     return render_template("client_auth.html", client_id=client_id)
+
+@chat_bp.route('/ai-chat', methods=['POST'])
+def ai_chat():
+    data = request.get_json()
+    user_input = data.get('message', '').strip()
+    if not user_input:
+        return jsonify({'error': 'No message provided.'}), 400
+
+    # Prompt engineering for better responses
+    prompt = (
+        "You are a helpful AI assistant. Answer the user's question in a friendly and informative way.\n"
+        f"User: {user_input}\nAI:"
+    )
+    result = local_llm(prompt, max_length=128, num_return_sequences=1, return_full_text=True)
+    if isinstance(result, list) and 'generated_text' in result[0]:
+        generated = result[0]['generated_text']
+        response = generated[len(prompt):] if generated.startswith(prompt) else generated
+        response = response.replace(user_input, '').replace('User:', '').replace('AI:', '').strip()
+        response = response.split('\n\n')[0].strip()
+        if not response:
+            response = generated.strip() or "I'm here to help! Please ask me anything."
+    else:
+        response = str(result) or "I'm here to help! Please ask me anything."
+    return jsonify({'response': response, 'timestamp': int(time.time() * 1000)})
 
 # Utility function to get build version (imported from main app)
 def get_build_version():

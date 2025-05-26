@@ -101,6 +101,39 @@ const UIManager = {
         }
       });
     }
+
+    // AI Chat submit and Enter key
+    const aiSubmit = document.getElementById('ai-chat-submit');
+    const aiInput = document.getElementById('ai-canvas');
+    const aiResp = document.getElementById('ai-chat-response');
+    if (aiSubmit && aiInput && aiResp) {
+      aiSubmit.onclick = async function() {
+        const message = aiInput.value.trim();
+        if (!message) return;
+        aiSubmit.disabled = true;
+        aiResp.style.display = 'block';
+        aiResp.textContent = 'Thinking...';
+        try {
+          const resp = await fetch('/ai-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message })
+          });
+          const data = await resp.json();
+          aiResp.textContent = data.response || 'No response.';
+        } catch (e) {
+          aiResp.textContent = 'Error: ' + e;
+        }
+        aiSubmit.disabled = false;
+      };
+      // Allow pressing Enter to submit (but Shift+Enter for newline)
+      aiInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          aiSubmit.click();
+        }
+      });
+    }
   },
 
   // Initialize status indicators

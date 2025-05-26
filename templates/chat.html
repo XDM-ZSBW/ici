@@ -32,37 +32,11 @@
             background: #fff;
         }
         
-        /* Specific heights for different memory areas */
-        #env-box { height: 200px; }  /* All users - tallest */
-        #client-box { height: 120px; }  /* IP-shared */
-        #private-box { height: 120px; }  /* Private */
-        
         /* Offline styling */
         .memory-textarea.offline {
             background: #fff5f5;
             border-color: #ef4444;
             outline: 2px solid #fecaca;
-        }
-        
-        /* Memory labels */
-        .memory-label {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 8px;
-            margin-top: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .memory-label:first-child { margin-top: 0; }
-        .memory-label .status-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #10b981;
-        }
-        .memory-label .status-indicator.offline {
-            background: #ef4444;
         }
         
         /* Modern form styling */
@@ -161,43 +135,13 @@
             <div style="margin-top:10px;">Or <a href="#" id="auth-link">open authentication link</a></div>        </div><div id="memory-section" style="display:none;">
             <h2>Collaborative Memory</h2>
             
-            <!-- Memory Display Areas -->
-            <div class="memory-label">
-                <span class="status-indicator" id="shared-status"></span>
-                Shared Memory - All Users
-            </div>
-            <textarea id="env-box" class="memory-textarea" placeholder="Shared memories for all clients with the same env-id will appear here..." readonly></textarea>
-            
-            <div class="memory-label">
-                <span class="status-indicator" id="ip-status"></span>
-                IP-Shared Memory - Same Network
-            </div>
-            <textarea id="client-box" class="memory-textarea" placeholder="Shared memories for users with the same public IP and env-id will appear here..." readonly></textarea>
-            
-            <div class="memory-label">
-                <span class="status-indicator"></span>
-                Private Memory - This Browser
-            </div>
-            <textarea id="private-box" class="memory-textarea" placeholder="Private memories for this browser, env-id, and public IP will appear here..." readonly></textarea>
-            
-            <!-- Memory Controls at Bottom -->
+            <!-- AI Chat Canvas -->
             <div class="memory-controls">
-                <div class="memory-input-group">
-                    <input type="text" id="memory-input" placeholder="Add a memory or question..." required aria-label="Add a memory or question">
-                    <button type="button" id="screenshot-btn" title="Take screenshot" style="background:none;border:none;cursor:pointer;padding:0 8px;display:flex;align-items:center;">
-                        <svg id="camera-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3l2-3h6l2 3h3a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-                    </button>
+                <textarea id="ai-canvas" class="memory-textarea" style="height:180px;min-height:120px;resize:vertical;width:100%;margin-bottom:12px;" placeholder="Type your question or memory here..."></textarea>
+                <div style="display:flex;justify-content:flex-end;gap:10px;">
+                    <button type="button" id="ai-chat-submit" class="memory-btn shared" style="font-size:1.1em;padding:10px 28px;">Ask AI</button>
                 </div>
-                <div class="memory-buttons">
-                    <button type="button" id="add-to-private" class="memory-btn private">💾 Add to Private</button>
-                    <button type="button" id="add-to-ip" class="memory-btn ip-shared">🌐 Add to IP-Shared</button>
-                    <button type="button" id="add-to-shared" class="memory-btn shared">🌍 Add to Shared</button>
-                </div>                <div class="debug-buttons">
-                    <button type="button" id="debug-test-sync" class="debug-btn">🔧 Test Sync</button>
-                    <button type="button" id="debug-clear-all" class="debug-btn">🗑️ Clear All</button>
-                    <button type="button" id="debug-refresh" class="debug-btn">🔄 Refresh Display</button>
-                    <button type="button" id="debug-test-api" class="debug-btn">🌐 Test API</button>
-                </div>
+                <div id="ai-chat-response" style="margin-top:18px;display:none;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:18px 16px;white-space:pre-line;font-family:inherit;"></div>
             </div>
         </div>    </main>
     {% include '_footer.html' %}
