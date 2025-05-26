@@ -3,6 +3,8 @@
 from flask import Blueprint, jsonify, request, render_template
 from backend.utils.id_utils import get_env_id
 import time
+import os
+from eth_account import Account
 
 client_bp = Blueprint('client', __name__)
 
@@ -153,4 +155,13 @@ def recovery_data():
         "env_id": env_id,
         "clients": filtered_clients,
         "total_clients": len(filtered_clients)
+    })
+
+@client_bp.route('/client/new-wallet', methods=['POST'])
+def create_new_wallet():
+    """Create a new crypto wallet and return the public address."""
+    acct = Account.create(os.urandom(32))
+    return jsonify({
+        'public_address': acct.address,
+        'private_key': acct.key.hex()  # Only return for demo/testing; remove in production!
     })

@@ -257,6 +257,10 @@ const UIManager = {
   },
 
   captureFullScreen: async function() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      alert('Screen capture is not supported in this browser or requires HTTPS.');
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
       const track = stream.getVideoTracks()[0];
@@ -278,6 +282,10 @@ const UIManager = {
   },
 
   captureArea: async function() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      alert('Screen capture is not supported in this browser or requires HTTPS.');
+      return;
+    }
     // Use full screen capture, then let user draw a rectangle overlay
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });

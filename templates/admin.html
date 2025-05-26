@@ -59,6 +59,21 @@
             </div>
             <pre id="debug-output">Click a button above to view debug data...</pre>
         </div>
+
+        <section id="wallet-admin" style="margin-top:40px;">
+          <h2>Wallet Management</h2>
+          <p>
+            <a href="/client/new-wallet" target="_blank" class="wallet-link" style="font-weight:500;color:#2563eb;text-decoration:underline;">Generate New Wallet</a>
+          </p>
+          <div id="wallet-admin-ui" style="margin-top:24px;max-width:600px;">
+            <button id="create-wallet-btn" style="padding:10px 18px;font-size:1em;border-radius:8px;border:2px solid #e5e7eb;background:#f3f4f6;cursor:pointer;">Create New Wallet</button>
+            <div id="wallet-result" style="margin-top:18px;display:none;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:18px 16px;">
+              <div><b>Public Address:</b> <span id="wallet-address"></span></div>
+              <div style="margin-top:8px;"><b>Private Key:</b> <span id="wallet-private"></span></div>
+              <div style="margin-top:12px;font-size:0.95em;color:#b91c1c;">Keep your private key secure! Do not share it with anyone.</div>
+            </div>
+          </div>
+        </section>
     </div>
 
     <script>
@@ -224,18 +239,41 @@
             }
         }
 
-        // Load initial data
         document.addEventListener('DOMContentLoaded', function() {
             loadSystemInfo();
             loadMemoryStats();
             loadClients();
         });
 
-        // Auto-refresh every 30 seconds
         setInterval(() => {
             loadMemoryStats();
             loadClients();
         }, 30000);
+
+        document.addEventListener('DOMContentLoaded', function() {
+          // Wallet management logic
+          const btn = document.getElementById('create-wallet-btn');
+          const result = document.getElementById('wallet-result');
+          const addr = document.getElementById('wallet-address');
+          const priv = document.getElementById('wallet-private');
+          if (btn) {
+            btn.onclick = async function() {
+              btn.disabled = true;
+              btn.textContent = 'Creating...';
+              try {
+                const resp = await fetch('/client/new-wallet', {method:'POST'});
+                const data = await resp.json();
+                addr.textContent = data.public_address;
+                priv.textContent = data.private_key;
+                result.style.display = '';
+              } catch (e) {
+                alert('Failed to create wallet: ' + e);
+              }
+              btn.disabled = false;
+              btn.textContent = 'Create New Wallet';
+            };
+          }
+        });
     </script>
 </body>
 </html>
