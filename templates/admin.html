@@ -94,9 +94,7 @@
             } catch (error) {
                 document.getElementById('system-info').innerHTML = `<p style="color: red;">Error loading system info: ${error.message}</p>`;
             }
-        }
-
-        async function loadMemoryStats() {
+        }        async function loadMemoryStats() {
             try {
                 const [envBox, ipBox] = await Promise.all([
                     fetch('/debug/env-box').then(r => r.json()),
@@ -105,7 +103,7 @@
                 
                 document.getElementById('memory-stats').innerHTML = `
                     <p><strong>Shared Environments:</strong> ${envBox.total_environments}</p>
-                    <p><strong>IP-Shared Environments:</strong> ${envBox.total_ip_environments}</p>
+                    <p><strong>IP-Shared Environments:</strong> ${ipBox.total_ip_environments}</p>
                     <p><strong>Total Memory Stores:</strong> ${envBox.total_environments + ipBox.total_ip_environments}</p>
                 `;
             } catch (error) {

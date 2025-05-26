@@ -2,15 +2,132 @@
 
 from flask import Blueprint, render_template, jsonify, request, Response
 from backend.utils.id_utils import get_env_id, get_private_id
+from backend.utils.vector_db import get_vector_database
 import json
 import time
 import base64
+import re
 from transformers.pipelines import pipeline
 
 chat_bp = Blueprint('chat', __name__)
 
 # Load the local LLM once at startup
 local_llm = pipeline("text-generation", model="distilgpt2")
+
+# Get vector database instance for memory storage and retrieval
+vector_db = get_vector_database()
+
+# Helper functions for memory and knowledge management
+def is_statement_worth_remembering(text: str) -> bool:
+    """Determine if a statement contains information worth storing in memory"""
+    if not text or len(text.strip()) < 5:
+        return False
+    
+    # Patterns that indicate important information
+    memory_patterns = [
+        r'\b\w+\s+should\s+\w+',  # "Tommy should go"
+        r'\b\w+\s+will\s+\w+',    # "Tommy will arrive"
+        r'\b\w+\s+needs\s+to\s+\w+',  # "Tommy needs to go"
+        r'\b\w+\s+has\s+to\s+\w+',    # "Tommy has to leave"
+        r'\b\w+\s+(at|on|by)\s+\d',   # "Tommy at 2 pm"
+        r'\b\w+\s+is\s+\w+',      # "Tommy is busy"
+        r'\b\w+\s+likes\s+\w+',   # "Tommy likes pizza"
+        r'\b\w+\s+works\s+(at|in)\s+\w+',  # "Tommy works at Google"
+        r'\b\w+\'s\s+\w+',        # "Tommy's appointment"
+        r'\bremember\s+',         # "remember that"
+        r'\bnote\s+',             # "note that"
+        r'\b\d{1,2}:\d{2}\s*(am|pm)?', # Time references
+        r'\b\d{1,2}\s*(am|pm)\b', # Time references
+        r'\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)', # Days
+        r'\b(january|february|march|april|may|june|july|august|september|october|november|december)', # Months
+    ]
+    
+    text_lower = text.lower()
+    for pattern in memory_patterns:
+        if re.search(pattern, text_lower):
+            return True
+    
+    return False
+
+def is_question_seeking_memory(text: str) -> bool:
+    """Determine if a question is asking for stored information"""
+    if not text or '?' not in text:
+        return False
+    
+    question_patterns = [
+        r'what\s+time\s+',
+        r'when\s+(should|will|does|did)',
+        r'where\s+(is|does|should|will)',
+        r'who\s+(is|does|should|will)',
+        r'how\s+(much|many|often)',
+        r'what\s+(is|does|should)',
+        r'tell\s+me\s+about',
+        r'do\s+you\s+know',
+        r'what\s+do\s+you\s+remember',
+    ]
+    
+    text_lower = text.lower()
+    for pattern in question_patterns:
+        if re.search(pattern, text_lower):
+            return True
+    
+    return False
+
+def store_information_in_memory(user_input: str, user_id: str) -> bool:
+    """Store important information in vector database for future retrieval"""
+    if not is_statement_worth_remembering(user_input):
+        return False
+    
+    try:
+        # Create entry ID
+        timestamp = int(time.time() * 1000)
+        entry_id = f"memory_{hash(user_input + str(timestamp))}_{timestamp}"
+        
+        # Store in vector database
+        metadata = {
+            'type': 'memory_statement',
+            'timestamp': timestamp,
+            'source': 'chat_input'
+        }
+        
+        success = vector_db.add_entry(
+            entry_id=entry_id,
+            user_id=user_id,
+            text_content=user_input,
+            metadata=metadata
+        )
+        
+        if success:
+            print(f"Stored memory: {user_input[:50]}...")
+            return True
+            
+    except Exception as e:
+        print(f"Failed to store memory: {e}")
+    
+    return False
+
+def search_memory_for_context(query: str, user_id: str, limit: int = 5) -> list:
+    """Search vector database for relevant context"""
+    try:
+        # Search for similar entries
+        results = vector_db.search_similar(user_id, query, limit=limit, threshold=0.3)
+        
+        context_entries = []
+        for entry_id, score in results:
+            # Get entry from the vector database entries dict
+            if entry_id in vector_db.entries:
+                entry = vector_db.entries[entry_id]
+                context_entries.append({
+                    'text': entry.text_content,
+                    'score': score,
+                    'metadata': entry.metadata
+                })
+        
+        return context_entries
+        
+    except Exception as e:
+        print(f"Failed to search memory: {e}")
+        return []
 
 # In-memory store for env-box values by env_id (for demo; use persistent storage in production)
 shared_env_box = {}
@@ -115,10 +232,22 @@ def ai_chat():
     if not user_input:
         return jsonify({'error': 'No message provided.'}), 400
 
-    # Use the live system prompt from the user
-    prompt = (
-        f"{system_prompt}\nUser: {user_input}\nAI:"
-    )
+    # Get user ID for memory operations
+    user_id = data.get('user_id', 'anonymous')
+    
+    # Check if this is a question seeking memory
+    memory_context = ""
+    if is_question_seeking_memory(user_input):
+        relevant_memories = search_memory_for_context(user_input, user_id)
+        if relevant_memories:
+            memory_context = "\n\nRelevant information from memory:\n"
+            for mem in relevant_memories[:3]:  # Limit to top 3 results
+                memory_context += f"- {mem['text']}\n"    # Build prompt with memory context
+    prompt = f"{system_prompt}"
+    if memory_context:
+        prompt += memory_context
+    prompt += f"\nUser: {user_input}\nAI:"
+    
     result = local_llm(
         prompt,
         max_new_tokens=40,
@@ -149,7 +278,18 @@ def ai_chat():
             response = generated.strip() or "I'm here to help! Please ask me anything."
     else:
         response = str(result) or "I'm here to help! Please ask me anything."
-    return jsonify({'response': response, 'timestamp': int(time.time() * 1000)})
+    
+    # Store important information in memory
+    memory_stored = False
+    if is_statement_worth_remembering(user_input):
+        memory_stored = store_information_in_memory(user_input, user_id)
+    
+    return jsonify({
+        'response': response, 
+        'timestamp': int(time.time() * 1000),
+        'memory_stored': memory_stored,
+        'memory_context_found': bool(memory_context)
+    })
 
 # Enhanced AI chat endpoint with file/screenshot support and memory search
 @chat_bp.route('/ai-chat-enhanced', methods=['POST'])
@@ -177,20 +317,16 @@ def ai_chat_enhanced():
                 content = file_info['content'][:500]  # First 500 chars
                 if len(file_info['content']) > 500:
                     content += "..."
-                file_context += f"  Content: {content}\n"
-
-    # Search related memories (simple keyword matching for now)
+                file_context += f"  Content: {content}\n"    # Search related memories using vector database
     memory_context = ""
-    if user_input:
-        env_id = get_env_id()
-        # Search shared memories
-        shared_memories = shared_env_box.get(env_id, [])
-        relevant_memories = [mem for mem in shared_memories if any(word.lower() in str(mem).lower() for word in user_input.split())]
-        
+    user_id = data.get('user_id', 'anonymous')
+    
+    if user_input and is_question_seeking_memory(user_input):
+        relevant_memories = search_memory_for_context(user_input, user_id)
         if relevant_memories:
-            memory_context = f"\n\nRelated memories found:\n"
+            memory_context = f"\n\nRelevant memories found:\n"
             for i, mem in enumerate(relevant_memories[:3]):  # Limit to 3 most relevant
-                memory_context += f"{i+1}. {str(mem)[:200]}...\n"
+                memory_context += f"{i+1}. {mem['text']}\n"
 
     # Build enhanced prompt with context
     full_prompt = f"{system_prompt}\n"
@@ -236,9 +372,12 @@ def ai_chat_enhanced():
         if not response:
             response = "I've analyzed your input and files. How can I help you further?"
     else:
-        response = "I'm here to help! Please ask me anything."
-
-    # Save the interaction to shared memory for future reference
+        response = "I'm here to help! Please ask me anything."    # Store important information in memory using vector database
+    memory_stored = False
+    if user_input and is_statement_worth_remembering(user_input):
+        memory_stored = store_information_in_memory(user_input, user_id)
+    
+    # Also save the interaction to shared memory for legacy compatibility
     if user_input or files:
         env_id = get_env_id()
         interaction = {
@@ -246,8 +385,7 @@ def ai_chat_enhanced():
             'user_input': user_input,
             'ai_response': response,
             'files': [{'name': f['name'], 'type': f['type']} for f in files],
-            'timestamp': int(time.time() * 1000)
-        }
+            'timestamp': int(time.time() * 1000)        }
         
         if env_id not in shared_env_box:
             shared_env_box[env_id] = []
@@ -257,6 +395,7 @@ def ai_chat_enhanced():
         'response': response, 
         'timestamp': int(time.time() * 1000),
         'memory_context_found': bool(memory_context),
+        'memory_stored': memory_stored,
         'files_processed': len(files)
     })
 

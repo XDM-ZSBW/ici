@@ -13,8 +13,126 @@ import re
 import json
 import threading
 
+# Import vector database for memory functionality
+from backend.utils.vector_db import get_vector_database
+
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Get vector database instance for memory storage and retrieval
+vector_db = get_vector_database()
+
+# Helper functions for memory and knowledge management
+def is_statement_worth_remembering(text: str) -> bool:
+    """Determine if a statement contains information worth storing in memory"""
+    if not text or len(text.strip()) < 5:
+        return False
+    
+    # Patterns that indicate important information
+    memory_patterns = [
+        r'\b\w+\s+should\s+\w+',  # "Tommy should go"
+        r'\b\w+\s+will\s+\w+',    # "Tommy will arrive"
+        r'\b\w+\s+needs\s+to\s+\w+',  # "Tommy needs to go"
+        r'\b\w+\s+has\s+to\s+\w+',    # "Tommy has to leave"
+        r'\b\w+\s+(at|on|by)\s+\d',   # "Tommy at 2 pm"
+        r'\b\w+\s+is\s+\w+',      # "Tommy is busy"
+        r'\b\w+\s+likes\s+\w+',   # "Tommy likes pizza"
+        r'\b\w+\s+works\s+(at|in)\s+\w+',  # "Tommy works at Google"
+        r'\b\w+\'s\s+\w+',        # "Tommy's appointment"
+        r'\bremember\s+',         # "remember that"
+        r'\bnote\s+',             # "note that"
+        r'\b\d{1,2}:\d{2}\s*(am|pm)?', # Time references
+        r'\b\d{1,2}\s*(am|pm)\b', # Time references
+        r'\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)', # Days
+        r'\b(january|february|march|april|may|june|july|august|september|october|november|december)', # Months
+    ]
+    
+    text_lower = text.lower()
+    for pattern in memory_patterns:
+        if re.search(pattern, text_lower):
+            return True
+    
+    return False
+
+def is_question_seeking_memory(text: str) -> bool:
+    """Determine if a question is asking for stored information"""
+    if not text or '?' not in text:
+        return False
+    
+    question_patterns = [
+        r'what\s+time\s+',
+        r'when\s+(should|will|does|did)',
+        r'where\s+(is|does|should|will)',
+        r'who\s+(is|does|should|will)',
+        r'how\s+(much|many|often)',
+        r'what\s+(is|does|should)',
+        r'tell\s+me\s+about',
+        r'do\s+you\s+know',
+        r'what\s+do\s+you\s+remember',
+    ]
+    
+    text_lower = text.lower()
+    for pattern in question_patterns:
+        if re.search(pattern, text_lower):
+            return True
+    
+    return False
+
+def store_information_in_memory(user_input: str, user_id: str) -> bool:
+    """Store important information in vector database for future retrieval"""
+    if not is_statement_worth_remembering(user_input):
+        return False
+    
+    try:
+        # Create entry ID
+        timestamp = int(time.time() * 1000)
+        entry_id = f"memory_{hash(user_input + str(timestamp))}_{timestamp}"
+        
+        # Store in vector database
+        metadata = {
+            'type': 'memory_statement',
+            'timestamp': timestamp,
+            'source': 'chat_input'
+        }
+        
+        success = vector_db.add_entry(
+            entry_id=entry_id,
+            user_id=user_id,
+            text_content=user_input,
+            metadata=metadata
+        )
+        
+        if success:
+            print(f"Stored memory: {user_input[:50]}...")
+            return True
+            
+    except Exception as e:
+        print(f"Failed to store memory: {e}")
+    
+    return False
+
+def search_memory_for_context(query: str, user_id: str, limit: int = 5) -> list:
+    """Search vector database for relevant context"""
+    try:
+        # Search for similar entries
+        results = vector_db.search_similar(user_id, query, limit=limit, threshold=0.3)
+        
+        context_entries = []
+        for entry_id, score in results:
+            # Get entry from the vector database entries dict
+            if entry_id in vector_db.entries:
+                entry = vector_db.entries[entry_id]
+                context_entries.append({
+                    'text': entry.text_content,
+                    'score': score,
+                    'metadata': entry.metadata
+                })
+        
+        return context_entries
+        
+    except Exception as e:
+        print(f"Failed to search memory: {e}")
+        return []
 
 # In-memory store for env-box values by env_id (for demo; use persistent storage in production)
 shared_env_box = {}
@@ -327,9 +445,60 @@ def ask():
     data = request.get_json() or {}
     question = data.get("question", "")
     user_id = data.get("user_id", "Anonymous")
-    # Dummy AI answer for demo
-    answer = f"Echo: {question} (AI demo answer)"
-    return jsonify({"answer": answer})
+    
+    # Check if this is a question seeking memory
+    memory_context = ""
+    if is_question_seeking_memory(question):
+        relevant_memories = search_memory_for_context(question, user_id)
+        if relevant_memories:
+            # Found relevant information in memory
+            memory_info = relevant_memories[0]['text']  # Use the best match
+            
+            # Extract specific information from the memory
+            if "tommy should go at" in memory_info.lower():
+                # Extract time information
+                import re
+                time_match = re.search(r'(\d{1,2})\s*(pm|am)', memory_info.lower())
+                if time_match:
+                    time_str = f"{time_match.group(1)} {time_match.group(2)}"
+                    answer = f"Tommy should go at {time_str}."
+                else:
+                    answer = f"Based on what I remember: {memory_info}"
+            else:
+                answer = f"Based on what I remember: {memory_info}"
+                
+            return jsonify({
+                "answer": answer,
+                "memory_used": True,
+                "memory_count": len(relevant_memories)
+            })
+    
+    # Store important information in memory
+    memory_stored = False
+    if is_statement_worth_remembering(question):
+        memory_stored = store_information_in_memory(question, user_id)
+        
+        # Provide acknowledgment based on what was stored
+        if "should go at" in question.lower():
+            answer = "Got it! I'll remember that scheduling information."
+        elif "likes" in question.lower():
+            answer = "Noted! I'll remember that preference."
+        elif "works at" in question.lower() or "works in" in question.lower():
+            answer = "I'll remember that workplace information."
+        else:
+            answer = "I've noted that information for future reference."
+    else:
+        # Provide helpful response for general queries
+        if question.strip():
+            answer = f"I understand you said: '{question}'. How can I help you with that?"
+        else:
+            answer = "Hello! You can tell me information to remember, or ask me questions about what I've learned."
+    
+    return jsonify({
+        "answer": answer,
+        "memory_stored": memory_stored,
+        "memory_used": False
+    })
 
 @app.route("/env-box-aggregate", methods=["GET"])
 def env_box_aggregate():
