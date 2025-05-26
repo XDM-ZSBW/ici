@@ -134,14 +134,25 @@
             <img id="qr-code-img" class="qr-code" src="" alt="QR Code for authentication" width="180" height="180">
             <div style="margin-top:10px;">Or <a href="#" id="auth-link">open authentication link</a></div>        </div><div id="memory-section" style="display:none;">
             <h2>Collaborative Memory</h2>
-            
-            <!-- AI Chat Canvas -->
+              <!-- AI Chat Canvas -->
             <div class="memory-controls">
                 <textarea id="ai-canvas" class="memory-textarea" style="height:180px;min-height:120px;resize:vertical;width:100%;margin-bottom:12px;" placeholder="Type your question or memory here..."></textarea>
-                <div style="display:flex;justify-content:flex-end;gap:10px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+                    <div style="display:flex;gap:8px;">
+                        <input type="file" id="file-upload" accept="image/*,text/*,.pdf,.doc,.docx" style="display:none;" multiple>
+                        <button type="button" id="file-upload-btn" class="memory-btn private" style="font-size:0.9em;padding:8px 12px;" title="Upload files">📁 Upload</button>
+                        <button type="button" id="screenshot-btn" class="memory-btn private" style="font-size:0.9em;padding:8px 12px;" title="Take screenshot">📷 Screenshot</button>
+                    </div>
                     <button type="button" id="ai-chat-submit" class="memory-btn shared" style="font-size:1.1em;padding:10px 28px;">Ask AI</button>
                 </div>
+                <div id="uploaded-files" style="margin-top:12px;display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:12px;">
+                    <div style="font-weight:600;margin-bottom:8px;color:#0369a1;">📎 Attached Files:</div>
+                    <div id="file-list"></div>
+                </div>
                 <div id="ai-chat-response" style="margin-top:18px;display:none;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:18px 16px;white-space:pre-line;font-family:inherit;"></div>
+                <div id="offline-cache-indicator" style="margin-top:8px;display:none;font-size:0.85em;color:#f59e0b;background:#fffbeb;border:1px solid #fed7aa;border-radius:4px;padding:6px 10px;">
+                    💾 Response cached offline - will sync when connection is restored
+                </div>
             </div>
         </div>    </main>
         <!-- System Prompt Tuning Box -->
@@ -154,12 +165,12 @@
           <a href="/learn" style="color:#2563eb;text-decoration:underline;font-weight:500;">📚 Learn: Deployment & Dev Tips</a>
         </div>
     {% include '_footer.html' %}
-    
-    <!-- Load modular JavaScript files -->
+      <!-- Load modular JavaScript files -->
     <script src="/static/js/debug.js" defer></script>
     <script src="/static/js/api.js" defer></script>
     <script src="/static/js/memory.js" defer></script>
     <script src="/static/js/auth.js" defer></script>
+    <script src="/static/js/ai-chat.js" defer></script>
     <script src="/static/js/ui.js" defer></script>
     <script src="/static/js/app.js" defer></script>
 </body>

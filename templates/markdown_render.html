@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title or "Markdown" }}</title>
+    <link rel="stylesheet" href="/static/css/markdown.css?v={{ config['ICI_CSS_VERSION'] if config and config.get('ICI_CSS_VERSION') else '1.0.0' }}">
+    <style>
+      body { background: #f4f6fa; }
+    </style>
+</head>
+<body>
+    {% include '_header.html' %}
+    <div class="markdown-body">
+        {{ content|safe }}
+    </div>
+    {% include '_footer.html' %}
+</body>
+</html>

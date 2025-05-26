@@ -4,7 +4,8 @@ from flask import Blueprint, render_template, jsonify, request, Response
 from backend.utils.id_utils import get_env_id, get_private_id
 import json
 import time
-from transformers import pipeline
+import base64
+from transformers.pipelines import pipeline
 
 chat_bp = Blueprint('chat', __name__)
 
@@ -149,6 +150,115 @@ def ai_chat():
     else:
         response = str(result) or "I'm here to help! Please ask me anything."
     return jsonify({'response': response, 'timestamp': int(time.time() * 1000)})
+
+# Enhanced AI chat endpoint with file/screenshot support and memory search
+@chat_bp.route('/ai-chat-enhanced', methods=['POST'])
+def ai_chat_enhanced():
+    data = request.get_json()
+    user_input = data.get('message', '').strip()
+    system_prompt = data.get('system_prompt', '').strip() or "You are a helpful AI assistant. Answer the user's question in a concise, non-repetitive way."
+    files = data.get('files', [])
+    
+    if not user_input and not files:
+        return jsonify({'error': 'No message or files provided.'}), 400
+
+    # Process uploaded files/screenshots
+    file_context = ""
+    if files:
+        file_context = "\n\nAttached files:\n"
+        for file_info in files:
+            file_context += f"- {file_info['name']} ({file_info['type']})\n"
+            
+            # For images, add description
+            if file_info.get('isImage') and file_info.get('content'):
+                file_context += f"  [Image content available for analysis]\n"
+            # For text files, include content snippet
+            elif file_info.get('content') and not file_info.get('isImage'):
+                content = file_info['content'][:500]  # First 500 chars
+                if len(file_info['content']) > 500:
+                    content += "..."
+                file_context += f"  Content: {content}\n"
+
+    # Search related memories (simple keyword matching for now)
+    memory_context = ""
+    if user_input:
+        env_id = get_env_id()
+        # Search shared memories
+        shared_memories = shared_env_box.get(env_id, [])
+        relevant_memories = [mem for mem in shared_memories if any(word.lower() in str(mem).lower() for word in user_input.split())]
+        
+        if relevant_memories:
+            memory_context = f"\n\nRelated memories found:\n"
+            for i, mem in enumerate(relevant_memories[:3]):  # Limit to 3 most relevant
+                memory_context += f"{i+1}. {str(mem)[:200]}...\n"
+
+    # Build enhanced prompt with context
+    full_prompt = f"{system_prompt}\n"
+    if memory_context:
+        full_prompt += memory_context
+    if file_context:
+        full_prompt += file_context
+    full_prompt += f"\nUser: {user_input}\nAI:"
+
+    # Generate response using local LLM
+    result = local_llm(
+        full_prompt,
+        max_new_tokens=60,  # Slightly more tokens for context-aware responses
+        num_return_sequences=1,
+        repetition_penalty=1.3,
+        eos_token_id=None,
+        return_full_text=True
+    )
+
+    if isinstance(result, list) and 'generated_text' in result[0]:
+        generated = result[0]['generated_text']
+        response = generated[len(full_prompt):] if generated.startswith(full_prompt) else generated
+        response = response.replace(user_input, '').replace('User:', '').replace('AI:', '').strip()
+        
+        # Clean up response
+        for stop_token in ['\n\n', '\nUser:', '\nAI:', '. ']:
+            idx = response.find(stop_token)
+            if idx > 0:
+                response = response[:idx+1].strip()
+                break
+        
+        # Remove repetitive lines
+        lines = response.splitlines()
+        seen = set()
+        filtered = []
+        for line in lines:
+            l = line.strip()
+            if l and l not in seen:
+                filtered.append(l)
+                seen.add(l)
+        response = '\n'.join(filtered)
+        
+        if not response:
+            response = "I've analyzed your input and files. How can I help you further?"
+    else:
+        response = "I'm here to help! Please ask me anything."
+
+    # Save the interaction to shared memory for future reference
+    if user_input or files:
+        env_id = get_env_id()
+        interaction = {
+            'type': 'ai_interaction',
+            'user_input': user_input,
+            'ai_response': response,
+            'files': [{'name': f['name'], 'type': f['type']} for f in files],
+            'timestamp': int(time.time() * 1000)
+        }
+        
+        if env_id not in shared_env_box:
+            shared_env_box[env_id] = []
+        shared_env_box[env_id].append(interaction)
+
+    return jsonify({
+        'response': response, 
+        'timestamp': int(time.time() * 1000),
+        'memory_context_found': bool(memory_context),
+        'files_processed': len(files)
+    })
 
 # Utility function to get build version (imported from main app)
 def get_build_version():

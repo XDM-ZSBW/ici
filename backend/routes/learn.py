@@ -1,4 +1,5 @@
-from flask import Blueprint, Response
+from flask import Blueprint, Response, render_template
+import markdown
 
 learn_bp = Blueprint('learn', __name__)
 
@@ -38,4 +39,8 @@ _Last updated: May 25, 2025_
 
 @learn_bp.route('/learn')
 def learn():
-    return Response(LEARN_MARKDOWN, mimetype='text/markdown')
+    html = markdown.markdown(
+        LEARN_MARKDOWN,
+        extensions=['fenced_code', 'extra']
+    )
+    return render_template('markdown_render.html', content=html, title="Learn / Lessons")

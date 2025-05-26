@@ -1,6 +1,7 @@
 # Administrative routes for ICI Chat backend
 
 from flask import Blueprint, render_template, jsonify, request, Response
+import markdown
 from backend.utils.id_utils import get_env_id
 import json
 import os
@@ -25,11 +26,12 @@ def health():
 
 @admin_bp.route("/readme")
 def readme():
-    """Serve README.md as plain text"""
+    """Serve README.md as rendered HTML"""
     readme_path = os.path.join(os.path.dirname(__file__), '..', '..', 'README.md')
     if os.path.exists(readme_path):
         with open(readme_path, encoding='utf-8') as f:
-            return Response(f.read(), mimetype='text/plain')
+            html = markdown.markdown(f.read(), extensions=['fenced_code', 'extra'])
+            return render_template('markdown_render.html', content=html, title="README")
     return Response('README.md not found.', mimetype='text/plain')
 
 @admin_bp.route("/policies")
