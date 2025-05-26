@@ -1,27 +1,63 @@
-# ICI Collaborative Memory Web App
+# ICI: Your AI Memory Companion for Enhanced Independence
 
-A Flask-based collaborative memory web application supporting real-time, multi-user chat and memory sharing across browsers and devices.
+An open-source, AI-powered memory assistant designed with and for individuals with cognitive disabilities. ICI provides ethical, privacy-respecting memory support through collaborative, adaptive technology that enhances independence and well-being.
 
-## Features
+## Mission & Vision
 
-- **Collaborative Chat & Memory**: Main chat page with three memory scopes:
-  - **Shared Memory**: (env-id) - visible to all clients with the same environment hash.
-  - **IP Shared Memory**: (env-id + public IP) - visible to all clients sharing the same environment and public IP.
-  - **Private Memory**: (env-id + public IP + browser) - visible only to the current browser.
-- **Real-Time Updates**: Shared memory updates are broadcast instantly to all connected clients using WebSockets (Flask-SocketIO + Socket.IO JS client).
-- **QR Code Authentication**: Users authenticate by scanning a QR code, which links their session to a unique client ID.
-- **Live Client Table**: `/join` page displays a live-updating table of all client sessions (using SSE for admin tools).
-- **Recovery & Admin Tools**: `/recovery` page allows recovery of lost memory, client management, and deletion of client/session records.
-- **Merge & Deduplication Logic**: Shared memory is a running total of all private chats, with deduplication by timestamp and question.
-- **Markdown README Portal**: The landing page displays project info and navigation, rendering the latest README.md.
-- **Modern, Accessible UI**: Semantic HTML, accessible forms, and responsive design.
+**Purpose**: ICI is an open-source AI memory companion designed with and for individuals with cognitive disabilities, providing ethical, privacy-respecting memory support.
 
-## How It Works
+**Mission**: To enhance independence and well-being through AI-powered, personalized memory assistance that empowers rather than replaces human agency.
 
-- **Memory Model**: All chat messages are stored as arrays of objects (with `q`, `a`, `ts`, and optional `user` fields) in memory. Shared memory is keyed by environment hash (`env-id`).
-- **Real-Time Sync**: When any client updates shared memory, a `shared_memory_updated` event is broadcast via WebSockets. All connected browsers instantly refresh their shared chat.
-- **Private/Shared Merge**: If shared memory is lost, clients reshare their private memory to restore the shared state.
-- **No Email Logic**: All references to email have been removed from backend, frontend, and templates.
+**Vision**: A world where cognitive support technology is accessible, dignified, and designed by the communities it serves.
+
+## Core Features
+
+- **AI-Powered Memory Support**: Intelligent reminders, prompts, and memory organization tailored to individual needs and preferences.
+- **Collaborative Memory Sharing**: Three memory scopes with user control:
+  - **Private Memory**: Personal, secure storage for individual use
+  - **IP Shared Memory**: Shared with trusted devices on the same network
+  - **Shared Memory**: Community memory for broader collaboration
+- **Real-Time Synchronization**: Instant updates across devices using WebSockets for seamless memory access.
+- **QR Code Authentication**: Simple, accessible authentication system for easy device linking.
+- **Adaptive Interface**: UI that learns and adapts to user preferences and accessibility needs.
+- **Privacy-First Design**: User-controlled data sharing with transparent privacy policies.
+- **Modular Architecture**: Clean, maintainable codebase supporting ongoing development and customization.
+
+## Architecture
+
+ICI uses a modern, modular architecture designed for maintainability and extensibility:
+
+### Backend Structure
+- **`backend/`**: Main Flask application package
+  - **`app.py`**: Flask app factory with blueprint registration
+  - **`routes/`**: Modular route handlers
+    - `chat.py`: Chat and memory management routes
+    - `client.py`: Client session management routes  
+    - `admin.py`: Administrative and recovery tools
+  - **`models/`**: Data models and schema definitions
+  - **`utils/`**: Utility functions and helpers
+
+### Frontend Structure
+- **Modular JavaScript**: Split from monolithic to focused modules
+  - `app.js`: Main application orchestration
+  - `memory.js`: Memory management and display logic
+  - `ui.js`: User interface interactions
+  - `api.js`: Backend communication utilities
+  - `auth.js`: Authentication management
+  - `debug.js`: Debug tools and system testing
+
+### Templates
+- **Accessible HTML**: Semantic, screen-reader friendly templates
+- **Responsive Design**: Mobile-first, adaptive layouts
+- **Component System**: Reusable header/footer components
+
+## How Memory Support Works
+
+- **Personalized AI**: The system learns individual patterns and preferences to provide increasingly tailored support.
+- **Collaborative Design**: Built with the cognitive disability community as equal partners in development.
+- **Ethical Foundation**: Every feature prioritizes dignity, autonomy, and user agency.
+- **Real-Time Sync**: Memory updates synchronize instantly across devices for consistent access.
+- **Privacy Control**: Users maintain complete control over what information is shared and with whom.
 
 ## API Endpoints
 
@@ -71,52 +107,69 @@ A Flask-based collaborative memory web application supporting real-time, multi-u
 - **Server-Sent Events (SSE)** for admin live tables
 - **HTML5, CSS, JavaScript** (vanilla, no frameworks)
 
-## Running Locally
+## Running ICI
 
-1. Install dependencies:
+### Development Setup
+
+1. **Install dependencies**:
    ```sh
    pip install flask flask-socketio eventlet
    ```
-2. Run the app:
+
+2. **Run the refactored application**:
    ```sh
-   python app.py
+   python run_refactored.py
    ```
-3. Open [http://localhost:8080](http://localhost:8080) in your browser.
 
-## Notes
+3. **Access the application**:
+   - Homepage: [http://localhost:8080](http://localhost:8080)
+   - Chat Interface: [http://localhost:8080/chat](http://localhost:8080/chat)
+   - Join Community: [http://localhost:8080/join](http://localhost:8080/join)
 
-- All memory is in-memory only (demo mode). For production, use persistent storage.
-- Real-time chat requires WebSocket support (Flask-SocketIO + eventlet or gevent).
-- No user emails or passwords are stored or required.
+### Legacy Version
+- The original `app.py` is maintained for backward compatibility
+- Run with: `python app.py`
 
-## Policies, Terms, and Governance
+## Community & Ethics
 
-The ICI Collaborative Memory Web App includes a dedicated area for policies, terms, and governance documentation to help users and organizations comply with legal and privacy requirements.
+ICI is developed **with** and **for** the cognitive disability community, not simply for them. We believe in:
 
-- **Cookie Consent**: A cookie consent banner is shown to all users on first visit. Consent is required for session management and analytics cookies. See the [Policies page](/policies) for details.
-- **Policies Page**: Visit [/policies](/policies) for full documentation of:
-  - Cookie Policy
-  - Terms of Use
-  - Data Governance
-  - Contact information
+- **Nothing About Us, Without Us**: Equal partnership in design and development
+- **Dignity & Autonomy**: Technology that enhances rather than replaces human agency  
+- **Accessibility First**: Universal design principles from the ground up
+- **Open Source Transparency**: All code, decisions, and governance are transparent
+- **Privacy as a Right**: User data control and ethical AI practices
 
-**Links:**
-- [Cookie Policy and Terms](/policies)
+### Get Involved
+- **Contributors Welcome**: Join our development community
+- **Feedback Valued**: Share your experiences and suggestions
+- **Partnership Opportunities**: Organizations supporting cognitive accessibility
+- **Research Collaboration**: Academic institutions studying assistive technology
 
-This area is designed to be easily extensible for additional compliance, privacy, or governance requirements.
+## Privacy, Ethics & Governance
 
-## Browser Console Error Note
+ICI operates under strict ethical guidelines developed in partnership with disability rights advocates:
 
-If you see an error like the following in your browser's developer console:
+- **Informed Consent**: Clear, accessible explanations of all data practices
+- **Data Minimization**: Only collect information necessary for memory support
+- **User Control**: Complete control over data sharing and retention
+- **Algorithmic Transparency**: Open source AI decision-making processes
+- **Community Governance**: User community involvement in policy decisions
 
-```
-recovery:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
-```
+### Documentation
+- **[Policies & Terms](/policies)**: Complete privacy and usage policies
+- **Cookie Consent**: Transparent cookie usage with user control
+- **Data Governance**: Community-driven data protection standards
+- **Ethical AI**: Guidelines for responsible cognitive support technology
 
-This error is **not caused by ICI Chat**. It is a known issue from certain browser extensions (such as ad blockers, password managers, or privacy tools) that inject scripts into web pages. It does not affect the functionality of the app and can be safely ignored. To confirm, try running ICI Chat in a private/incognito window with all extensions disabled—the error will disappear.
-
-You do not need to take any action regarding this error.
+### Contact & Support
+- **Community**: Join our inclusive development community
+- **Support**: Accessible help and documentation
+- **Feedback**: Multiple ways to share experiences and suggestions
+- **Advocacy**: Partnership with disability rights organizations
 
 ---
 
-Open source. Contributions welcome!
+**ICI: Technology that respects, empowers, and serves the cognitive disability community with dignity and partnership.**
+
+*Open source. Community-driven. Ethically-focused. Contributions and partnerships welcome.*

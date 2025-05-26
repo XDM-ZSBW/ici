@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICI Chat - Authentication</title>
+    <link rel="stylesheet" href="/static/join.css">
+</head>
+<body>
+    <div class="container">
+        <h1>ICI Chat Authentication</h1>
+        <p>You are being authenticated with client ID: <strong>{{ client_id }}</strong></p>
+        
+        <div class="auth-actions">
+            <button id="continue-btn" class="btn btn-primary">Continue to Chat</button>
+            <button id="new-session-btn" class="btn btn-secondary">Start New Session</button>
+        </div>
+        
+        <div class="auth-info">
+            <p>This authentication link was generated for secure access to your chat session.</p>
+            <p>Click "Continue to Chat" to proceed with your existing session, or "Start New Session" to begin fresh.</p>
+        </div>
+    </div>
+
+    <script>
+        const clientId = '{{ client_id }}';
+        
+        document.getElementById('continue-btn').addEventListener('click', function() {
+            // Set authentication and redirect to chat
+            localStorage.setItem('ici-chat-user-id', clientId);
+            localStorage.setItem('ici-auth-via-qr', 'true');
+            window.location.href = '/chat';
+        });
+        
+        document.getElementById('new-session-btn').addEventListener('click', function() {
+            // Clear any existing data and redirect
+            localStorage.clear();
+            window.location.href = '/chat';
+        });
+    </script>
+</body>
+</html>

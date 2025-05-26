@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICI Chat - Admin Dashboard</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; max-height: 300px; }
+        .status { padding: 5px 10px; border-radius: 20px; font-size: 0.9em; }
+        .status.online { background: #d4edda; color: #155724; }
+        .status.offline { background: #f8d7da; color: #721c24; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+        .client-id { font-family: monospace; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ICI Chat - Admin Dashboard</h1>
+        <p>Environment ID: <code>{{ env_id }}</code></p>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>System Information</h3>
+                <div id="system-info">Loading...</div>
+                <button class="btn btn-secondary" onclick="loadSystemInfo()">Refresh</button>
+            </div>
+            
+            <div class="card">
+                <h3>Memory Stores</h3>
+                <div id="memory-stats">Loading...</div>
+                <button class="btn btn-secondary" onclick="loadMemoryStats()">Refresh</button>
+                <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+            </div>
+            
+            <div class="card">
+                <h3>Active Clients</h3>
+                <div id="client-list">Loading...</div>
+                <button class="btn btn-secondary" onclick="loadClients()">Refresh</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>Debug Data</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <button class="btn btn-primary" onclick="loadEnvBoxData()">View Env-Box Data</button>
+                <button class="btn btn-primary" onclick="loadIpBoxData()">View IP-Box Data</button>
+                <button class="btn btn-primary" onclick="loadClientData()">View Client Data</button>
+                <button class="btn btn-primary" onclick="exportData()">Export All Data</button>
+            </div>
+            <pre id="debug-output">Click a button above to view debug data...</pre>
+        </div>
+    </div>
+
+    <script>
+        async function loadSystemInfo() {
+            try {
+                const response = await fetch('/system-info');
+                const data = await response.json();
+                document.getElementById('system-info').innerHTML = `
+                    <p><strong>Python:</strong> ${data.python_version}</p>
+                    <p><strong>Platform:</strong> ${data.platform}</p>
+                    <p><strong>Implementation:</strong> ${data.python_implementation}</p>
+                    <p><strong>Executable:</strong> ${data.executable}</p>
+                `;
+            } catch (error) {
+                document.getElementById('system-info').innerHTML = `<p style="color: red;">Error loading system info: ${error.message}</p>`;
+            }
+        }
+
+        async function loadMemoryStats() {
+            try {
+                const [envBox, ipBox] = await Promise.all([
+                    fetch('/debug/env-box').then(r => r.json()),
+                    fetch('/debug/ip-box').then(r => r.json())
+                ]);
+                
+                document.getElementById('memory-stats').innerHTML = `
+                    <p><strong>Shared Environments:</strong> ${envBox.total_environments}</p>
+                    <p><strong>IP-Shared Environments:</strong> ${envBox.total_ip_environments}</p>
+                    <p><strong>Total Memory Stores:</strong> ${envBox.total_environments + ipBox.total_ip_environments}</p>
+                `;
+            } catch (error) {
+                document.getElementById('memory-stats').innerHTML = `<p style="color: red;">Error loading memory stats: ${error.message}</p>`;
+            }
+        }
+
+        async function loadClients() {
+            try {
+                const response = await fetch('/clients');
+                const data = await response.json();
+                const clients = data.clients || [];
+                
+                let html = `<p><strong>Total Clients:</strong> ${clients.length}</p>`;
+                
+                if (clients.length > 0) {
+                    html += `
+                        <table>
+                            <tr>
+                                <th>Client ID</th>
+                                <th>Public IP</th>
+                                <th>Last Seen</th>
+                                <th>Status</th>
+                            </tr>
+                    `;
+                    
+                    clients.forEach(client => {
+                        const lastSeen = new Date(client.last_seen);
+                        const isRecent = Date.now() - client.last_seen < 5 * 60 * 1000; // 5 minutes
+                        const status = isRecent ? 'online' : 'offline';
+                        
+                        html += `
+                            <tr>
+                                <td class="client-id">${client.client_id}</td>
+                                <td>${client.public_ip}</td>
+                                <td>${lastSeen.toLocaleString()}</td>
+                                <td><span class="status ${status}">${status}</span></td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</table>';
+                } else {
+                    html += '<p>No clients registered</p>';
+                }
+                
+                document.getElementById('client-list').innerHTML = html;
+            } catch (error) {
+                document.getElementById('client-list').innerHTML = `<p style="color: red;">Error loading clients: ${error.message}</p>`;
+            }
+        }
+
+        async function loadEnvBoxData() {
+            try {
+                const response = await fetch('/debug/env-box');
+                const data = await response.json();
+                document.getElementById('debug-output').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('debug-output').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function loadIpBoxData() {
+            try {
+                const response = await fetch('/debug/ip-box');
+                const data = await response.json();
+                document.getElementById('debug-output').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('debug-output').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function loadClientData() {
+            try {
+                const response = await fetch('/debug/clients');
+                const data = await response.json();
+                document.getElementById('debug-output').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('debug-output').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        async function clearAllData() {
+            if (!confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/debug/clear-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ timestamp: Date.now() })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('All data cleared successfully');
+                    location.reload();
+                } else {
+                    alert('Failed to clear data');
+                }
+            } catch (error) {
+                alert(`Error clearing data: ${error.message}`);
+            }
+        }
+
+        async function exportData() {
+            try {
+                const [envBox, ipBox, clients] = await Promise.all([
+                    fetch('/debug/env-box').then(r => r.json()),
+                    fetch('/debug/ip-box').then(r => r.json()),
+                    fetch('/debug/clients').then(r => r.json())
+                ]);
+                
+                const exportData = {
+                    timestamp: new Date().toISOString(),
+                    env_id: '{{ env_id }}',
+                    envBox,
+                    ipBox,
+                    clients
+                };
+                
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+                    type: 'application/json'
+                });
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ici-export-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                alert(`Error exporting data: ${error.message}`);
+            }
+        }
+
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSystemInfo();
+            loadMemoryStats();
+            loadClients();
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            loadMemoryStats();
+            loadClients();
+        }, 30000);
+    </script>
+</body>
+</html>

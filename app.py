@@ -1,3 +1,6 @@
+# LEGACY MONOLITHIC VERSION - Use run_refactored.py for the new modular backend
+# This file is kept for backward compatibility and comparison purposes
+
 from flask import Flask, render_template, send_file, jsonify, request, Response
 from flask_socketio import SocketIO, emit
 import secrets
