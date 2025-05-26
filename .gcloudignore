@@ -1,4 +1,4 @@
-# Exclude Python cache, test data, local dev scripts, and other unnecessary files for Docker builds
+# Exclude Python cache, test data, local dev scripts, and other unnecessary files for Cloud Run builds
 __pycache__/
 *.pyc
 *.pyo
@@ -43,7 +43,3 @@ test_endpoints.sh
 ENDPOINT_TESTING_COMPLETE.md
 TESTING_SUITE_INVENTORY.md
 cloudbuild.yaml
-
-*.md
-!README*.md
-README-secret.md
