@@ -106,9 +106,11 @@ const UIManager = {
     const aiSubmit = document.getElementById('ai-chat-submit');
     const aiInput = document.getElementById('ai-canvas');
     const aiResp = document.getElementById('ai-chat-response');
+    const sysPromptBox = document.getElementById('system-prompt-box');
     if (aiSubmit && aiInput && aiResp) {
       aiSubmit.onclick = async function() {
         const message = aiInput.value.trim();
+        const systemPrompt = sysPromptBox ? sysPromptBox.value.trim() : '';
         if (!message) return;
         aiSubmit.disabled = true;
         aiResp.style.display = 'block';
@@ -117,7 +119,7 @@ const UIManager = {
           const resp = await fetch('/ai-chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message })
+            body: JSON.stringify({ message, system_prompt: systemPrompt })
           });
           const data = await resp.json();
           aiResp.textContent = data.response || 'No response.';

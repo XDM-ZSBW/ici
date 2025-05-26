@@ -110,20 +110,40 @@ def client_auth(client_id):
 def ai_chat():
     data = request.get_json()
     user_input = data.get('message', '').strip()
+    system_prompt = data.get('system_prompt', '').strip() or "You are a helpful AI assistant. Answer the user's question in a concise, non-repetitive way."
     if not user_input:
         return jsonify({'error': 'No message provided.'}), 400
 
-    # Prompt engineering for better responses
+    # Use the live system prompt from the user
     prompt = (
-        "You are a helpful AI assistant. Answer the user's question in a friendly and informative way.\n"
-        f"User: {user_input}\nAI:"
+        f"{system_prompt}\nUser: {user_input}\nAI:"
     )
-    result = local_llm(prompt, max_length=128, num_return_sequences=1, return_full_text=True)
+    result = local_llm(
+        prompt,
+        max_new_tokens=40,
+        num_return_sequences=1,
+        repetition_penalty=1.3,
+        eos_token_id=None,  # Let us use stop sequences below
+        return_full_text=True
+    )
     if isinstance(result, list) and 'generated_text' in result[0]:
         generated = result[0]['generated_text']
         response = generated[len(prompt):] if generated.startswith(prompt) else generated
         response = response.replace(user_input, '').replace('User:', '').replace('AI:', '').strip()
-        response = response.split('\n\n')[0].strip()
+        for stop_token in ['\n\n', '\nUser:', '\nAI:', '. ']:
+            idx = response.find(stop_token)
+            if idx > 0:
+                response = response[:idx+1].strip()
+                break
+        lines = response.splitlines()
+        seen = set()
+        filtered = []
+        for line in lines:
+            l = line.strip()
+            if l and l not in seen:
+                filtered.append(l)
+                seen.add(l)
+        response = '\n'.join(filtered)
         if not response:
             response = generated.strip() or "I'm here to help! Please ask me anything."
     else:

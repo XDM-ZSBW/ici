@@ -173,3 +173,79 @@ ICI operates under strict ethical guidelines developed in partnership with disab
 **ICI: Technology that respects, empowers, and serves the cognitive disability community with dignity and partnership.**
 
 *Open source. Community-driven. Ethically-focused. Contributions and partnerships welcome.*
+
+# ICI Chat - Modern AI Chat & Memory Platform
+
+## Features
+- AI chat with local LLM (DistilGPT2) and live system prompt tuning
+- Secure local development with automated HTTPS (self-signed certs)
+- Memory and screenshot support (requires HTTPS)
+- Crypto wallet generation and admin tools
+- Modular backend (Flask, Flask-SocketIO)
+- Ready for Google Cloud Run deployment
+
+## Quick Start (Local Dev)
+
+1. **Install Python 3.9+ and pip**
+2. **Install OpenSSL**
+   - [Download OpenSSL for Windows](https://slproweb.com/products/Win32OpenSSL.html)
+   - Add the OpenSSL `bin` directory to your PATH
+3. **Install dependencies**
+   ```pwsh
+   pip install -r requirements.txt
+   ```
+4. **Run the server**
+   ```pwsh
+   python run_refactored.py
+   ```
+   - The server will auto-generate `cert.pem` and `key.pem` for HTTPS if missing.
+   - Visit: https://localhost:8080
+
+## Google Cloud Run Deployment
+- Use the provided `Dockerfile` for containerization.
+- Cloud Run provides HTTPS by default—no extra SSL config needed.
+- For persistent memory, use Google Cloud Storage or Firestore.
+- Ensure all environment variables and secrets are set in Cloud Run.
+
+## Lessons Learned / Nuggets
+
+### SSL & HTTPS for Local Dev
+- Many browser APIs (like screenshot capture) require HTTPS, even for localhost.
+- Use Flask's SSL support with self-signed certs for local testing.
+- Automate cert generation with OpenSSL in your launcher script.
+- If OpenSSL is missing, fail fast and print a clear error.
+
+### OpenSSL on Windows
+- Download from [slproweb.com](https://slproweb.com/products/Win32OpenSSL.html)
+- Add the `bin` directory to your PATH so Python can find `openssl.exe`.
+
+### Cloud Run Deployment
+- Use a `Dockerfile` based on `python:3.9-slim`.
+- Expose port 8080 and use HTTPS (Cloud Run handles certs).
+- For LLMs, use small models (DistilGPT2, quantized Llama) to fit memory/CPU limits.
+- Cold starts can be slow if loading models—consider using a health check endpoint.
+
+### AI Chat & Memory
+- Small LLMs are limited: use prompt engineering, repetition penalty, and post-processing to improve output.
+- For best results, use OpenAI/Gemini API or a larger local model if resources allow.
+- Store user memories and include them in the prompt for context.
+- For screenshots, use OCR to extract text and store as memory.
+
+### Admin & Wallets
+- Admin UI allows wallet creation and management.
+- Use `/client/new-wallet` endpoint for new crypto addresses.
+
+---
+
+## Endpoints
+- `/ai-chat` — AI chat with system prompt tuning
+- `/client/new-wallet` — Generate new crypto wallet
+- `/vault/collect` — Collect memory/screenshot data
+- `/vault/search` — Search memory
+- `/admin` — Admin UI
+- `/learn` — (see below)
+
+---
+
+## Learn Endpoint
+See `/learn` for a live Markdown knowledge base of lessons learned, deployment tips, and dev workflow nuggets.

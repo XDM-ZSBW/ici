@@ -144,6 +144,15 @@
                 <div id="ai-chat-response" style="margin-top:18px;display:none;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:18px 16px;white-space:pre-line;font-family:inherit;"></div>
             </div>
         </div>    </main>
+        <!-- System Prompt Tuning Box -->
+        <div style="max-width:700px;margin:0 auto 32px auto;padding:18px 24px 24px 24px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 1px 6px #0001;">
+            <label for="system-prompt-box" style="font-weight:600;color:#374151;display:block;margin-bottom:8px;">System Prompt (AI Personality/Instructions)</label>
+            <textarea id="system-prompt-box" style="width:100%;min-height:60px;border-radius:8px;border:2px solid #e5e7eb;padding:12px;font-size:1em;resize:vertical;">You are a helpful AI assistant. Answer the user's question in a concise, non-repetitive way.</textarea>
+            <div style="margin-top:8px;font-size:0.95em;color:#64748b;">Edit the system prompt above to tune the AI's behavior in real time. Changes take effect immediately for new questions.</div>
+        </div>
+        <div style="text-align:center;margin:32px 0 0 0;">
+          <a href="/learn" style="color:#2563eb;text-decoration:underline;font-weight:500;">📚 Learn: Deployment & Dev Tips</a>
+        </div>
     {% include '_footer.html' %}
     
     <!-- Load modular JavaScript files -->

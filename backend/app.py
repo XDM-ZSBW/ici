@@ -18,11 +18,13 @@ def create_app():
     from backend.routes.client import client_bp
     from backend.routes.admin import admin_bp
     from backend.routes.vault import vault_bp
+    from backend.routes.learn import learn_bp
     
     app.register_blueprint(chat_bp)
     app.register_blueprint(client_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(vault_bp)
+    app.register_blueprint(learn_bp)
     
     # Add data endpoint for backward compatibility
     from backend.utils.id_utils import generate_secure_key
