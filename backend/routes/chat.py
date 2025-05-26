@@ -1,402 +1,188 @@
 # Chat-related routes for ICI Chat backend
 
 from flask import Blueprint, render_template, jsonify, request, Response
-from backend.utils.id_utils import get_env_id, get_private_id
+from backend.utils.id_utils import get_env_id, get_private_id # Assuming get_build_version is also here or in another util
 from backend.utils.vector_db import get_vector_database
 import json
 import time
 import base64
 import re
-from transformers.pipelines import pipeline
+from transformers import pipeline # IMPORT PIPELINE HERE
 
-chat_bp = Blueprint('chat', __name__)
+# Import memory utility functions - THESE ARE THE SINGLE SOURCE OF TRUTH
+from backend.utils.memory_utils import (
+    is_statement_worth_remembering,
+    is_question_seeking_memory,
+    store_information_in_memory,
+    search_memory_for_context,
+)
+# REMOVE: from backend.services import ai_service (if not used for LLM)
+
+chat_bp = Blueprint('chat_bp', __name__)
 
 # Load the local LLM once at startup
-local_llm = pipeline("text-generation", model="distilgpt2")
+try:
+    print("Loading distilgpt2 model...")
+    local_llm = pipeline("text-generation", model="distilgpt2", tokenizer="distilgpt2") # Specify tokenizer explicitly
+    print("distilgpt2 model loaded successfully.")
+except Exception as e:
+    print(f"Error loading distilgpt2 model: {e}")
+    local_llm = None # Set to None if loading fails
 
-# Get vector database instance for memory storage and retrieval
-vector_db = get_vector_database()
-
-# Helper functions for memory and knowledge management
-def is_statement_worth_remembering(text: str) -> bool:
-    """Determine if a statement contains information worth storing in memory"""
-    if not text or len(text.strip()) < 5:
-        return False
-    
-    # Patterns that indicate important information
-    memory_patterns = [
-        r'\b\w+\s+should\s+\w+',  # "Tommy should go"
-        r'\b\w+\s+will\s+\w+',    # "Tommy will arrive"
-        r'\b\w+\s+needs\s+to\s+\w+',  # "Tommy needs to go"
-        r'\b\w+\s+has\s+to\s+\w+',    # "Tommy has to leave"
-        r'\b\w+\s+(at|on|by)\s+\d',   # "Tommy at 2 pm"
-        r'\b\w+\s+is\s+\w+',      # "Tommy is busy"
-        r'\b\w+\s+likes\s+\w+',   # "Tommy likes pizza"
-        r'\b\w+\s+works\s+(at|in)\s+\w+',  # "Tommy works at Google"
-        r'\b\w+\'s\s+\w+',        # "Tommy's appointment"
-        r'\bremember\s+',         # "remember that"
-        r'\bnote\s+',             # "note that"
-        r'\b\d{1,2}:\d{2}\s*(am|pm)?', # Time references
-        r'\b\d{1,2}\s*(am|pm)\b', # Time references
-        r'\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)', # Days
-        r'\b(january|february|march|april|may|june|july|august|september|october|november|december)', # Months
-    ]
-    
-    text_lower = text.lower()
-    for pattern in memory_patterns:
-        if re.search(pattern, text_lower):
-            return True
-    
-    return False
-
-def is_question_seeking_memory(text: str) -> bool:
-    """Determine if a question is asking for stored information"""
-    if not text or '?' not in text:
-        return False
-    
-    question_patterns = [
-        r'what\s+time\s+',
-        r'when\s+(should|will|does|did)',
-        r'where\s+(is|does|should|will)',
-        r'who\s+(is|does|should|will)',
-        r'how\s+(much|many|often)',
-        r'what\s+(is|does|should)',
-        r'tell\s+me\s+about',
-        r'do\s+you\s+know',
-        r'what\s+do\s+you\s+remember',
-    ]
-    
-    text_lower = text.lower()
-    for pattern in question_patterns:
-        if re.search(pattern, text_lower):
-            return True
-    
-    return False
-
-def store_information_in_memory(user_input: str, user_id: str) -> bool:
-    """Store important information in vector database for future retrieval"""
-    if not is_statement_worth_remembering(user_input):
-        return False
-    
+# Helper function to generate response using local_llm
+def generate_llm_response(prompt_text, max_length_offset=60, temperature=0.7, top_k=50, top_p=0.95, repetition_penalty=1.2):
+    if not local_llm:
+        return "AI model is not available at the moment."
     try:
-        # Create entry ID
-        timestamp = int(time.time() * 1000)
-        entry_id = f"memory_{hash(user_input + str(timestamp))}_{timestamp}"
-        
-        # Store in vector database
-        metadata = {
-            'type': 'memory_statement',
-            'timestamp': timestamp,
-            'source': 'chat_input'
-        }
-        
-        success = vector_db.add_entry(
-            entry_id=entry_id,
-            user_id=user_id,
-            text_content=user_input,
-            metadata=metadata
+        if not isinstance(prompt_text, str):
+            prompt_text = str(prompt_text)
+
+        # Calculate max_length for the pipeline call
+        # max_length is the total length (prompt + generated)
+        # min_length is also total length
+        # Tokenize prompt to get its length in tokens
+        # It's safer to use the model's own tokenizer for this
+        prompt_input_ids = local_llm.tokenizer(prompt_text, return_tensors="pt")["input_ids"]
+        prompt_length_tokens = prompt_input_ids.shape[1]
+
+        target_max_length = prompt_length_tokens + max_length_offset
+        target_min_length = prompt_length_tokens + 10 # Ensure some generation
+
+        # Safety: Ensure max_length is not too large for the model (distilgpt2 context is 1024)
+        if target_max_length > 1000: # Leave some buffer
+            target_max_length = 1000
+        if target_min_length >= target_max_length: # Ensure min_length < max_length
+             target_min_length = target_max_length - max_length_offset // 2 if max_length_offset > 20 else target_max_length -10
+
+
+        generated_sequences = local_llm(
+            prompt_text,
+            max_length=target_max_length,
+            min_length=target_min_length,
+            num_return_sequences=1,
+            temperature=temperature,
+            top_k=top_k,
+            top_p=top_p,
+            repetition_penalty=repetition_penalty,
+            pad_token_id=local_llm.tokenizer.eos_token_id,
+            truncation=True # Important to prevent errors if prompt is too long
         )
+        response = generated_sequences[0]['generated_text']
+        if response.startswith(prompt_text):
+            response = response[len(prompt_text):].strip()
         
-        if success:
-            print(f"Stored memory: {user_input[:50]}...")
-            return True
+        # Basic cleanup
+        if '.' in response: response = response.rsplit('.', 1)[0] + '.'
+        elif '?' in response: response = response.rsplit('?', 1)[0] + '?'
+        elif '!' in response: response = response.rsplit('!', 1)[0] + '!'
             
+        return response if response else "I'm not sure how to respond to that."
     except Exception as e:
-        print(f"Failed to store memory: {e}")
-    
-    return False
-
-def search_memory_for_context(query: str, user_id: str, limit: int = 5) -> list:
-    """Search vector database for relevant context"""
-    try:
-        # Search for similar entries
-        results = vector_db.search_similar(user_id, query, limit=limit, threshold=0.3)
-        
-        context_entries = []
-        for entry_id, score in results:
-            # Get entry from the vector database entries dict
-            if entry_id in vector_db.entries:
-                entry = vector_db.entries[entry_id]
-                context_entries.append({
-                    'text': entry.text_content,
-                    'score': score,
-                    'metadata': entry.metadata
-                })
-        
-        return context_entries
-        
-    except Exception as e:
-        print(f"Failed to search memory: {e}")
-        return []
-
-# In-memory store for env-box values by env_id (for demo; use persistent storage in production)
-shared_env_box = {}
-shared_client_box = {}  # key: (env_id, public_ip)
-
-@chat_bp.route("/")
-def index():
-    env_id = get_env_id()
-    build_version = get_build_version()
-    return render_template("index.html", env_id=env_id, build_version=build_version)
-
-@chat_bp.route("/chat")
-def chat():
-    env_id = get_env_id()
-    build_version = get_build_version()
-    return render_template("chat.html", build_version=build_version, env_id=env_id)
-
-@chat_bp.route("/join")
-def join():
-    """Join page for new users"""
-    env_id = get_env_id()
-    return render_template("join.html", env_id=env_id)
-
-@chat_bp.route("/join/<client_id>")
-def join_with_client_id(client_id):
-    """Join page with specific client ID"""
-    return f"Joined with client-id: {client_id}"
-
-@chat_bp.route("/env-id")
-def env_id():
-    env_id = get_env_id()
-    return jsonify({"env_id": env_id})
-
-@chat_bp.route("/env-id-html")
-def env_id_html():
-    env_id = get_env_id()
-    return render_template("env-id.html", env_id=env_id)
-
-@chat_bp.route("/env-box", methods=["GET", "POST"])
-def env_box_api():
-    # Use env_id from request (query param or POST body) if present
-    env_id = request.args.get("env_id")
-    if not env_id and request.is_json:
-        env_id = (request.get_json() or {}).get("env_id")
-    if not env_id:
-        env_id = get_env_id()
-    
-    if request.method == "POST":
-        data = request.get_json()
-        # Always treat shared_env_box[env_id] as a list of messages
-        value = data.get("value", [])
-        if not isinstance(value, list):
-            value = []
-        shared_env_box[env_id] = value
-        return jsonify({"env_id": env_id, "value": value})
-    else:
-        # GET request
-        value = shared_env_box.get(env_id, [])
-        return jsonify({"env_id": env_id, "value": value})
-
-@chat_bp.route("/ip-box", methods=["GET", "POST"])
-def ip_box_api():
-    # Use env_id and public_ip from request
-    env_id = request.args.get("env_id")
-    public_ip = request.args.get("public_ip")
-    
-    if not env_id and request.is_json:
-        data = request.get_json() or {}
-        env_id = data.get("env_id")
-        public_ip = data.get("public_ip")
-    
-    if not env_id:
-        env_id = get_env_id()
-    if not public_ip:
-        return jsonify({"error": "public_ip required"}), 400
-    
-    key = (env_id, public_ip)
-    
-    if request.method == "POST":
-        data = request.get_json()
-        # Always treat shared_client_box[key] as a list of messages
-        value = data.get("value", [])
-        if not isinstance(value, list):
-            value = []
-        shared_client_box[key] = value
-        return jsonify({"env_id": env_id, "public_ip": public_ip, "value": value})
-    else:
-        # GET request
-        value = shared_client_box.get(key, [])
-        return jsonify({"env_id": env_id, "public_ip": public_ip, "value": value})
-
-@chat_bp.route("/client/<client_id>")
-def client_auth(client_id):
-    # Authentication endpoint for QR code scanning
-    return render_template("client_auth.html", client_id=client_id)
+        print(f"Error during LLM generation: {e}")
+        # Log the full traceback for debugging
+        import traceback
+        traceback.print_exc()
+        return "Sorry, I encountered an error trying to generate a response."
 
 @chat_bp.route('/ai-chat', methods=['POST'])
 def ai_chat():
-    data = request.get_json()
-    user_input = data.get('message', '').strip()
-    system_prompt = data.get('system_prompt', '').strip() or "You are a helpful AI assistant. Answer the user's question in a concise, non-repetitive way."
-    if not user_input:
-        return jsonify({'error': 'No message provided.'}), 400
-
-    # Get user ID for memory operations
+    data = request.json
+    user_message = data.get('message')
     user_id = data.get('user_id', 'anonymous')
-    
-    # Check if this is a question seeking memory
-    memory_context = ""
-    if is_question_seeking_memory(user_input):
-        relevant_memories = search_memory_for_context(user_input, user_id)
-        if relevant_memories:
-            memory_context = "\n\nRelevant information from memory:\n"
-            for mem in relevant_memories[:3]:  # Limit to top 3 results
-                memory_context += f"- {mem['text']}\n"    # Build prompt with memory context
-    prompt = f"{system_prompt}"
-    if memory_context:
-        prompt += memory_context
-    prompt += f"\nUser: {user_input}\nAI:"
-    
-    result = local_llm(
-        prompt,
-        max_new_tokens=40,
-        num_return_sequences=1,
-        repetition_penalty=1.3,
-        eos_token_id=None,  # Let us use stop sequences below
-        return_full_text=True
-    )
-    if isinstance(result, list) and 'generated_text' in result[0]:
-        generated = result[0]['generated_text']
-        response = generated[len(prompt):] if generated.startswith(prompt) else generated
-        response = response.replace(user_input, '').replace('User:', '').replace('AI:', '').strip()
-        for stop_token in ['\n\n', '\nUser:', '\nAI:', '. ']:
-            idx = response.find(stop_token)
-            if idx > 0:
-                response = response[:idx+1].strip()
-                break
-        lines = response.splitlines()
-        seen = set()
-        filtered = []
-        for line in lines:
-            l = line.strip()
-            if l and l not in seen:
-                filtered.append(l)
-                seen.add(l)
-        response = '\n'.join(filtered)
-        if not response:
-            response = generated.strip() or "I'm here to help! Please ask me anything."
-    else:
-        response = str(result) or "I'm here to help! Please ask me anything."
-    
-    # Store important information in memory
+
+    if not user_message:
+        return jsonify({"error": "No message provided"}), 400
+
+    db = get_vector_database() # Get DB instance for this request
+    response_text = ""
     memory_stored = False
-    if is_statement_worth_remembering(user_input):
-        memory_stored = store_information_in_memory(user_input, user_id)
-    
+    memory_context_found = False
+    parsed_schedule_info = None
+
+    schedule_match = re.search(r"(\w+)\s+should\s+go\s+at\s+(.+)", user_message, re.IGNORECASE)
+    if schedule_match:
+        parsed_schedule_info = {"name": schedule_match.group(1), "time": schedule_match.group(2)}
+
+    if is_statement_worth_remembering(user_message):
+        # Pass the db instance to the memory function
+        store_information_in_memory(db, user_id, user_message) 
+        memory_stored = True
+        if parsed_schedule_info:
+            response_text = f"OK, {parsed_schedule_info['name']} should go at {parsed_schedule_info['time']}, today."
+        else:
+            response_text = f"OK, I've remembered that: \"{user_message}\""
+    elif is_question_seeking_memory(user_message):
+        # Pass db if needed by this func
+        context_results = search_memory_for_context(user_message, user_id) # Get list of dicts
+        
+        # Extract just the text from context_results for the prompt
+        context_texts = [item['text'] for item in context_results if 'text' in item]
+        context_for_prompt = " ".join(context_texts)
+
+
+        if context_for_prompt:
+            memory_context_found = True
+            prompt_text = f"Based on our previous conversation: \"{context_for_prompt}\". Now, regarding your question: \"{user_message}\""
+            response_text = generate_llm_response(prompt_text, max_length_offset=70)
+        else:
+            response_text = generate_llm_response(user_message)
+    else:
+        response_text = generate_llm_response(user_message)
+
     return jsonify({
-        'response': response, 
-        'timestamp': int(time.time() * 1000),
-        'memory_stored': memory_stored,
-        'memory_context_found': bool(memory_context)
+        "response": response_text,
+        "memory_stored": memory_stored,
+        "memory_context_found": memory_context_found
     })
 
 # Enhanced AI chat endpoint with file/screenshot support and memory search
 @chat_bp.route('/ai-chat-enhanced', methods=['POST'])
 def ai_chat_enhanced():
-    data = request.get_json()
-    user_input = data.get('message', '').strip()
-    system_prompt = data.get('system_prompt', '').strip() or "You are a helpful AI assistant. Answer the user's question in a concise, non-repetitive way."
-    files = data.get('files', [])
-    
-    if not user_input and not files:
-        return jsonify({'error': 'No message or files provided.'}), 400
-
-    # Process uploaded files/screenshots
-    file_context = ""
-    if files:
-        file_context = "\n\nAttached files:\n"
-        for file_info in files:
-            file_context += f"- {file_info['name']} ({file_info['type']})\n"
-            
-            # For images, add description
-            if file_info.get('isImage') and file_info.get('content'):
-                file_context += f"  [Image content available for analysis]\n"
-            # For text files, include content snippet
-            elif file_info.get('content') and not file_info.get('isImage'):
-                content = file_info['content'][:500]  # First 500 chars
-                if len(file_info['content']) > 500:
-                    content += "..."
-                file_context += f"  Content: {content}\n"    # Search related memories using vector database
-    memory_context = ""
+    data = request.json
+    user_message = data.get('message', '')
     user_id = data.get('user_id', 'anonymous')
-    
-    if user_input and is_question_seeking_memory(user_input):
-        relevant_memories = search_memory_for_context(user_input, user_id)
-        if relevant_memories:
-            memory_context = f"\n\nRelevant memories found:\n"
-            for i, mem in enumerate(relevant_memories[:3]):  # Limit to 3 most relevant
-                memory_context += f"{i+1}. {mem['text']}\n"
 
-    # Build enhanced prompt with context
-    full_prompt = f"{system_prompt}\n"
-    if memory_context:
-        full_prompt += memory_context
-    if file_context:
-        full_prompt += file_context
-    full_prompt += f"\nUser: {user_input}\nAI:"
+    if not user_message:
+        return jsonify({"error": "No message provided"}), 400
 
-    # Generate response using local LLM
-    result = local_llm(
-        full_prompt,
-        max_new_tokens=60,  # Slightly more tokens for context-aware responses
-        num_return_sequences=1,
-        repetition_penalty=1.3,
-        eos_token_id=None,
-        return_full_text=True
-    )
-
-    if isinstance(result, list) and 'generated_text' in result[0]:
-        generated = result[0]['generated_text']
-        response = generated[len(full_prompt):] if generated.startswith(full_prompt) else generated
-        response = response.replace(user_input, '').replace('User:', '').replace('AI:', '').strip()
-        
-        # Clean up response
-        for stop_token in ['\n\n', '\nUser:', '\nAI:', '. ']:
-            idx = response.find(stop_token)
-            if idx > 0:
-                response = response[:idx+1].strip()
-                break
-        
-        # Remove repetitive lines
-        lines = response.splitlines()
-        seen = set()
-        filtered = []
-        for line in lines:
-            l = line.strip()
-            if l and l not in seen:
-                filtered.append(l)
-                seen.add(l)
-        response = '\n'.join(filtered)
-        
-        if not response:
-            response = "I've analyzed your input and files. How can I help you further?"
-    else:
-        response = "I'm here to help! Please ask me anything."    # Store important information in memory using vector database
+    db = get_vector_database() # Get DB instance here
+    response_text = ""
     memory_stored = False
-    if user_input and is_statement_worth_remembering(user_input):
-        memory_stored = store_information_in_memory(user_input, user_id)
-    
-    # Also save the interaction to shared memory for legacy compatibility
-    if user_input or files:
-        env_id = get_env_id()
-        interaction = {
-            'type': 'ai_interaction',
-            'user_input': user_input,
-            'ai_response': response,
-            'files': [{'name': f['name'], 'type': f['type']} for f in files],
-            'timestamp': int(time.time() * 1000)        }
-        
-        if env_id not in shared_env_box:
-            shared_env_box[env_id] = []
-        shared_env_box[env_id].append(interaction)
+    memory_context_found = False
+    parsed_schedule_info = None
 
+    schedule_match = re.search(r"(\w+)\s+should\s+go\s+at\s+(.+)", user_message, re.IGNORECASE)
+    if schedule_match:
+        parsed_schedule_info = {"name": schedule_match.group(1), "time": schedule_match.group(2)}
+    
+    if user_message:
+        if is_statement_worth_remembering(user_message):
+            store_information_in_memory(user_message, user_id) # Pass db if needed
+            memory_stored = True
+            if parsed_schedule_info:
+                response_text = f"OK, {parsed_schedule_info['name']} should go at {parsed_schedule_info['time']}, today."
+            else:
+                response_text = f"OK, I've remembered that: \"{user_message}\""
+        elif is_question_seeking_memory(user_message):
+            context_results = search_memory_for_context(user_message, user_id) # Pass db if needed
+            context_texts = [item['text'] for item in context_results if 'text' in item]
+            context_for_prompt = " ".join(context_texts)
+
+            if context_for_prompt:
+                memory_context_found = True
+                prompt_text = f"Based on our previous conversation: \"{context_for_prompt}\". Now, regarding your question: \"{user_message}\""
+                response_text = generate_llm_response(prompt_text, max_length_offset=70)
+            else:
+                response_text = generate_llm_response(user_message)
+        else:
+            response_text = generate_llm_response(user_message)
+    
     return jsonify({
-        'response': response, 
-        'timestamp': int(time.time() * 1000),
-        'memory_context_found': bool(memory_context),
-        'memory_stored': memory_stored,
-        'files_processed': len(files)
+        "response": response_text,
+        "user_id": user_id,
+        "memory_stored": memory_stored,
+        "memory_context_found": memory_context_found,
+        "files_processed": 0 
     })
 
 # Utility function to get build version (imported from main app)

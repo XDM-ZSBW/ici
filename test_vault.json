@@ -1,0 +1,22 @@
+{
+  "user_id": "test-user-final",
+  "tab_id": "12345",
+  "url": "https://example.com/test-page",
+  "ui_element": {
+    "selector": "#test-element",
+    "tag_name": "div",
+    "text_content": "Testing vector database after fixes - this should work perfectly now with proper structure",
+    "attributes": {
+      "class": "test-class",
+      "id": "test-element"
+    },
+    "position": {
+      "x": 100,
+      "y": 200
+    }
+  },
+  "storage_data": {
+    "test": "final",
+    "timestamp": "2025-05-26"
+  }
+}
