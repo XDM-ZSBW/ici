@@ -1,0 +1,19 @@
+{
+  "user_id": "test_user",
+  "tab_id": "123",
+  "url": "https://example.com/page1",
+  "ui_element": {
+    "selector": "#main-button",
+    "tag_name": "button",
+    "text_content": "Click me to submit your form",
+    "attributes": {
+      "class": "btn-primary"
+    },
+    "position": {
+      "x": 100,
+      "y": 200,
+      "width": 120,
+      "height": 40
+    }
+  }
+}

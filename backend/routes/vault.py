@@ -44,7 +44,8 @@ def collect_vault_data():
             attributes=ui_element_data.get('attributes', {}),
             position=ui_element_data.get('position', {})
         )
-          # Create vault entry
+        
+        # Create vault entry
         vault_entry = VaultEntry(
             user_id=data['user_id'],
             tab_id=str(data['tab_id']),
@@ -55,6 +56,9 @@ def collect_vault_data():
             vector_embedding=None,  # Will be populated by ML service
             timestamp=data.get('timestamp', time.time() * 1000)
         )
+        # Ensure entry_id is always a string
+        if not vault_entry.entry_id:
+            vault_entry.entry_id = f"vault_{hash((vault_entry.user_id, vault_entry.url, vault_entry.ui_element.selector, vault_entry.timestamp))}_{int(vault_entry.timestamp)}"
         
         # Get or create user vault
         user_id = data['user_id']
@@ -82,15 +86,14 @@ def collect_vault_data():
             }
             
             success = vector_db.add_entry(
-                entry_id=vault_entry.entry_id,
+                entry_id=str(vault_entry.entry_id),
                 user_id=user_id,
                 text_content=text_content,
                 metadata=metadata
             )
-            
             if success:
                 # Get the generated embedding and store it
-                embedding = vector_db.get_entry_embedding(vault_entry.entry_id)
+                embedding = vector_db.get_entry_embedding(str(vault_entry.entry_id))
                 vault_entry.vector_embedding = embedding
         
         return jsonify({
@@ -118,50 +121,38 @@ def search_vault():
     if not user_id or not query_text:
         return jsonify({"error": "Missing user_id or query_text"}), 400
     
-    if user_id not in user_vaults:
-        return jsonify({"entries": [], "count": 0})
-    
     try:
-        # Use vector similarity search
-        similar_entries = vector_db.search_similar(
+        # Use vector similarity search directly
+        search_results = vector_db.search_entries(
             user_id=user_id,
             query_text=query_text,
-            limit=limit,
-            threshold=threshold
+            k=limit
         )
         
-        # Get vault entries for the similar entry IDs
-        vault = user_vaults[user_id]
+        # Convert to the expected format
         matching_entries = []
-        
-        for entry_id, similarity_score in similar_entries:
-            for entry in vault.entries:
-                if entry.entry_id == entry_id:
-                    # Apply domain filter if specified
-                    if not domain_filter or entry.domain == domain_filter:
-                        entry_dict = entry.to_dict()
-                        entry_dict['similarity_score'] = similarity_score
-                        matching_entries.append(entry_dict)
-                    break
-        
-        # Fallback to simple text search if vector search returns no results
-        if not matching_entries:
-            for entry in vault.entries:
-                text_content = entry.ui_element.text_content.lower()
-                if query_text.lower() in text_content:
-                    if not domain_filter or entry.domain == domain_filter:
-                        entry_dict = entry.to_dict()
-                        entry_dict['similarity_score'] = 0.5  # Lower score for text match
-                        matching_entries.append(entry_dict)
+        for entry_id, similarity_score, metadata in search_results:
+            # Apply domain filter if specified
+            if not domain_filter or metadata.get('domain') == domain_filter:
+                entry_data = {
+                    'entry_id': entry_id,
+                    'similarity_score': similarity_score,
+                    'url': metadata.get('url'),
+                    'domain': metadata.get('domain'),
+                    'selector': metadata.get('selector'),
+                    'tag_name': metadata.get('tag_name'),
+                    'timestamp': metadata.get('timestamp')
+                }
+                matching_entries.append(entry_data)
         
         return jsonify({
             "entries": matching_entries,
             "count": len(matching_entries),
-            "search_type": "vector" if similar_entries else "text"
+            "search_type": "vector"
         })
         
     except Exception as e:
-        return jsonify({"error": f"Search failed: {str(e)}"}), 500
+        return jsonify({"error": f"Vector search failed: {str(e)}"}), 500
 
 @vault_bp.route("/vault/entries/<user_id>", methods=["GET"])
 def get_user_entries(user_id):

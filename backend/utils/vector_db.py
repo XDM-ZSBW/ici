@@ -32,7 +32,8 @@ class VectorDatabase:
         self.model = None
         self.index = None
         self.entries: Dict[str, VectorEntry] = {}
-        self.user_indices: Dict[str, faiss.Index] = {}
+        self.user_indices: Dict[str, faiss.IndexIDMap2] = {}
+        self.user_entry_order: Dict[str, list] = {}  # Maps user_id to list of entry_ids in FAISS order
         self.lock = threading.Lock()
         
         # Initialize model and index
@@ -49,11 +50,12 @@ class VectorDatabase:
             # Fallback to dummy implementation
             self.model = None
     
-    def _get_user_index(self, user_id: str) -> faiss.Index:
+    def _get_user_index(self, user_id: str) -> faiss.IndexIDMap2:
         """Get or create FAISS index for a specific user"""
         if user_id not in self.user_indices:
-            # Create new index for user (using Inner Product for cosine similarity)
-            self.user_indices[user_id] = faiss.IndexFlatIP(self.dimension)
+            base_index = faiss.IndexFlatIP(self.dimension)
+            self.user_indices[user_id] = faiss.IndexIDMap2(base_index)
+            self.user_entry_order[user_id] = []
         return self.user_indices[user_id]
     
     def generate_embedding(self, text: str) -> Optional[np.ndarray]:
@@ -90,7 +92,11 @@ class VectorDatabase:
                     metadata=metadata
                 )                # Add to user's FAISS index
                 user_index = self._get_user_index(user_id)
-                user_index.add(np.array([embedding]))
+                eid_int = abs(hash(entry_id)) % (2**63)
+                embedding_np = np.array([embedding]).astype(np.float32)
+                eid_np = np.array([eid_int], dtype=np.int64)
+                user_index.add_with_ids(embedding_np, eid_np)
+                self.user_entry_order[user_id].append((eid_int, entry_id))
                 
                 # Store entry
                 self.entries[entry_id] = vector_entry
@@ -134,7 +140,43 @@ class VectorDatabase:
             except Exception as e:
                 print(f"Failed to search vectors: {e}")
                 return []
-      def get_entry_embedding(self, entry_id: str) -> Optional[List[float]]:
+    
+    def search_entries(self, user_id: str, query_text: str, k: int = 5) -> List[Tuple[str, float, Dict]]:
+        """Search for entries by text similarity for a specific user"""
+        if not self.model or not query_text.strip():
+            return []
+
+        query_embedding = self.generate_embedding(query_text)
+        if query_embedding is None:
+            return []
+
+        with self.lock:
+            user_index = self._get_user_index(user_id)
+            if user_index.ntotal == 0:
+                return []
+
+            try:
+                query_np = np.array([query_embedding]).astype(np.float32).reshape(1, -1)
+                distances, indices = user_index.search(query_np, k)
+                results = []
+                # Map FAISS index IDs back to entry_ids
+                id_map = dict(self.user_entry_order[user_id])
+                for i in range(k):
+                    faiss_id = indices[0][i]
+                    if faiss_id == -1:
+                        continue
+                    entry_id = id_map.get(faiss_id)
+                    if entry_id is None:
+                        continue
+                    entry = self.entries.get(entry_id)
+                    if entry:
+                        results.append((entry.entry_id, float(distances[0][i]), entry.metadata))
+                return results
+            except Exception as e:
+                print(f"Failed to search entries for user {user_id}: {e}")
+                return []
+
+    def get_entry_embedding(self, entry_id: str) -> Optional[List[float]]:
         """Get embedding for a specific entry"""
         if entry_id in self.entries:
             return self.entries[entry_id].embedding.tolist()
@@ -154,6 +196,22 @@ class VectorDatabase:
             
             print(f"Removed all data for user {user_id}")
     
+    def remove_entry(self, entry_id: str, user_id: str) -> bool:
+        """Remove entry from vector database"""
+        with self.lock:
+            if entry_id not in self.entries or self.entries[entry_id].user_id != user_id:
+                return False
+            eid_int = abs(hash(entry_id)) % (2**63)
+            user_index = self._get_user_index(user_id)
+            try:
+                user_index.remove_ids(np.array([eid_int], dtype=np.int64))
+            except Exception as e:
+                print(f"FAISS remove_ids failed: {e}")
+            self.user_entry_order[user_id] = [(i, eid) for i, eid in self.user_entry_order[user_id] if eid != entry_id]
+            del self.entries[entry_id]
+            print(f"Removed entry {entry_id} from internal store and FAISS for user {user_id}.")
+            return True
+    
     def get_stats(self) -> Dict:
         """Get database statistics"""
         with self.lock:
@@ -169,9 +227,66 @@ class VectorDatabase:
                 "dimension": self.dimension
             }
 
-# Global vector database instance
-vector_db = VectorDatabase()
+# Global instance of the vector database
+_vector_db_instance = None
+_vector_db_lock = threading.Lock()
 
-def get_vector_database() -> VectorDatabase:
-    """Get the global vector database instance"""
-    return vector_db
+def get_vector_database_instance():
+    """Get the global instance of the vector database, creating it if necessary."""
+    global _vector_db_instance
+    if _vector_db_instance is None:
+        with _vector_db_lock:
+            if _vector_db_instance is None:
+                print("Initializing VectorDatabase singleton...")
+                _vector_db_instance = VectorDatabase()
+    return _vector_db_instance
+
+# For compatibility with the previous import, though get_vector_database_instance is preferred
+def get_vector_database():
+    return get_vector_database_instance()
+
+# Example usage (optional, for testing)
+if __name__ == "__main__":
+    db = get_vector_database_instance()
+    
+    # Test embedding
+    sample_text = "This is a test sentence."
+    embedding = db.generate_embedding(sample_text)
+    if embedding is not None:
+        print(f"Generated embedding for '{sample_text}': {embedding[:5]}...") # Print first 5 dimensions
+    else:
+        print(f"Failed to generate embedding for '{sample_text}'")
+
+    # Test adding entry
+    user1 = "user_test_123"
+    entry1_id = "entry_test_001"
+    text1 = "Hello world, this is a test entry."
+    meta1 = {"url": "http://example.com/page1"}
+    
+    if db.add_entry(entry_id=entry1_id, user_id=user1, text_content=text1, metadata=meta1):
+        print(f"Successfully added entry {entry1_id}")
+    else:
+        print(f"Failed to add entry {entry1_id}")
+
+    # Test searching
+    query_text = "test entry"
+    results = db.search_entries(user_id=user1, query_text=query_text, k=1)
+    if results:
+        print(f"Search results for '{query_text}':")
+        for res_id, score, meta in results:
+            print(f"  ID: {res_id}, Score: {score:.4f}, Meta: {meta}")
+    else:
+        print(f"No results found for '{query_text}'")
+    
+    # Test removing entry
+    if db.remove_entry(entry1_id, user1):
+        print(f"Successfully removed entry {entry1_id}")
+    else:
+        print(f"Failed to remove entry {entry1_id}")
+
+    # Test persistence (if implemented)
+    # db.save_database("my_vector_db.json")
+    # new_db = get_vector_database_instance()
+    # new_db.load_database("my_vector_db.json")
+    # results_after_load = new_db.search_entries(user_id=user1, query_text="test entry", k=1)
+    # print(f"Results after loading: {results_after_load}")
