@@ -9,6 +9,8 @@ import json
 import os
 import asyncio
 from datetime import datetime, timedelta
+from backend.utils.secrets_manager import TransparentSecretsManager
+import traceback
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -486,3 +488,28 @@ def client_table_events():
     response.headers['Connection'] = 'keep-alive'
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
+
+@admin_bp.route('/secret-lookup', methods=['GET', 'POST'])
+def secret_lookup():
+    result = None
+    error = None
+    debug = None
+    if request.method == 'POST':
+        project_id = request.form.get('project_id', '').strip()
+        environment = request.form.get('environment', '').strip()
+        secret_name = request.form.get('secret_name', '').strip()
+        try:
+            if not project_id or not environment or not secret_name:
+                raise ValueError('All fields are required.')
+            os.environ['GOOGLE_CLOUD_PROJECT'] = project_id
+            os.environ['ENVIRONMENT'] = environment
+            manager = TransparentSecretsManager()
+            debug = f"[DEBUG] Using project_id={project_id}, environment={environment}, secret_name={secret_name}"
+            value = manager.get_secret(secret_name)
+            if value is not None:
+                result = value
+            else:
+                error = f"Secret '{secret_name}' not found."
+        except Exception as e:
+            error = str(e) + '\n' + traceback.format_exc()
+    return render_template('secret_lookup.html', result=result, error=error, debug=debug)

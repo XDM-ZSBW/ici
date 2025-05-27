@@ -4,3 +4,5 @@ psutil
 markdown
 requests
 aiohttp
+google-auth
+google-cloud-secret-manager

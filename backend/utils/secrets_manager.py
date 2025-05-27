@@ -34,10 +34,32 @@ class TransparentSecretsManager:
     """
     
     def __init__(self):
+        # Try to get project ID from env, else from gcloud auth or metadata
         self.project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
+        if not self.project_id:
+            try:
+                import google.auth
+                creds, project = google.auth.default()
+                if not project:
+                    # Try to get project from metadata if running on GCP
+                    try:
+                        import requests
+                        r = requests.get(
+                            'http://metadata.google.internal/computeMetadata/v1/project/project-id',
+                            headers={'Metadata-Flavor': 'Google'}, timeout=2
+                        )
+                        if r.status_code == 200:
+                            project = r.text
+                    except Exception as meta_e:
+                        logger.warning(f"Could not get project from GCP metadata: {meta_e}")
+                if project:
+                    self.project_id = project
+                    logger.info(f"GOOGLE_CLOUD_PROJECT auto-detected: {self.project_id}")
+            except Exception as e:
+                logger.warning(f"Could not auto-detect GOOGLE_CLOUD_PROJECT: {e}")
         self.environment = os.getenv('ENVIRONMENT', 'development')
         self.client = None
-          # Initialize Google Cloud client if available and configured
+        # Initialize Google Cloud client if available and configured
         if GOOGLE_CLOUD_AVAILABLE and self.project_id and secretmanager:
             try:
                 self.client = secretmanager.SecretManagerServiceClient()
@@ -45,7 +67,6 @@ class TransparentSecretsManager:
             except Exception as e:
                 logger.warning(f"Could not initialize Secret Manager client: {e}")
                 self.client = None
-        
         # Log configuration transparently (no secret values)
         logger.info(f"Secrets Manager initialized - Environment: {self.environment}, "
                    f"Secret Manager available: {bool(self.client)}")
