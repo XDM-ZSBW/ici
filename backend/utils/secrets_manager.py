@@ -37,8 +37,7 @@ class TransparentSecretsManager:
         self.project_id = os.getenv('GOOGLE_CLOUD_PROJECT')
         self.environment = os.getenv('ENVIRONMENT', 'development')
         self.client = None
-        
-        # Initialize Google Cloud client if available and configured
+          # Initialize Google Cloud client if available and configured
         if GOOGLE_CLOUD_AVAILABLE and self.project_id and secretmanager:
             try:
                 self.client = secretmanager.SecretManagerServiceClient()
@@ -46,7 +45,8 @@ class TransparentSecretsManager:
             except Exception as e:
                 logger.warning(f"Could not initialize Secret Manager client: {e}")
                 self.client = None
-          # Log configuration transparently (no secret values)
+        
+        # Log configuration transparently (no secret values)
         logger.info(f"Secrets Manager initialized - Environment: {self.environment}, "
                    f"Secret Manager available: {bool(self.client)}")
     

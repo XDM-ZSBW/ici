@@ -353,3 +353,136 @@ def changelog():
 def policies():
     """Policies and terms page"""
     return render_template("policies.html")
+
+@admin_bp.route("/recovery")
+def recovery():
+    """Recovery page for administrators"""
+    env_id = request.args.get("env_id")
+    if not env_id:
+        env_id = get_env_id()
+    
+    # Get clients for this environment
+    from backend.routes.client import client_json_table
+    filtered_clients = [c for c in client_json_table if c.get("env_id") == env_id]
+    
+    return render_template("recovery.html", env_id=env_id, clients=filtered_clients)
+
+@admin_bp.route("/get-lost-memory-reports")
+def get_lost_memory_reports():
+    """Get lost memory reports for an environment"""
+    env_id = request.args.get("env_id")
+    if not env_id:
+        return jsonify({"status": "error", "message": "env_id required"}), 400
+    
+    reports = lost_memory_reports.get(env_id, [])
+    return jsonify({
+        "status": "ok",
+        "reports": reports,
+        "env_id": env_id
+    })
+
+@admin_bp.route("/file-lost-memory-report", methods=["POST"])
+def file_lost_memory_report():
+    """File a lost memory report"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "reason": "No data provided"}), 400
+    
+    env_id = data.get("env_id")
+    details = data.get("details")
+    
+    if not env_id or not details:
+        return jsonify({"status": "error", "reason": "env_id and details required"}), 400
+    
+    # Create report entry
+    import time
+    report_entry = {
+        "timestamp": time.time(),
+        "details": details,
+        "env_id": env_id
+    }
+    
+    # Store report
+    if env_id not in lost_memory_reports:
+        lost_memory_reports[env_id] = []
+    
+    lost_memory_reports[env_id].append(report_entry)
+    
+    return jsonify({
+        "status": "ok",
+        "message": "Report filed successfully"
+    })
+
+@admin_bp.route("/delete-client-row", methods=["POST"])
+def delete_client_row():
+    """Delete a specific client row"""
+    data = request.get_json()
+    if not data:
+        return jsonify({"status": "error", "message": "No data provided"}), 400
+    
+    client_id = data.get("client_id")
+    private_id = data.get("private_id")
+    
+    if not client_id:
+        return jsonify({"status": "error", "message": "client_id required"}), 400
+    
+    # Remove from client table
+    from backend.routes.client import client_json_table, client_memory
+    
+    # Remove from table
+    original_length = len(client_json_table)
+    client_json_table[:] = [c for c in client_json_table if c.get("client_id") != client_id]
+    
+    # Remove from memory
+    env_id = get_env_id()
+    client_key = f"{env_id}:{client_id}"
+    if client_key in client_memory:
+        del client_memory[client_key]
+    
+    removed_count = original_length - len(client_json_table)
+    
+    return jsonify({
+        "status": "ok",
+        "message": f"Removed {removed_count} client record(s)",
+        "removed_count": removed_count
+    })
+
+@admin_bp.route("/delete-all-client-rows", methods=["POST"])
+def delete_all_client_rows():
+    """Delete all client rows for current environment"""
+    env_id = get_env_id()
+    
+    from backend.routes.client import client_json_table, client_memory
+    
+    # Remove from table
+    original_length = len(client_json_table)
+    client_json_table[:] = [c for c in client_json_table if c.get("env_id") != env_id]
+    
+    # Remove from memory
+    keys_to_remove = [key for key in client_memory.keys() if key.startswith(f"{env_id}:")]
+    for key in keys_to_remove:
+        del client_memory[key]
+    
+    removed_count = original_length - len(client_json_table)
+    
+    return jsonify({
+        "status": "ok",
+        "message": f"Removed {removed_count} client record(s) for environment {env_id}",
+        "removed_count": removed_count
+    })
+
+@admin_bp.route("/client-table-events")
+def client_table_events():
+    """Server-Sent Events for client table updates"""
+    def generate():
+        while True:
+            from backend.routes.client import client_json_table
+            yield f"data: {json.dumps(client_json_table)}\n\n"
+            import time
+            time.sleep(2)  # Update every 2 seconds
+    
+    response = Response(generate(), mimetype='text/event-stream')
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['Connection'] = 'keep-alive'
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
