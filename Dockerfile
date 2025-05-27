@@ -24,8 +24,8 @@ USER app
 EXPOSE 8080
 
 # Health check endpoint
-#HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-#    CMD curl -f http://localhost:8080/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
 
 # Set the command to run the application     
 CMD ["python", "app.py"]
