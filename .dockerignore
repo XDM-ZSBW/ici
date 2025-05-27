@@ -36,7 +36,7 @@ test_*.py
 *.crt
 *.key
 *.json
-*.md
+#*.md
 *.txt
 
 # Node/npm (if present)
