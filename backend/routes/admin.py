@@ -1,4 +1,4 @@
-# Administrative routes for ICI Chat backend
+# Administrative routes                {"id": "P1F1", "title": "Decouple Pre-trained LLM", "description": "Remove dependency on external/pre-trained generative LLMs (e.g., distilgpt2) for core chat.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-20", "end_date": "2025-05-26", "impact_areas": ["AI Core", "Performance"]},for ICI Chat backend
 
 from flask import Blueprint, render_template, jsonify, request, Response
 import markdown
@@ -102,9 +102,9 @@ def recovery():
         env_id = get_env_id()
     return render_template("recovery.html", env_id=env_id)
 
-@admin_bp.route("/health")
-def health():
-    """Health check endpoint"""
+@admin_bp.route("/health-dashboard")
+def health_dashboard():
+    """Health dashboard endpoint (renamed to avoid conflict with API health endpoint)"""
     return render_template("health.html")
 
 @admin_bp.route("/readme")

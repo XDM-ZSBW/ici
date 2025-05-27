@@ -139,28 +139,19 @@ ICI uses a modern, modular architecture designed for maintainability and extensi
 - **Server-Sent Events (SSE)** for admin live tables
 - **HTML5, CSS, JavaScript** (vanilla, no frameworks)
 
-## Running ICI
+## 🚀 Running the Application
 
-### Development Setup
+**Use `app.py` as the ONLY entry point for all environments (local & Cloud Run):**
 
-1. **Install dependencies**:
-   ```sh
-   pip install flask flask-socketio eventlet
-   ```
+```sh
+python app.py
+```
 
-2. **Run the application**:
-   ```sh
-   python app.py
-   ```
+- For local development, HTTPS is auto-configured if certs are present.
+- For Cloud Run, simply deploy with `app.py` as the entrypoint (Cloud Run handles SSL termination).
 
-3. **Access the application**:
-   - Homepage: [http://localhost:8080](http://localhost:8080)
-   - Chat Interface: [http://localhost:8080/chat](http://localhost:8080/chat)
-   - Join Community: [http://localhost:8080/join](http://localhost:8080/join)
-
-### Legacy Version
-- The original `app.py` is maintained for backward compatibility
-- Run with: `python app.py`
+> **Note:**
+> `run_refactored.py` is deprecated and should NOT be used. It is retained for reference only and will be removed in a future release. All startup and deployment should use `app.py`.
 
 ## Community & Ethics
 
@@ -252,16 +243,18 @@ ICI operates under strict ethical guidelines developed in partnership with disab
 - Add the `bin` directory to your PATH so Python can find `openssl.exe`.
 
 ### Cloud Run Deployment
-- Use a `Dockerfile` based on `python:3.9-slim`.
-- Expose port 8080 and use HTTPS (Cloud Run handles certs).
-- For LLMs, use small models (DistilGPT2, quantized Llama) to fit memory/CPU limits.
-- Cold starts can be slow if loading models—consider using a health check endpoint.
+- **Lightweight Architecture**: Optimized for Google Cloud Run with 1 CPU and 512MB RAM
+- Use a `Dockerfile` based on `python:3.9-slim` for minimal footprint
+- Expose port 8080 and use HTTPS (Cloud Run handles certs)
+- **No Heavy Dependencies**: Removed transformers, torch, and vector databases for faster builds
+- **Fast Cold Starts**: Lightweight implementation eliminates model loading delays
 
 ### AI Chat & Memory
-- Small LLMs are limited: use prompt engineering, repetition penalty, and post-processing to improve output.
-- For best results, use OpenAI/Gemini API or a larger local model if resources allow.
-- Store user memories and include them in the prompt for context.
-- For screenshots, use OCR to extract text and store as memory.
+- **Text-Based Search**: Uses efficient string matching instead of vector embeddings
+- **Memory System**: Lightweight in-memory storage with simple text-based retrieval
+- Store user memories and include them in the prompt for context
+- For screenshots, use OCR to extract text and store as memory
+- **Cloud Run Ready**: Optimized for serverless deployment constraints
 
 ### Admin & Wallets
 - Admin UI allows wallet creation and management.

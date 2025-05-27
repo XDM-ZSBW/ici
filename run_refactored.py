@@ -9,6 +9,10 @@ import subprocess
 from backend.factory import create_app
 from graceful_shutdown import get_shutdown_manager
 
+# DEPRECATED: Do not use this file to start the ICI Chat app.
+# Use app.py as the single entry point for all environments (local & Cloud Run).
+# This file is retained for reference only and will be removed in a future release.
+
 CERT_FILE = "cert.pem"
 KEY_FILE = "key.pem"
 PORT = 8080

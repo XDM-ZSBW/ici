@@ -21,7 +21,9 @@ chat_bp = Blueprint('chat_bp', __name__)
 def ai_chat():
     data = request.json or {}
     user_message = data.get('message')
-    user_id = data.get('user_id', 'anonymous')    if not user_message:
+    user_id = data.get('user_id', 'anonymous')
+
+    if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
     # No longer need vector database - using lightweight memory functions
@@ -50,7 +52,6 @@ def ai_chat():
         # Extract just the text from context_results for the prompt
         context_texts = [item['text'] for item in context_results if 'text' in item]
         context_for_prompt = " ".join(context_texts)
-
 
         if context_for_prompt:
             memory_context_found = True
@@ -88,7 +89,8 @@ def ai_chat():
 
 # Enhanced AI chat endpoint with file/screenshot support and memory search
 @chat_bp.route('/ai-chat-enhanced', methods=['POST'])
-def ai_chat_enhanced():    data = request.json or {}
+def ai_chat_enhanced():
+    data = request.json or {}
     user_message = data.get('message', '')
     user_id = data.get('user_id', 'anonymous')
     
@@ -188,7 +190,8 @@ def env_id_endpoint():
     # Check if this is an AJAX request
     if request.headers.get('Accept') == 'application/json' or request.headers.get('Content-Type') == 'application/json':
         return jsonify({"env_id": env_id})
-      # Otherwise return the HTML page
+    
+    # Otherwise return the HTML page
     return render_template("env-id.html", env_id=env_id)
 
 # Note: /readme route moved to admin.py to avoid conflicts

@@ -136,3 +136,8 @@ curl -k "https://localhost:8080/env-box?env_id=test"
 - Environment ID is consistent per server instance
 - Memory scopes: private (user), ip (network), shared (global)
 - WebSocket available at `/socket.io/` for real-time updates
+
+## Startup / Entrypoint
+
+- Use <code>python app.py</code> to start the backend for all environments (local & Cloud Run).
+- <code>run_refactored.py</code> is deprecated and should not be used.

@@ -83,14 +83,12 @@ def complete_app_initialization(app):
         app.register_blueprint(memory_bp)
           # Initialize memory systems
         app.config['STARTUP_STATE']['memory_initialized'] = True
-        
-        # Initialize vector database
+          # Vector database no longer needed - lightweight implementation
         try:
-            from utils.vector_db import get_vector_database
-            get_vector_database()  # This initializes the vector DB
+            print("[STARTUP] Using lightweight text-based search (no vector database)")
             app.config['STARTUP_STATE']['vector_db_ready'] = True
         except Exception as e:
-            print(f"[STARTUP] Vector DB initialization warning: {e}")
+            print(f"[STARTUP] Startup warning: {e}")
             app.config['STARTUP_STATE']['vector_db_ready'] = True  # Continue anyway
         
         # Add data endpoint for backward compatibility

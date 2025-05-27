@@ -1,36 +1,41 @@
 #!/usr/bin/env python3
 """
-ICI Chat Application Launcher
-Starts the refactored ICI Chat application using the new modular backend structure.
+ICI Chat Application Launcher - Cloud Run Optimized
+Single entry point for the lightweight ICI Chat application.
+Optimized for Google Cloud Run deployment with <512MB memory usage.
 """
 import sys
 import os
 import subprocess
-from backend.factory import create_app
+import threading
+import time
+from backend.factory import create_app, complete_app_initialization
 from graceful_shutdown import get_shutdown_manager
 
+# Configuration
 CERT_FILE = "cert.pem"
 KEY_FILE = "key.pem"
-PORT = 8080
+PORT = int(os.environ.get("PORT", 8080))  # Cloud Run sets PORT env var
+IS_CLOUD_RUN = os.environ.get("K_SERVICE") is not None  # Cloud Run detection
 
-# Auto-generate self-signed cert if not present
-if not (os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)):
-    print("[SSL] No cert.pem/key.pem found. Generating self-signed certificate for local HTTPS...")
+# Only generate SSL certs for local development (not Cloud Run)
+if not IS_CLOUD_RUN and not (os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)):
+    print("[SSL] Local development: Generating self-signed certificate for HTTPS...")
     try:
         subprocess.run([
             "openssl", "req", "-x509", "-newkey", "rsa:4096", "-keyout", KEY_FILE, "-out", CERT_FILE,
             "-days", "365", "-nodes", "-subj", "/CN=localhost"
         ], check=True)
-        print(f"[SSL] Generated {CERT_FILE} and {KEY_FILE}.")
+        print(f"[SSL] Generated {CERT_FILE} and {KEY_FILE} for local development.")
     except FileNotFoundError:
-        print("[SSL] OpenSSL not found. Please install OpenSSL and add it to your PATH for automatic HTTPS cert generation.")
-        sys.exit(1)
+        print("[SSL] OpenSSL not found. Running HTTP only for local development.")
     except Exception as e:
-        print(f"[SSL] Failed to generate self-signed cert: {e}\nHTTPS will not be available.")
-        sys.exit(1)
+        print(f"[SSL] Failed to generate cert: {e}. Running HTTP only for local development.")
 
 if __name__ == "__main__":
-    print("Starting ICI Chat with progressive startup...")
+    deployment_type = "Cloud Run" if IS_CLOUD_RUN else "Local Development"
+    print(f"Starting ICI Chat Lightweight Solution - {deployment_type} Mode")
+    print(f"Memory optimized for Cloud Run (<512MB)")
 
     # Only run shutdown/cleanup logic if not in a Flask code reload
     is_reloader = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
@@ -39,55 +44,59 @@ if __name__ == "__main__":
         shutdown_mgr = get_shutdown_manager()
         shutdown_mgr.prepare_for_startup()
 
-    # Create app with basic functionality first
-    print("[STARTUP] Creating basic Flask app...")
+    # Create app with lightweight architecture
+    print("[STARTUP] Creating lightweight Flask app (no vector database)...")
     app, socketio = create_app()
 
     if shutdown_mgr:
         shutdown_mgr.register_app(app, socketio)
 
-    use_ssl = CERT_FILE and KEY_FILE and os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)
-    
+    # SSL only for local development (Cloud Run handles SSL termination)
+    use_ssl = not IS_CLOUD_RUN and CERT_FILE and KEY_FILE and os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)    
     # Start server in background thread to serve loading page immediately
-    import threading
-    import time
-    
     def complete_initialization():
         """Complete app initialization in background"""
         print("[STARTUP] Starting background initialization...")
         time.sleep(1)  # Brief delay to ensure server is responding
         
-        from backend.factory import complete_app_initialization
         complete_app_initialization(app)
         
-        print("[STARTUP] Background initialization complete!")
+        print("[STARTUP] Lightweight initialization complete!")
     
     # Start background initialization
     init_thread = threading.Thread(target=complete_initialization, daemon=True)
     init_thread.start()
     
-    # Start server immediately with basic routes
-    if use_ssl:
-        print("[SSL] Running with HTTPS at https://localhost:8080 ...")
-        print("[STARTUP] Loading page available immediately at https://localhost:8080")
+    # Start server - Cloud Run or Local Development
+    if IS_CLOUD_RUN:
+        print(f"[CLOUD RUN] Starting HTTP server on port {PORT} (SSL handled by Cloud Run)")
+        print("[STARTUP] Health check available at /health")
+        try:
+            socketio.run(app, host="0.0.0.0", port=PORT, debug=False)  # No debug in production
+        except Exception as e:
+            print(f"[ERROR] Cloud Run server error: {e}")
+            sys.exit(1)
+    elif use_ssl:
+        print(f"[LOCAL] Running with HTTPS at https://localhost:{PORT}")
+        print(f"[STARTUP] Loading page available immediately at https://localhost:{PORT}")
         try:
             socketio.run(app, host="0.0.0.0", port=PORT, debug=True, keyfile=KEY_FILE, certfile=CERT_FILE)
         except KeyboardInterrupt:
             print("\n[SHUTDOWN] Received keyboard interrupt")
         except Exception as e:
-            print(f"[ERROR] Server error: {e}")
+            print(f"[ERROR] Local server error: {e}")
         finally:
             if shutdown_mgr:
                 shutdown_mgr.cleanup()
     else:
-        print("[SSL] Running without HTTPS (no certs found or generated). Use HTTP only.")
-        print("[STARTUP] Loading page available immediately at http://localhost:8080")
+        print(f"[LOCAL] Running HTTP only at http://localhost:{PORT}")
+        print(f"[STARTUP] Loading page available immediately at http://localhost:{PORT}")
         try:
             socketio.run(app, host="0.0.0.0", port=PORT, debug=True)
         except KeyboardInterrupt:
             print("\n[SHUTDOWN] Received keyboard interrupt")
         except Exception as e:
-            print(f"[ERROR] Server error: {e}")
+            print(f"[ERROR] Local server error: {e}")
         finally:
             if shutdown_mgr:
                 shutdown_mgr.cleanup()
