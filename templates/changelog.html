@@ -151,6 +151,76 @@
             <p>Track the evolution of ICI Chat with detailed version history and updates</p>
         </div>
 
+        <!-- v1.3.4: Build Success -->
+        <div class="version changed">
+            <div class="version-header">
+                <div>
+                    <span class="version-number">v1.3.4</span>
+                    <span class="version-type type-minor">Minor</span>
+                </div>
+                <span class="version-date">May 26, 2025</span>
+            </div>
+            <div class="changes">
+                <div class="change-category fixed">
+                    <h4><span class="icon">✅</span> Build Success</h4>
+                    <ul class="change-list">
+                        <li>Build completed successfully after recent dependency, footer, and WebSocket cleanup changes</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- v1.3.3: Footer Links -->
+        <div class="version changed">
+            <div class="version-header">
+                <div>
+                    <span class="version-number">v1.3.3</span>
+                    <span class="version-type type-minor">Minor</span>
+                </div>
+                <span class="version-date">May 26, 2025</span>
+            </div>
+            <div class="changes">
+                <div class="change-category fixed">
+                    <h4><span class="icon">🔗</span> Footer Links</h4>
+                    <ul class="change-list">
+                        <li>Updated GitHub link in footer to <span class="code">https://github.com/XDM-ZSBW/ici</span></li>
+                        <li>Updated Contributors link in footer to <span class="code">https://github.com/XDM-ZSBW/ici/graphs/contributors</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- v1.3.2: WebSocket/Socket.IO Removal -->
+        <div class="version removed">
+            <div class="version-header">
+                <div>
+                    <span class="version-number">v1.3.2</span>
+                    <span class="version-type type-patch">Patch</span>
+                </div>
+                <span class="version-date">May 26, 2025</span>
+            </div>
+            <div class="changes">
+                <div class="change-category removed">
+                    <h4><span class="icon">🗑️</span> Removed / Deprecated</h4>
+                    <ul class="change-list">
+                        <li>Removed all WebSocket and Socket.IO support from backend and frontend for Cloud Run optimization</li>
+                        <li>Eliminated <span class="code">flask-socketio</span> and all related dependencies from requirements and Dockerfile</li>
+                        <li>Updated documentation and roadmap to reflect HTTP-only architecture</li>
+                        <li>Marked real-time sync and live updates as deprecated in favor of stateless HTTP endpoints</li>
+                    </ul>
+                </div>
+                <div class="change-category changed">
+                    <h4><span class="icon">📚</span> Documentation</h4>
+                    <ul class="change-list">
+                        <li>README.md now uses <span class="code">strikeout</span> for all removed WebSocket/Socket.IO features</li>
+                        <li>Added migration note for users relying on real-time sync</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="note">
+                <div class="note-title">⚠️ Breaking Change</div>
+                WebSocket-based real-time sync is no longer available. All communication is now HTTP-based for maximum compatibility and minimal resource usage on Cloud Run.
+            </div>
+        </div>
+
         <div class="version changed">
             <div class="version-header">
                 <div>
@@ -373,75 +443,6 @@
             <div class="note">
                 <div class="note-title">🚀 Launch:</div>
                 First stable release of ICI Chat as an open-source AI memory companion designed for cognitive accessibility.
-            </div>
-        </div>
-
-        <div class="version removed">
-            <div class="version-header">
-                <div>
-                    <span class="version-number">v1.3.2</span>
-                    <span class="version-type type-patch">Patch</span>
-                </div>
-                <span class="version-date">May 26, 2025</span>
-            </div>
-            <div class="changes">
-                <div class="change-category removed">
-                    <h4><span class="icon">🗑️</span> Removed / Deprecated</h4>
-                    <ul class="change-list">
-                        <li>Removed all WebSocket and Socket.IO support from backend and frontend for Cloud Run optimization</li>
-                        <li>Eliminated <span class="code">flask-socketio</span> and all related dependencies from requirements and Dockerfile</li>
-                        <li>Updated documentation and roadmap to reflect HTTP-only architecture</li>
-                        <li>Marked real-time sync and live updates as deprecated in favor of stateless HTTP endpoints</li>
-                    </ul>
-                </div>
-                <div class="change-category changed">
-                    <h4><span class="icon">📚</span> Documentation</h4>
-                    <ul class="change-list">
-                        <li>README.md now uses <span class="code">strikeout</span> for all removed WebSocket/Socket.IO features</li>
-                        <li>Added migration note for users relying on real-time sync</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="note">
-                <div class="note-title">⚠️ Breaking Change</div>
-                WebSocket-based real-time sync is no longer available. All communication is now HTTP-based for maximum compatibility and minimal resource usage on Cloud Run.
-            </div>
-        </div>
-
-        <div class="version changed">
-            <div class="version-header">
-                <div>
-                    <span class="version-number">v1.3.3</span>
-                    <span class="version-type type-minor">Minor</span>
-                </div>
-                <span class="version-date">May 26, 2025</span>
-            </div>
-            <div class="changes">
-                <div class="change-category fixed">
-                    <h4><span class="icon">🔗</span> Footer Links</h4>
-                    <ul class="change-list">
-                        <li>Updated GitHub link in footer to <span class="code">https://github.com/XDM-ZSBW/ici</span></li>
-                        <li>Updated Contributors link in footer to <span class="code">https://github.com/XDM-ZSBW/ici/graphs/contributors</span></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="version changed">
-            <div class="version-header">
-                <div>
-                    <span class="version-number">v1.3.4</span>
-                    <span class="version-type type-minor">Minor</span>
-                </div>
-                <span class="version-date">May 26, 2025</span>
-            </div>
-            <div class="changes">
-                <div class="change-category fixed">
-                    <h4><span class="icon">✅</span> Build Success</h4>
-                    <ul class="change-list">
-                        <li>Build completed successfully after recent dependency, footer, and WebSocket cleanup changes</li>
-                    </ul>
-                </div>
             </div>
         </div>
 
