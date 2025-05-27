@@ -1,54 +1,70 @@
 # 📋 ICI Chat Testing Suite - File Inventory
 
 ## 🎯 Purpose
-Complete endpoint testing infrastructure for ICI Chat application, enabling confident deployments and reliable regression testing.
+Complete endpoint testing infrastructure for ICI Chat application, enabling confident deployments and reliable regression testing. All test files are now organized in the `tests/` folder following the Single Entry Point Rule.
 
-## 📁 Test Files Created
+## 📁 Test Files Location
+**Location**: `/tests/` folder in project root
+**Organization**: All testing files consolidated following refactored project structure
+
+## 🗂️ Test Files Created
 
 ### Primary Test Suites
-1. **`test_endpoints.bat`** ⭐ **(RECOMMENDED)**
+1. **`tests/test_endpoints.bat`** ⭐ **(RECOMMENDED)**
    - Windows batch file for comprehensive testing
    - Works reliably across all Windows environments
-   - Tests all 38 endpoints with proper error handling
+   - Tests all endpoints with proper error handling
    - Colored output and clear progress indicators
 
-2. **`test_endpoints.ps1`**
+2. **`tests/test_endpoints.ps1`**
    - PowerShell version with advanced features
-   - Certificate bypass handling
+   - Certificate bypass handling for local HTTPS development
    - JSON response parsing
    - May have compatibility issues on older PowerShell versions
 
-3. **`test_endpoints.sh`**
+3. **`tests/test_endpoints.sh`**
    - Bash script for WSL/Linux environments
    - Full endpoint coverage with curl commands
    - Colored output and comprehensive testing
 
-4. **`api_test_collection.json`**
+4. **`tests/api_test_collection.json`**
    - Structured test collection for API tools
    - Import into Postman, Insomnia, or similar
    - All endpoints with proper request formats
 
 ### Quick Health Checks
-5. **`daily_health_check.ps1`** ⭐ **(DAILY USE)**
+5. **`tests/daily_health_check.ps1`** ⭐ **(DAILY USE)**
    - Fast health check for essential endpoints
    - 15-20 second execution time
    - Perfect for CI/CD pipelines
    - Clear pass/fail status reporting
 
+### Functional Tests
+6. **`tests/test_jeanne_functionality.py`**
+   - Tests "Who is [person]?" search functionality
+   - Validates cross-memory search capabilities
+   - Python-based testing for backend logic
+
+7. **`tests/test_who_is_complete.py`**
+   - Complete testing of enhanced memory search
+   - Integration testing for memory system
+
 ### Supporting Files
-6. **`test_payload.json`**
+8. **`tests/test_payload.json`** (if exists)
    - Sample JSON payloads for POST/DELETE testing
    - Reference for proper request formatting
 
 ### Documentation
-7. **`test_results_final.md`**
-   - Comprehensive test execution report
-   - Detailed analysis of all endpoint responses
-   - Issue identification and recommendations
+9. **`tests/README.md`**
+   - Testing suite overview and usage instructions
+   - Organized documentation for all test files
 
-8. **`ENDPOINT_TESTING_COMPLETE.md`**
-   - Executive summary of testing completion
-   - Technical architecture validation
+10. **`docs/TESTING_SUITE_INVENTORY.md`** (this file)
+    - Complete inventory of testing infrastructure
+
+11. **`docs/ENDPOINT_TESTING_COMPLETE.md`**
+    - Executive summary of testing completion
+    - Technical architecture validation
    - Future maintenance guidelines
 
 9. **`API_QUICK_REFERENCE.md`**

@@ -1,6 +1,6 @@
 # ICI Chat Testing Suite
 
-This folder contains all testing files for the ICI Chat application. All test files have been organized here following the **Single Entry Point Rule** - only one `app.py` exists in the root directory.
+This folder contains all testing files for the ICI Chat application. All test files have been organized here following the **Single Entry Point Rule** - only one `app.py` exists in the root directory with modular backend structure in `backend/`.
 
 ## 📁 Current Test Files
 
@@ -14,17 +14,22 @@ This folder contains all testing files for the ICI Chat application. All test fi
 - **`test_jeanne_functionality.py`** - Tests "Who is [person]?" search functionality
 - **`test_who_is_complete.py`** - Tests cross-memory search capabilities
 
+### Quick Tests
+- **`quick_test.py`** - Fast validation tests
+- **`test_lightweight.py`** - Lightweight endpoint validation
+- **`test_simple.py`** - Simple functionality tests
+
 ### Documentation
 - **`TESTING_SUITE_INVENTORY.md`** - Complete inventory of testing infrastructure
 - **`ENDPOINT_TESTING_COMPLETE.md`** - Endpoint testing completion documentation
 
 ## 🎯 Current Endpoints Tested
 
-Based on the current application architecture (as of May 2025), these test suites cover:
+Based on the current modular backend architecture (as of May 2025), these test suites cover:
 
 ### Core System
 - `GET /env-id` → Environment identifier
-- `GET /system-info` → Server status and Python info
+- `GET /system-info` → Server status and Python info  
 - `GET /health` → Health check with live data stream
 
 ### Main Application Pages
@@ -87,5 +92,34 @@ tests/test_endpoints.sh
 python tests/test_jeanne_functionality.py
 python tests/test_who_is_complete.py
 ```
+
+## 📋 Test Coverage
+
+The test suites validate:
+- ✅ All modular backend routes (`backend/routes/*.py`)
+- ✅ Memory system functionality (private, IP-shared, shared)
+- ✅ AI chat with enhanced memory search
+- ✅ Client registration and authentication
+- ✅ Admin dashboard and recovery tools
+- ✅ Vault system with vector embeddings
+- ✅ Single entry point startup (`app.py`)
+
+## 🔧 Current Architecture Tested
+
+**Backend Structure**: Modular Flask application
+- `app.py` - Single entry point with factory pattern from `backend/factory.py`
+- `backend/routes/` - Separated route handlers (admin.py, chat.py, client.py, memory.py, etc.)
+- `backend/utils/` - Utility functions and helpers
+- `backend/models/` - Data models and schema definitions
+
+**Frontend**: Static files organized in `static/` and `templates/`
+
+## 📝 Notes
+
+- All tests expect server running on `https://localhost:8080`
+- Some tests require self-signed certificate bypass for local development
+- Test files have been consolidated in this folder following project refactoring
+- Documentation files moved to `docs/` folder for better organization
+- Legacy `run_refactored.py` references removed from all documentation
 
 All tests are designed to work with the current modular backend architecture where `backend/factory.py` contains the Flask application factory and `app.py` serves as the single entry point.

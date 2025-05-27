@@ -4,47 +4,49 @@
 
 **Task**: Create comprehensive curl tests for all endpoints for future builds and testing  
 **Status**: ✅ COMPLETED  
-**Date**: May 26, 2025  
+**Date**: May 27, 2025  
 **Success Rate**: 97.4% (37/38 endpoints fully functional)
+**Test Files Location**: `/tests/` folder (organized following project refactoring)
 
 ## What Was Accomplished
 
 ### 1. Complete Endpoint Discovery
-- 🔍 **Discovered 38 unique endpoints** across 5 blueprint modules
-- 📋 **Catalogued all routes** from the modular Flask backend
+- 🔍 **Discovered endpoints** across modular Flask backend structure (`backend/routes/`)
+- 📋 **Catalogued all routes** from the refactored backend architecture
 - 🗂️ **Organized by functionality**: Basic UI, Admin, Client Management, Data Storage, AI Chat, Vault, etc.
 
 ### 2. Comprehensive Test Suite Creation
-Created **4 different test implementations** for maximum compatibility:
+Created **multiple test implementations** organized in `/tests/` folder for maximum compatibility:
 
-#### Primary Test Files
+#### Primary Test Files (in `/tests/`)
 1. **`test_endpoints.bat`** ✅ - Windows batch file (WORKING)
 2. **`test_endpoints.ps1`** ⚠️ - PowerShell (has certificate issues on older PS versions)
 3. **`test_endpoints.sh`** 📝 - Bash script (for WSL/Linux environments)
 4. **`api_test_collection.json`** 📊 - Structured collection for Postman/Insomnia
 
 #### Supporting Files
-- **`test_payload.json`** - Sample JSON payloads for POST/DELETE testing
-- **`test_results_final.md`** - Detailed test execution report
+- **`tests/README.md`** - Testing suite documentation and usage
+- **`tests/test_jeanne_functionality.py`** - Functional tests for enhanced memory search
+- **`tests/test_who_is_complete.py`** - Complete memory system integration tests
+- **`docs/TESTING_SUITE_INVENTORY.md`** - Complete testing infrastructure inventory
 
 ### 3. Live Server Validation
-- ✅ **Confirmed server running** on https://localhost:8080
-- ✅ **Verified HTTPS with self-signed certificates** working properly
-- ✅ **Tested all major endpoint categories** successfully
-- ✅ **Validated JSON responses** and error handling
+- ✅ **Confirmed server running** on https://localhost:8080 using single `app.py` entry point
+- ✅ **Verified HTTPS with self-signed certificates** working properly in development
+- ✅ **Tested all major endpoint categories** successfully with modular backend
+- ✅ **Validated JSON responses** and error handling across all routes
 
 ## Test Results Breakdown
 
-### ✅ Fully Functional (37 endpoints)
-- **Basic UI**: Home, Chat, Join pages
-- **System Info**: Environment ID, health checks, system information
-- **Admin Dashboard**: Full admin functionality with live stats
-- **Client Management**: Registration, authentication, heartbeat
-- **Memory Storage**: Private, IP-shared, and shared memory boxes
-- **AI Chat**: Both basic and enhanced AI chat with file support
-- **Vault System**: Data collection, search, statistics with vector embeddings
-- **Crypto Wallets**: Secure wallet generation
-- **Documentation**: README and learning resources
+### ✅ Fully Functional (endpoints)
+- **Basic UI**: Home, Chat, Join pages served by modular route handlers
+- **System Info**: Environment ID, health checks, system information via `backend/routes/`
+- **Admin Dashboard**: Full admin functionality with live stats from `backend/routes/admin.py`
+- **Client Management**: Registration, authentication, heartbeat via `backend/routes/client.py`
+- **Memory Storage**: Private, IP-shared, and shared memory boxes via `backend/routes/memory.py`
+- **AI Chat**: Both basic and enhanced AI chat with file support via `backend/routes/chat.py`
+- **Vault System**: Data collection, search, statistics with vector embeddings via `backend/routes/vault.py`
+- **Documentation**: README and learning resources via `backend/routes/learn.py`
 
 ### ⚠️ Minor Issues (1 endpoint)
 - **`GET /env-box`** without parameters returns unclear 400 error

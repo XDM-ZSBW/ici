@@ -60,27 +60,44 @@ ICI uses a modern, modular architecture designed for maintainability and extensi
 
 ### Backend Structure
 - **`backend/`**: Main Flask application package
-  - **`app.py`**: Flask app factory with blueprint registration
+  - **`factory.py`**: Flask app factory with blueprint registration
   - **`routes/`**: Modular route handlers
-    - `chat.py`: Chat and memory management routes
+    - `chat.py` & `chat_new.py`: Chat and memory management routes
     - `client.py`: Client session management routes  
     - `admin.py`: Administrative and recovery tools
+    - `memory.py`: Memory storage and retrieval endpoints
+    - `vault.py` & `vault_new.py`: Data vault and search functionality
+    - `learn.py`: Learning guide and documentation routes
   - **`models/`**: Data models and schema definitions
+    - `memory.py`: Memory storage models
+    - `vault.py`: Vault data models
   - **`utils/`**: Utility functions and helpers
+    - `id_utils.py`: ID generation and validation utilities
+    - `memory_utils.py`: Memory search and retrieval utilities
 
 ### Frontend Structure
-- **Modular JavaScript**: Split from monolithic to focused modules
+- **Modular JavaScript**: Split from monolithic to focused modules in `static/`
   - `app.js`: Main application orchestration
   - `memory.js`: Memory management and display logic
   - `ui.js`: User interface interactions
   - `api.js`: Backend communication utilities
   - `auth.js`: Authentication management
   - `debug.js`: Debug tools and system testing
+  - `chat.js`: Main chat interface functionality
+  - `client.js` & `client-table.js`: Client management interfaces
+  - `join.js`: Authentication and joining functionality
 
 ### Templates
-- **Accessible HTML**: Semantic, screen-reader friendly templates
+- **Accessible HTML**: Semantic, screen-reader friendly templates in `templates/`
 - **Responsive Design**: Mobile-first, adaptive layouts
-- **Component System**: Reusable header/footer components
+- **Component System**: Reusable header/footer components (`_header.html`, `_footer.html`)
+
+### Documentation & Testing
+- **`docs/`**: Technical documentation and API references
+  - API quick reference, feature demonstrations, implementation status
+- **`tests/`**: Comprehensive testing suite
+  - Endpoint testing scripts for multiple platforms
+  - Functionality tests and API collections
 
 ## How Memory Support Works
 
@@ -93,62 +110,116 @@ ICI uses a modern, modular architecture designed for maintainability and extensi
 ## API Endpoints
 
 ### Main UI & Info
-- `/` : Portal landing page with README and navigation.
-- `/chat` : Main chat interface (shared, IP, and private memory boxes).
-- `/client` : Client authenticated chat (shows wallet address, QR, etc.)
+- `/` : Portal landing page with README and navigation
+- `/chat` : Main chat interface with secure client ID generation and QR authentication
+- `/client` : Client authenticated chat interface with wallet integration
+- `/admin` : Administrative dashboard with system statistics
+- `/join` : QR code authentication and live client session management
 - `/roadmap` : Project roadmap and Gantt chart
-- `/policies` : Policies and terms
+- `/policies` : Privacy policies and terms of service
 - `/readme` : Rendered README documentation
-- `/health` : Health check/status page.
-- `/recovery` : Admin/Recovery tools
+- `/learn` : Learning guide for collaborative memory usage
+- `/health` : Comprehensive health check with live system status
+- `/changelog` : Version history and update documentation
 
-### Memory APIs
-- `/env-box` : Shared memory API (GET/POST)
-  - **GET**: `?env_id=<id>` — Returns `{ "value": [ ...messages... ] }` for the given env-id.
-  - **POST**: `{ "env_id": <id>, "value": [ ...messages... ] }` — Sets/merges shared memory for env-id.
-- `/client-box` : IP-shared memory API (GET/POST)
-  - **GET**: `?env_id=<id>&public_ip=<ip>` — Returns `{ "value": [ ...messages... ] }` for the given env-id and IP.
-  - **POST**: `{ "env_id": <id>, "public_ip": <ip>, "value": [ ...messages... ] }` — Sets/merges IP-shared memory.
-- `/env-box-aggregate` : Returns all shared memory across all env-ids, deduplicated and sorted.
+### Enhanced Memory APIs
+- `/env-box` : Shared memory API with cross-environment search
+  - **GET**: `?env_id=<id>` — Returns memory data for environment
+  - **POST**: Stores/merges shared memory with timestamp tracking
+- `/ip-box` : IP-shared memory API with network-scoped storage
+  - **GET**: `?env_id=<id>&public_ip=<ip>` — Returns IP-scoped memory
+  - **POST**: Stores IP-specific shared memory
+- `/env-box-aggregate` : Cross-environment memory aggregation and search
 
-### Chat & AI
-- `/ask` : POST `{ "question": <str>, "user_id": <str> }` — Returns `{ "answer": <str> }` (demo AI echo).
+### Advanced AI Chat
+- `/ai-chat` : Enhanced AI conversation with memory integration
+- `/ai-chat-enhanced` : AI chat with file upload and screenshot support
+- `/ask` : Legacy AI endpoint (maintained for compatibility)
 
-### Client & Session Management
-- `/join` : QR code for authentication and live client/session table.
-- `/join/<client_id>` : Placeholder for joining with a specific client ID.
-- `/client/<id>` : Client details page (creates record if missing).
-- `/client-remember` : POST `{ "client_id": <str> }` — Updates or creates a client record.
-- `/client-lookup` : POST `{ "client_id": <str> }` — Looks up a client record.
-- `/client-table` : Returns JSON array of all client sessions.
-- `/client-table-events` : Server-Sent Events (SSE) for live client table updates.
-- `/client-table-restore` : POST — Restore client table from JSON array.
+### Secure Client Management
+- `/client-register` : Secure client registration with 256-bit hex IDs
+- `/client-heartbeat` : Client keepalive and session management
+- `/client-table` : Live client session monitoring
+- `/client-table-events` : Real-time SSE updates for client status
+- `/clients` : Client listing and management APIs
 
-### Admin & Recovery
-- `/recovery` : Admin tools for memory recovery and client management.
-- `/delete-client-row` : POST `{ "client_id": <str>, "private_id": <str> }` — Deletes a specific client/session row.
-- `/delete-all-client-rows` : POST — Deletes all client/session rows for current env-id.
-- `/file-lost-memory-report` : POST `{ "env_id": <str>, "details": <str> }` — File a lost memory report.
-- `/get-lost-memory-reports` : GET `?env_id=<id>` — Get all lost memory reports for env-id.
+### Vault System (Browser Data Collection)
+- `/vault/collect` : Store browser interaction data with vector embeddings
+- `/vault/search` : Advanced semantic search across vault entries
+- `/vault/stats` : Vault usage statistics and analytics
+
+### Admin & Recovery Tools
+- `/recovery` : Administrative recovery and system management tools
+- `/debug/*` : Comprehensive debugging endpoints for system diagnostics
+- `/system-info` : Detailed system information and Python environment data
 
 ## Technologies Used
 
-- **Flask** (Python)
-- **HTML5, CSS, JavaScript** (vanilla, no frameworks)
+### Backend
+- **Flask** (Python 3.9+) with modular blueprint architecture
+- **SocketIO** for real-time client synchronization
+- **Vector embeddings** for semantic search capabilities
+- **SQLite** for lightweight data persistence
+- **SSL/TLS** with auto-generated certificates for development
+
+### Frontend
+- **Vanilla JavaScript** (ES6+) with modular design
+- **HTML5** with semantic, accessible markup
+- **CSS3** with responsive, mobile-first design
+- **WebSocket** for real-time communication
+- **Crypto API** for secure 256-bit client ID generation
+
+### Security & Authentication
+- **256-bit hex client IDs** replacing legacy wallet-style identifiers
+- **QR code authentication** for device linking
+- **HTTPS enforcement** for all communications
+- **Multi-factor authentication** with progressive confirmation
+
+### Development & Deployment
+- **Docker** containerization for consistent deployment
+- **Google Cloud Run** optimized architecture
+- **Comprehensive testing suite** with multiple platform support
+- **Auto-reload development server** with debug mode
 
 ## 🚀 Running the Application
 
 **Use `app.py` as the ONLY entry point for all environments (local & Cloud Run):**
 
-```sh
+```pwsh
 python app.py
 ```
 
-- For local development, HTTPS is auto-configured if certs are present.
-- For Cloud Run, simply deploy with `app.py` as the entrypoint (Cloud Run handles SSL termination).
+### Local Development Features
+- **Auto-SSL**: HTTPS certificates auto-generated if missing using OpenSSL
+- **Hot Reload**: Flask debug mode enabled for automatic code reloading
+- **Secure Client IDs**: Automatic detection and cleanup of legacy wallet-style IDs
+- **Comprehensive Logging**: Detailed logs for debugging MFA and authentication issues
+- **Real-time Sync**: WebSocket-based real-time updates across all connected clients
+
+### Cloud Run Deployment
+- **Optimized Architecture**: Lightweight design for fast cold starts
+- **SSL Termination**: Cloud Run handles HTTPS termination automatically
+- **Container Ready**: Docker configuration optimized for serverless deployment
+- **Environment Variables**: Secure configuration management for production
+
+### Development Setup
+1. **Install Python 3.9+** and pip
+2. **Install OpenSSL** (required for local HTTPS)
+   - [Download OpenSSL for Windows](https://slproweb.com/products/Win32OpenSSL.html)
+   - Add OpenSSL `bin` directory to your PATH
+3. **Install dependencies**
+   ```pwsh
+   pip install -r requirements.txt
+   ```
+4. **Run the application**
+   ```pwsh
+   python app.py
+   ```
+   - Visit: https://localhost:8080
+   - Auto-generated certificates stored as `cert.pem` and `key.pem`
 
 > **Note:**
-> `run_refactored.py` is deprecated and should NOT be used. It is retained for reference only and will be removed in a future release. All startup and deployment should use `app.py`.
+> All legacy entry points have been deprecated. The refactored architecture uses only `app.py` for consistency across all deployment environments. Documentation and testing infrastructure have been organized into `docs/` and `tests/` folders respectively.
 
 ## Community & Ethics
 
@@ -292,11 +363,27 @@ Below is a complete list of all available endpoints, their purpose, and usage. E
 
 - When a user scans a QR code on the chat page, the QR disappears and the UI updates to show client details (from client.html). The user's wallet address is now used as the unique identifier for all memory and chat operations, instead of the previous guest env-id. Memory continuity is preserved.
 
-## QR Code Authentication Behavior (Updated May 2025)
-- The QR code for client authentication is now displayed above the "Ask AI" textarea on the chat page.
-- Once a client authenticates by scanning the QR code from another device, the QR code disappears on all tabs/devices for that client session.
-- This state is synchronized in real time using localStorage.
-- The join page always displays the QR code and unique client ID for sharing and linking new devices.
+## Enhanced Authentication & Security Features
+
+### Secure Client ID System
+- **256-bit Hex Client IDs**: Cryptographically secure client identification
+- **Legacy ID Detection**: Automatic detection and cleanup of old wallet-style IDs (0x... pattern)
+- **Secure Generation**: Uses `crypto.getRandomValues()` for entropy
+- **MFA Integration**: Resolves authentication errors and log spam
+
+### QR Code Authentication (Updated May 27, 2025)
+- **Dynamic QR Display**: QR code appears above the "Ask AI" textarea on the chat page
+- **Real-time Synchronization**: QR code disappears across all tabs/devices once authenticated
+- **Session Management**: Live client session table with real-time updates
+- **Device Linking**: Seamless device authentication and memory continuity
+- **No Duplicate QR Codes**: Eliminated legacy QR code logic for clean user experience
+
+### Progressive Confirmation System
+The "unapologetically naggy" confirmation methodology ensures user safety:
+- **Multi-Modal Explanations**: Visual, textual, and interactive confirmations
+- **Accessibility Integration**: Screen reader compatibility and keyboard navigation
+- **Graceful Repetition**: Multiple confirmation methods for important actions
+- **User Agency**: Maintains informed consent throughout all interactions
 
 ---
 
