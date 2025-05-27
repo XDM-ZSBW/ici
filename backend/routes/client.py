@@ -245,3 +245,53 @@ def client_auth(client_id):
                              env_id=env_id,
                              authenticated=False,
                              error=str(e))
+
+@client_bp.route("/client-mfa-active", methods=["POST"])
+def client_mfa_active():
+    """Receive notification that a client has MFA (2+ active threads/tabs)."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    env_id = data.get("env_id")
+    client_id = data.get("client_id")
+    timestamp = data.get("timestamp", time.time() * 1000)
+    if not all([env_id, client_id]):
+        return jsonify({"error": "Missing required fields"}), 400
+    client_key = f"{env_id}:{client_id}"
+    # Update MFA status in memory
+    if client_key in client_memory:
+        client_memory[client_key]["mfa_active"] = True
+        client_memory[client_key]["mfa_last_update"] = timestamp
+    # Update in client table
+    for client in client_json_table:
+        if client.get("client_id") == client_id and client.get("env_id") == env_id:
+            client["mfa_active"] = True
+            client["mfa_last_update"] = timestamp
+            break
+    print(f"[MFA ACTIVE] Client {client_id} in env {env_id} at {timestamp}")
+    return jsonify({"success": True, "mfa_active": True, "client_id": client_id, "env_id": env_id, "timestamp": timestamp})
+
+@client_bp.route("/client-mfa-lost", methods=["POST"])
+def client_mfa_lost():
+    """Receive notification that a client has lost MFA (fewer than 2 active threads/tabs)."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    env_id = data.get("env_id")
+    client_id = data.get("client_id")
+    timestamp = data.get("timestamp", time.time() * 1000)
+    if not all([env_id, client_id]):
+        return jsonify({"error": "Missing required fields"}), 400
+    client_key = f"{env_id}:{client_id}"
+    # Update MFA status in memory
+    if client_key in client_memory:
+        client_memory[client_key]["mfa_active"] = False
+        client_memory[client_key]["mfa_last_update"] = timestamp
+    # Update in client table
+    for client in client_json_table:
+        if client.get("client_id") == client_id and client.get("env_id") == env_id:
+            client["mfa_active"] = False
+            client["mfa_last_update"] = timestamp
+            break
+    print(f"[MFA LOST] Client {client_id} in env {env_id} at {timestamp}")
+    return jsonify({"success": True, "mfa_active": False, "client_id": client_id, "env_id": env_id, "timestamp": timestamp})

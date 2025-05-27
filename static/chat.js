@@ -1007,17 +1007,55 @@ function onQRCodeScanned(walletAddress, clientData) {
 function renderDynamicQrCode(id) {
     const qrContainer = document.getElementById('dynamic-qr-container');
     if (!qrContainer) return;
-    // If authenticated, hide QR
-    if (localStorage.getItem('ici-authenticated-client') === '1') {
-        qrContainer.style.display = 'none';
-        return;
-    }
     const qrUrl = window.location.origin + '/client/' + encodeURIComponent(id);
-    qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrUrl)}" alt="QR Code for authentication" width="180" height="180"><div style='margin-top:8px;font-size:0.95em;word-break:break-all;'><a href="${qrUrl}" target="_blank" rel="noopener">${qrUrl}</a></div>`;
-    qrContainer.style.display = '';
+    const collapsed = localStorage.getItem('ici-authenticated-client') === '1';
+    if (collapsed) {
+        // Show client ID instead of QR code
+        qrContainer.innerHTML = `<div style='font-size:1.1em;color:#2563eb;font-weight:bold;margin:8px 0;'>Client ID: <span style='font-family:monospace;'>${id}</span></div><div style='font-size:0.95em;color:#64748b;'>Multi-Factor Authentication (MFA) active</div>`;
+        qrContainer.style.display = '';
+    } else {
+        qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrUrl)}" alt="QR Code for authentication" width="180" height="180"><div style='margin-top:8px;font-size:0.95em;word-break:break-all;'><a href="${qrUrl}" target="_blank" rel="noopener">${qrUrl}</a></div>`;
+        qrContainer.style.display = '';
+    }
 }
 
-// On load, show QR for current userId unless authenticated
+// --- MFA tab tracking logic ---
+function updateMfaTabCount() {
+    // Use a localStorage key to track open tabs for this client
+    const id = localStorage.getItem('ici-chat-user-id');
+    if (!id) return;
+    const key = 'ici-mfa-tabs-' + id;
+    let tabs = JSON.parse(localStorage.getItem(key) || '[]');
+    const now = Date.now();
+    // Remove stale tabs (older than 10s)
+    tabs = tabs.filter(t => now - t.ts < 10000);
+    // Add/update this tab
+    const tabId = window.name || (window.name = Math.random().toString(36).slice(2));
+    const idx = tabs.findIndex(t => t.tabId === tabId);
+    if (idx >= 0) tabs[idx].ts = now;
+    else tabs.push({ tabId, ts: now });
+    localStorage.setItem(key, JSON.stringify(tabs));
+    // Notify backend if MFA is lost (less than 2 tabs)
+    if (tabs.length < 2) {
+        fetch('/client-mfa-lost', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_id: id, mfa: false })
+        });
+    } else {
+        fetch('/client-mfa-active', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_id: id, mfa: true })
+        });
+    }
+}
+setInterval(updateMfaTabCount, 5000);
+window.addEventListener('storage', function(e) {
+    if (e.key && e.key.startsWith('ici-mfa-tabs-')) updateMfaTabCount();
+});
+
+// On load, always render QR for current userId
 if (window.localStorage) {
     let initialId = localStorage.getItem('ici-chat-user-id');
     if (!initialId) {
@@ -1027,11 +1065,11 @@ if (window.localStorage) {
     renderDynamicQrCode(initialId);
 }
 
-// When QR code is scanned and walletAddress is set, update QR code and hide it
+// When QR code is scanned and walletAddress is set, show client ID and MFA
 window.onQRCodeScanned = function(walletAddress, clientData) {
-    // Hide QR code UI
-    const qrSection = document.getElementById('qrSection');
-    if (qrSection) qrSection.style.display = 'none';
+    localStorage.setItem('ici-authenticated-client', '1');
+    let id = walletAddress || localStorage.getItem('ici-chat-user-id');
+    renderDynamicQrCode(id);
     // Show client details UI (from client.html template)
     fetch('/client?wallet=' + encodeURIComponent(walletAddress))
         .then(res => res.text())
@@ -1044,16 +1082,22 @@ window.onQRCodeScanned = function(walletAddress, clientData) {
         });
     // Update chat memory logic to use walletAddress as the user_id
     window.currentUserId = walletAddress;
-    localStorage.setItem('ici-authenticated-client', '1');
-    renderDynamicQrCode(walletAddress); // This will hide the QR
     // Optionally, trigger a UI notification
     if (window.showToast) window.showToast('Authenticated as client: ' + walletAddress);
 }
 
+
 // Listen for authentication state changes across tabs/devices
 window.addEventListener('storage', function(e) {
-    if (e.key === 'ici-authenticated-client' && e.newValue === '1') {
-        const qrContainer = document.getElementById('dynamic-qr-container');
-        if (qrContainer) qrContainer.style.display = 'none';
+    if (e.key === 'ici-authenticated-client') {
+        let id = localStorage.getItem('ici-chat-user-id');
+        renderDynamicQrCode(id);
     }
 });
+
+// Optional: For testing, allow reset of QR code state
+window.resetQrCodeState = function() {
+    localStorage.removeItem('ici-authenticated-client');
+    let id = localStorage.getItem('ici-chat-user-id');
+    renderDynamicQrCode(id);
+};
