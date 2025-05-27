@@ -1,5 +1,4 @@
 flask
-flask-socketio
 eth-account
 psutil
 markdown

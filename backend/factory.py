@@ -1,6 +1,5 @@
 # Main Flask app factory and entry point
 from flask import Flask
-from flask_socketio import SocketIO
 import os
 
 def create_app():
@@ -12,9 +11,6 @@ def create_app():
     app = Flask(__name__, 
                 template_folder=os.path.join(project_root, 'templates'),
                 static_folder=os.path.join(project_root, 'static'))
-    
-    # SocketIO will be initialized later during progressive startup
-    socketio = None
     
     # Add startup state tracking using app.config
     app.config['STARTUP_STATE'] = {
@@ -66,11 +62,7 @@ def create_app():
             "message": "Server is starting up..." if status == "starting" else "Server ready"
         })
     
-    # Initialize SocketIO early for basic functionality
-    socketio = SocketIO(app, cors_allowed_origins="*")
-    app.config['STARTUP_STATE']['socketio_ready'] = True
-    
-    return app, socketio
+    return app
 
 def complete_app_initialization(app):
     """Complete the app initialization with remaining blueprints and services"""
@@ -112,5 +104,5 @@ def complete_app_initialization(app):
 
 # For running directly
 if __name__ == "__main__":
-    app, socketio = create_app()
-    socketio.run(app, host="0.0.0.0", port=8080, debug=True)
+    app = create_app()
+    app.run(host="0.0.0.0", port=8080, debug=True)
