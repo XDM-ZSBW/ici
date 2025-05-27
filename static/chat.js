@@ -1010,17 +1010,34 @@ function renderDynamicQrCode(id) {
     const qrUrl = window.location.origin + '/client/' + encodeURIComponent(id);
     const collapsed = localStorage.getItem('ici-authenticated-client') === '1';
     if (collapsed) {
-        // Show small QR code (45x45px), client ID, and MFA status
+        // Hide QR and client ID, show only the share button
         qrContainer.innerHTML = `
-            <div style='display:flex;align-items:center;gap:12px;justify-content:center;'>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=45x45&data=${encodeURIComponent(qrUrl)}" alt="QR Code (collapsed)" width="45" height="45" style="border-radius:6px;border:1px solid #e5e7eb;background:#fff;">
-                <div>
-                    <div style='font-size:1.1em;color:#2563eb;font-weight:bold;'>Client ID: <span style='font-family:monospace;'>${id}</span></div>
-                    <div style='font-size:0.95em;color:#64748b;'>Multi-Factor Authentication (MFA) active</div>
-                </div>
-            </div>
+            <button id="share-device-btn" class="memory-btn shared" style="font-size:1em;padding:10px 18px;margin:10px auto;display:block;">
+                📤 Share this device
+            </button>
         `;
         qrContainer.style.display = '';
+        // Add share button logic
+        setTimeout(() => {
+            const shareBtn = document.getElementById('share-device-btn');
+            if (shareBtn) {
+                shareBtn.onclick = function() {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: 'ICI Chat Device',
+                            text: 'Link this device to ICI Chat:',
+                            url: qrUrl
+                        }).catch(() => {});
+                    } else {
+                        // Fallback: copy to clipboard
+                        navigator.clipboard.writeText(qrUrl).then(() => {
+                            shareBtn.textContent = 'Link copied!';
+                            setTimeout(() => { shareBtn.textContent = '📤 Share this device'; }, 1500);
+                        });
+                    }
+                };
+            }
+        }, 100);
     } else {
         // Show large QR and link
         qrContainer.innerHTML = `<img id="dynamic-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrUrl)}" alt="QR Code for authentication" width="180" height="180"><div id="dynamic-qr-link" style='margin-top:8px;font-size:0.95em;word-break:break-all;'><a href="${qrUrl}" target="_blank" rel="noopener">${qrUrl}</a></div>`;
