@@ -311,6 +311,38 @@ ICI operates under strict ethical guidelines developed in partnership with disab
 - For persistent memory, use Google Cloud Storage or Firestore.
 - Ensure all environment variables and secrets are set in Cloud Run.
 
+## Google Cloud Run: Secret Manager Configuration (IMPORTANT)
+
+When deploying to Google Cloud Run and using Google Secret Manager for secrets:
+
+1. **Grant Secret Accessor Role**
+   - The Cloud Run service account (often `PROJECT_NUMBER-compute@developer.gserviceaccount.com` or your custom account) **must** have the `Secret Manager Secret Accessor` role (`roles/secretmanager.secretAccessor`).
+   - The Editor role is NOT sufficient for secret access.
+   - Assign this role in IAM for the whole project or for specific secrets as needed.
+
+2. **Environment Variables**
+   - Set `ENVIRONMENT=production` in your Cloud Run service's environment variables to enable Secret Manager usage.
+   - You do **not** need to set `GOOGLE_CLOUD_PROJECT` unless you are overriding the default project. Cloud Run sets this automatically.
+
+3. **Secret Names**
+   - Secret names are **case-sensitive** and must be entered exactly as defined in Google Secret Manager.
+   - The web and CLI lookup tools will only match the exact name.
+
+4. **Troubleshooting**
+   - If you see errors like `Permission 'secretmanager.versions.access' denied`, your service account is missing the required role.
+   - Check Cloud Run logs for detailed error messages.
+
+5. **Redeploy After Changes**
+   - After changing IAM roles or environment variables, redeploy or restart your Cloud Run service to apply changes.
+
+**Example: Granting Secret Accessor Role via gcloud CLI**
+
+```pwsh
+gcloud projects add-iam-policy-binding <PROJECT_ID> \
+  --member="serviceAccount:<SERVICE_ACCOUNT_EMAIL>" \
+  --role="roles/secretmanager.secretAccessor"
+```
+
 ## Lessons Learned / Nuggets
 
 ### SSL & HTTPS for Local Dev
