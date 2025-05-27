@@ -22,6 +22,6 @@ timeout /t 2 >nul
 
 :: Start the application
 echo Starting the refactored ICI Chat application...
-.venv\Scripts\python.exe run_refactored.py
+.venv\Scripts\python.exe app.py
 
 pause

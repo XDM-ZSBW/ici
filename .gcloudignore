@@ -33,7 +33,7 @@ test_results_final.md
 test_vault.json
 test_payload.json
 test_memory_system.ps1
-run_refactored.py
+# Remove run_refactored.py reference - file no longer exists
 start.bat
 daily_health_check.ps1
 test_endpoints_win.ps1

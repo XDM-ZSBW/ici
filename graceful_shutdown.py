@@ -187,7 +187,7 @@ class GracefulShutdownManager:
                 try:
                     if (proc.info['name'] and 'python' in proc.info['name'].lower() and
                         proc.info['pid'] != current_pid and
-                        proc.info['cmdline'] and any('app.py' in str(cmd) or 'run_refactored.py' in str(cmd) 
+                        proc.info['cmdline'] and any('app.py' in str(cmd) 
                                                    for cmd in proc.info['cmdline'])):
                         print(f"[CLEANUP] Found hanging Python process: {proc.info['pid']}")
                         proc.terminate()

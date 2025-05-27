@@ -148,9 +148,9 @@ ICI uses a modern, modular architecture designed for maintainability and extensi
    pip install flask flask-socketio eventlet
    ```
 
-2. **Run the refactored application**:
+2. **Run the application**:
    ```sh
-   python run_refactored.py
+   python app.py
    ```
 
 3. **Access the application**:
@@ -228,7 +228,7 @@ ICI operates under strict ethical guidelines developed in partnership with disab
    ```
 4. **Run the server**
    ```pwsh
-   python run_refactored.py
+   python app.py
    ```
    - The server will auto-generate `cert.pem` and `key.pem` for HTTPS if missing.
    - Visit: https://localhost:8080

@@ -146,10 +146,102 @@
 <body>
     {% include "_header.html" %}
     
-    <div class="container">
-        <div class="changelog-header">
+    <div class="container">        <div class="changelog-header">
             <h1>📋 Changelog</h1>
             <p>Track the evolution of ICI Chat with detailed version history and updates</p>
+        </div>
+
+        <div class="version changed">
+            <div class="version-header">
+                <div>
+                    <span class="version-number">v1.3.1</span>
+                    <span class="version-type type-patch">Patch</span>
+                </div>
+                <span class="version-date">May 26, 2025</span>
+            </div>
+            <div class="changes">
+                <div class="change-category">
+                    <h4><span class="icon">🗺️</span> Roadmap Enhancement</h4>
+                    <ul class="change-list">
+                        <li><strong>Comprehensive Roadmap Update</strong> - Enhanced roadmap with detailed Phase 2 optimization features</li>
+                        <li>Added <strong>Phase 2: Optimization & Performance Enhancement</strong> with 10 planned features focusing on performance, caching, and monitoring</li>
+                        <li>Added <strong>Phase 2.5: Usability & User Experience</strong> with enhanced UI/UX improvements and mobile support</li>
+                        <li>Expanded <strong>Phase 3: Advanced Features & Intelligence</strong> with AI-powered context prediction and multi-modal support</li>
+                        <li>Introduced <strong>Phase 4: Enterprise & Strategic Scaling</strong> for enterprise-grade features and compliance</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">✅</span> Status Updates</h4>
+                    <ul class="change-list">
+                        <li>Marked Phase 1 as "Completed" with all 11 features successfully implemented</li>
+                        <li>Updated P1F10 (Single Entry Point) and P1F11 (Test Suite Organization) to "Completed" status</li>
+                        <li>Updated P2F1 (Roadmap Endpoint) to "Completed" status</li>
+                        <li>Added comprehensive timeline planning with start/end dates for all new features</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">🎯</span> Strategic Planning</h4>
+                    <ul class="change-list">
+                        <li>Defined 25+ new features across performance optimization, user experience, and enterprise capabilities</li>
+                        <li>Established clear impact areas for each feature: Performance, Security, AI Core, User Experience, etc.</li>
+                        <li>Created detailed feature descriptions with specific technical implementation goals</li>
+                        <li>Aligned roadmap phases with quarterly delivery targets through Q2 2026</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="note">
+                <div class="note-title">🚀 Development Focus</div>
+                The roadmap now reflects a mature development strategy with clear optimization priorities and enterprise readiness planning.
+            </div>
+        </div>
+
+        <div class="version changed">
+            <div class="version-header">
+                <div>
+                    <span class="version-number">v1.3.0</span>
+                    <span class="version-type type-minor">Minor</span>
+                </div>
+                <span class="version-date">May 26, 2025</span>
+            </div>
+            <div class="changes">
+                <div class="change-category">
+                    <h4><span class="icon">🏗️</span> Architecture</h4>
+                    <ul class="change-list">
+                        <li><strong>Single Entry Point Rule Implementation</strong> - Enforced architectural policy with only one <span class="code">app.py</span> in root directory</li>
+                        <li>Refactored <span class="code">backend/app.py</span> to <span class="code">backend/factory.py</span> for clear separation of concerns</li>
+                        <li>Removed legacy <span class="code">run_refactored.py</span> dependency and updated all references</li>
+                        <li>Updated governance policies with development standards and architectural guidelines</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">🧹</span> Testing & Organization</h4>
+                    <ul class="change-list">
+                        <li>Consolidated all test files into <span class="code">tests/</span> folder following single entry point rule</li>
+                        <li>Removed outdated test files for non-existent endpoints (<span class="code">/env-id-html</span>, <span class="code">/data</span>)</li>
+                        <li>Updated endpoint test suites to reflect current API structure</li>
+                        <li>Created comprehensive <span class="code">tests/README.md</span> with current testing documentation</li>
+                        <li>Cleaned up duplicate and legacy test artifacts</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">🔧</span> Improved</h4>
+                    <ul class="change-list">
+                        <li>Enhanced Dockerfile to consistently execute root-level <span class="code">app.py</span></li>
+                        <li>Updated startup scripts and documentation for streamlined deployment</li>
+                        <li>Improved graceful shutdown process cleanup for better resource management</li>
+                        <li>Standardized module organization with clear naming conventions</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">📚</span> Documentation</h4>
+                    <ul class="change-list">
+                        <li>Updated README.md with correct startup instructions</li>
+                        <li>Enhanced policies page with development standards and architectural requirements</li>
+                        <li>Documented Single Entry Point Rule as mandatory governance policy</li>
+                        <li>Updated all references from legacy <span class="code">run_refactored.py</span> to <span class="code">app.py</span></li>
+                    </ul>
+                </div>
+            </div>
         </div>
 
         <div class="version changed">

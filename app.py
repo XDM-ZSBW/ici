@@ -6,7 +6,7 @@ Starts the refactored ICI Chat application using the new modular backend structu
 import sys
 import os
 import subprocess
-from backend.app import create_app
+from backend.factory import create_app
 from graceful_shutdown import get_shutdown_manager
 
 CERT_FILE = "cert.pem"
@@ -57,7 +57,7 @@ if __name__ == "__main__":
         print("[STARTUP] Starting background initialization...")
         time.sleep(1)  # Brief delay to ensure server is responding
         
-        from backend.app import complete_app_initialization
+        from backend.factory import complete_app_initialization
         complete_app_initialization(app)
         
         print("[STARTUP] Background initialization complete!")

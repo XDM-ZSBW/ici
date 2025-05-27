@@ -99,9 +99,8 @@ Write-Host "============== UTILITY ENDPOINTS ==============" -ForegroundColor Ye
 
 # Environment and health
 Test-GetEndpoint "/env-id" "Environment ID (JSON)"
-Test-GetEndpoint "/env-id-html" "Environment ID (HTML)"
 Test-GetEndpoint "/health" "Health check page"
-Test-GetEndpoint "/data" "Secure key generation"
+Test-GetEndpoint "/system-info" "System information"
 
 Write-Host "============== DOCUMENTATION ==============" -ForegroundColor Yellow
 

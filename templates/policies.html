@@ -52,9 +52,7 @@
       This design philosophy prioritizes user agency and informed consent over convenience, ensuring that
       individuals with cognitive disabilities maintain full control and understanding of their interactions
       with the system. The "naggy" approach is intentional and considered a feature, not a bug.
-    </p>
-
-    <h2>Use of Automated Development Tools and Practices</h2>
+    </p>    <h2>Use of Automated Development Tools and Practices</h2>
     <p>
       This project leverages automated development tools, techniques, patterns, and practices,
       including but not limited to AI-assisted code generation, automated testing, and
@@ -71,6 +69,22 @@
       While these tools significantly aid in the development process, all critical code
       and architectural decisions are reviewed by human developers to ensure alignment
       with project goals, security standards, and maintainability.
+    </p>
+
+    <h2>Development Standards and Architectural Policies</h2>
+    <p>
+      This project follows strict architectural standards to ensure clarity, maintainability,
+      and consistency across all solution and service instances. These policies include:
+    </p>
+    <ul>
+      <li><strong>Single Entry Point Rule</strong>: Each solution or service instance must have exactly one <code>app.py</code> file located in the root directory. This file serves as the sole entry point and application launcher. All other application logic should be organized in appropriately named modules (e.g., <code>factory.py</code>, <code>server.py</code>, <code>main.py</code>) within subdirectories.</li>
+      <li><strong>Clear Separation of Concerns</strong>: Application factories, route handlers, and business logic should be separated into distinct modules with descriptive names.</li>
+      <li><strong>Consistent Module Organization</strong>: Backend logic should be organized in a <code>backend/</code> directory with clear module separation for routes, models, and utilities.</li>
+      <li><strong>Dockerfile Entry Point Consistency</strong>: Docker containers must always execute the root-level <code>app.py</code> as the entry point, ensuring consistent deployment behavior.</li>
+    </ul>
+    <p>
+      These standards prevent confusion, reduce cognitive load during development and maintenance,
+      and ensure that new developers can quickly understand the project structure and entry points.
     </p>
 
     <h2>Contact</h2>

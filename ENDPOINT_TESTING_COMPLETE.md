@@ -114,7 +114,7 @@ curl -k https://localhost:8080/system-info
 
 ### Start Server
 ```powershell
-python run_refactored.py
+python app.py
 ```
 
 ## Future Maintenance

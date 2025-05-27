@@ -15,11 +15,10 @@ lost_memory_reports = {}  # key: env_id, value: list of dicts (reports)
 # Roadmap Data (for /roadmap endpoint)
 roadmap_data_store = {
     "project_name": "ICI Chat - Intelligent Contextual Interface",
-    "phases": [
-        {
+    "phases": [        {
             "name": "Phase 1: Core Refactor & Foundation",
             "id": "phase1_core",
-            "status": "In Progress",
+            "status": "Completed",
             "target_completion": "Q2 2025",
             "features": [
                 {"id": "P1F1", "title": "Decouple Pre-trained LLM", "description": "Remove dependency on external/pre-trained generative LLMs (e.g., distilgpt2) for core chat.", "type": "Backend/IT", "status": "In Progress", "start_date": "2025-05-20", "end_date": "2025-06-10", "impact_areas": ["AI Core", "Performance"]},
@@ -27,33 +26,69 @@ roadmap_data_store = {
                 {"id": "P1F3", "title": "Client-Side env-id Integration", "description": "Ensure client consistently sends env-id for shared context.", "type": "UI/UX", "status": "Planned", "start_date": "2025-06-01", "end_date": "2025-06-10", "impact_areas": ["User Interface", "API"]},
                 {"id": "P1F4", "title": "Policy Updates for Shared Learning", "description": "Update policies.html to explain shared learning, env-id context, and data use.", "type": "Policy", "status": "In Progress", "start_date": "2025-05-25", "end_date": "2025-06-05", "impact_areas": ["Legal", "User Trust"]},
                 {"id": "P1F5", "title": "Project File Layout Refactor", "description": "Optimize file structure for Cloud Run and developer clarity (src/, __INIT_MYL_APP__/, _DEV_ONLY/).", "type": "Backend/IT", "status": "In Progress", "start_date": "2025-05-24", "end_date": "2025-06-05", "impact_areas": ["DevOps", "Maintainability"]},                {"id": "P1F6", "title": "Add 'Live Demo' Banner", "description": "Implement a dismissible banner on all pages indicating demo status.", "type": "UI/UX", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["User Interface", "Transparency"]},
-                {"id": "P1F7", "title": "Fast Startup Loading Page", "description": "Create immediate loading page during app startup to improve perceived performance and user experience.", "type": "UI/UX", "status": "Planned", "start_date": "2025-05-26", "end_date": "2025-06-02", "impact_areas": ["User Experience", "Performance", "Startup"]},
-                {"id": "P1F8", "title": "Progressive App Initialization", "description": "Refactor startup sequence to serve basic HTML immediately while backend components load asynchronously.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-05-26", "end_date": "2025-06-05", "impact_areas": ["Performance", "Architecture", "Startup"]},
-                {"id": "P1F9", "title": "Enhanced 'Who is [person]?' Memory Search", "description": "Implement cross-memory search functionality to find person mentions across all client records and memory stores.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["AI Core", "Memory System", "Search"]}
+                {"id": "P1F7", "title": "Fast Startup Loading Page", "description": "Create immediate loading page during app startup to improve perceived performance and user experience.", "type": "UI/UX", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["User Experience", "Performance", "Startup"]},
+                {"id": "P1F8", "title": "Progressive App Initialization", "description": "Refactor startup sequence to serve basic HTML immediately while backend components load asynchronously.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["Performance", "Architecture", "Startup"]},
+                {"id": "P1F9", "title": "Enhanced 'Who is [person]?' Memory Search", "description": "Implement cross-memory search functionality to find person mentions across all client records and memory stores.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["AI Core", "Memory System", "Search"]},
+                {"id": "P1F10", "title": "Single Entry Point Architecture", "description": "Implement Single Entry Point Rule with only one app.py in root directory and clean modular backend structure.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["Architecture", "Maintainability", "DevOps"]},
+                {"id": "P1F11", "title": "Test Suite Organization", "description": "Consolidate all test files into tests/ folder and remove outdated test files for non-existent endpoints.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["Testing", "Maintainability", "DevOps"]}
+            ]
+        },        {
+            "name": "Phase 2: Optimization & Performance Enhancement",
+            "id": "phase2_optimization",
+            "status": "In Progress",
+            "target_completion": "Q3 2025",
+            "features": [
+                {"id": "P2F1", "title": "Roadmap Endpoint & Visualization", "description": "This current feature: /roadmap endpoint with JSON and HTML Gantt-like view.", "type": "UI/UX", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["Transparency", "Project Management", "API"]},
+                {"id": "P2F2", "title": "Memory System Performance Optimization", "description": "Optimize memory storage and retrieval mechanisms for faster response times and better resource utilization.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-05-27", "end_date": "2025-06-10", "impact_areas": ["Performance", "Memory System", "Scalability"]},
+                {"id": "P2F3", "title": "Async Request Processing", "description": "Implement asynchronous processing for chat requests and memory operations to improve concurrent user handling.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-05-27", "end_date": "2025-06-15", "impact_areas": ["Performance", "Concurrency", "User Experience"]},
+                {"id": "P2F4", "title": "Response Caching Layer", "description": "Implement intelligent caching for frequently accessed data and repeated query patterns.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-06-01", "end_date": "2025-06-20", "impact_areas": ["Performance", "Response Time", "Resource Efficiency"]},
+                {"id": "P2F5", "title": "Enhanced Error Handling & Logging", "description": "Implement comprehensive error handling with structured logging for better debugging and monitoring.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-06-05", "end_date": "2025-06-25", "impact_areas": ["Reliability", "Debugging", "Monitoring"]},
+                {"id": "P2F6", "title": "API Rate Limiting & Security", "description": "Implement rate limiting, request validation, and enhanced security measures for all endpoints.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-06-10", "end_date": "2025-07-05", "impact_areas": ["Security", "API Management", "Stability"]},
+                {"id": "P2F7", "title": "Database Optimization & Indexing", "description": "Optimize database queries and implement proper indexing for vector and traditional database operations.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-06-15", "end_date": "2025-07-10", "impact_areas": ["Database", "Query Performance", "Scalability"]},
+                {"id": "P2F8", "title": "Real-time Performance Monitoring", "description": "Implement performance metrics collection and real-time monitoring dashboard for system health.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-06-20", "end_date": "2025-07-15", "impact_areas": ["Monitoring", "Performance Analysis", "Operations"]},
+                {"id": "P2F9", "title": "Advanced Memory Search Algorithms", "description": "Implement more sophisticated search algorithms for better relevance and faster memory retrieval.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-06-25", "end_date": "2025-07-20", "impact_areas": ["AI Core", "Search Performance", "User Experience"]},
+                {"id": "P2F10", "title": "Auto-scaling Infrastructure", "description": "Implement auto-scaling capabilities for Cloud Run deployment with load-based scaling strategies.", "type": "DevOps", "status": "Planned", "start_date": "2025-07-01", "end_date": "2025-07-25", "impact_areas": ["Infrastructure", "Scalability", "Cost Optimization"]}
             ]
         },
         {
-            "name": "Phase 2: Usability & Observability",
-            "id": "phase2_usability",
+            "name": "Phase 2.5: Usability & User Experience",
+            "id": "phase2_5_usability",
             "status": "Planned",
             "target_completion": "Q3 2025",
             "features": [
-                {"id": "P2F1", "title": "Roadmap Endpoint & Visualization", "description": "This current feature: /roadmap endpoint with JSON and HTML Gantt-like view.", "type": "UI/UX", "status": "In Progress", "start_date": "2025-05-26", "end_date": "2025-06-05", "impact_areas": ["Transparency", "Project Management", "API"]},
-                {"id": "P2F2", "title": "Refine KB Response Generation", "description": "Improve templates and logic for responses from the per-env-id KB.", "type": "Backend/IT", "status": "Planned", "impact_areas": ["AI Core", "User Experience"]},
-                {"id": "P2F3", "title": "Basic Admin View for KB Content", "description": "Allow admins to view (read-only) content stored per env-id for debugging/oversight.", "type": "UI/UX", "status": "Planned", "impact_areas": ["Admin Tools", "Support"]}
+                {"id": "P25F1", "title": "Refine KB Response Generation", "description": "Improve templates and logic for responses from the per-env-id KB with better formatting and relevance.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-07-01", "end_date": "2025-07-20", "impact_areas": ["AI Core", "User Experience"]},
+                {"id": "P25F2", "title": "Enhanced Chat UI/UX", "description": "Improve chat interface with better message formatting, typing indicators, and user feedback.", "type": "UI/UX", "status": "Planned", "start_date": "2025-07-05", "end_date": "2025-07-25", "impact_areas": ["User Interface", "User Experience"]},
+                {"id": "P25F3", "title": "Basic Admin View for KB Content", "description": "Allow admins to view (read-only) content stored per env-id for debugging/oversight.", "type": "UI/UX", "status": "Planned", "start_date": "2025-07-10", "end_date": "2025-07-30", "impact_areas": ["Admin Tools", "Support"]},
+                {"id": "P25F4", "title": "User Preferences & Settings", "description": "Implement user-customizable settings for chat behavior, notifications, and interface preferences.", "type": "UI/UX", "status": "Planned", "start_date": "2025-07-15", "end_date": "2025-08-05", "impact_areas": ["User Experience", "Personalization"]},
+                {"id": "P25F5", "title": "Mobile-Responsive Design", "description": "Optimize interface for mobile devices with touch-friendly controls and responsive layouts.", "type": "UI/UX", "status": "Planned", "start_date": "2025-07-20", "end_date": "2025-08-10", "impact_areas": ["Mobile Support", "Accessibility", "User Experience"]}
+            ]
+        },        {
+            "name": "Phase 3: Advanced Features & Intelligence",
+            "id": "phase3_advanced",
+            "status": "Planned",
+            "target_completion": "Q4 2025",
+            "features": [
+                {"id": "P3F1", "title": "Cross-env-id Search (Permissioned)", "description": "Allow users to search across multiple env-ids they own or are a client of with proper permission validation.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-08-01", "end_date": "2025-08-30", "impact_areas": ["Search", "Permissions", "Data Access"]},
+                {"id": "P3F2", "title": "Cross-env-id Search UI", "description": "User interface for initiating and viewing cross-env-id search results with filtering and sorting.", "type": "UI/UX", "status": "Planned", "start_date": "2025-08-15", "end_date": "2025-09-15", "impact_areas": ["User Interface", "Search"]},
+                {"id": "P3F3", "title": "Advanced Fact Extraction & Relationship Mapping", "description": "Enhance KB to understand relationships between stored facts within an env-id using graph algorithms.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-08-20", "end_date": "2025-09-30", "impact_areas": ["AI Core", "Knowledge Representation"]},
+                {"id": "P3F4", "title": "Intelligent Context Prediction", "description": "Implement ML-based context prediction to anticipate user needs and pre-load relevant information.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-09-01", "end_date": "2025-10-15", "impact_areas": ["AI Core", "Predictive Analytics", "User Experience"]},
+                {"id": "P3F5", "title": "Multi-modal Input Support", "description": "Support for image, document, and file uploads with content extraction and analysis.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-09-15", "end_date": "2025-11-01", "impact_areas": ["Input Processing", "Content Analysis", "User Experience"]},
+                {"id": "P3F6", "title": "Advanced Analytics Dashboard", "description": "Comprehensive analytics for usage patterns, popular queries, and system performance trends.", "type": "UI/UX", "status": "Planned", "start_date": "2025-10-01", "end_date": "2025-11-15", "impact_areas": ["Analytics", "Business Intelligence", "Admin Tools"]},
+                {"id": "P3F7", "title": "API Ecosystem & Integrations", "description": "Develop comprehensive API for third-party integrations and webhook support.", "type": "Backend/IT", "status": "Planned", "start_date": "2025-10-15", "end_date": "2025-12-01", "impact_areas": ["Integration", "API Management", "Ecosystem"]}
             ]
         },
         {
-            "name": "Phase 3: Advanced Features & Scalability",
-            "id": "phase3_advanced",
+            "name": "Phase 4: Enterprise & Strategic Scaling",
+            "id": "phase4_enterprise",
             "status": "Planned",
-            "target_completion": "Q4 2025 / Q1 2026",
+            "target_completion": "Q1-Q2 2026",
             "features": [
-                {"id": "P3F1", "title": "Cross-env-id Search (Permissioned)", "description": "Allow users to search across multiple env-ids they own or are a client of.", "type": "Backend/IT", "status": "Planned", "impact_areas": ["Search", "Permissions", "Data Access"]},
-                {"id": "P3F2", "title": "Cross-env-id Search UI", "description": "User interface for initiating and viewing cross-env-id search results.", "type": "UI/UX", "status": "Planned", "impact_areas": ["User Interface", "Search"]},
-                {"id": "P3F3", "title": "Advanced Fact Extraction & Relationship Mapping", "description": "Enhance KB to understand relationships between stored facts within an env-id.", "type": "Backend/IT", "status": "Planned", "impact_areas": ["AI Core", "Knowledge Representation"]},
-                {"id": "P3F4", "title": "User Roles & Permissions for env-ids", "description": "Detailed role management (admin, member) for env-ids.", "type": "UI/UX", "status": "Planned", "impact_areas": ["Security", "User Management", "Admin Tools"]},
-                {"id": "P3F5", "title": "User-Managed KB Contributions", "description": "Allow users to view, and potentially edit/delete their contributions to an env-id's KB.", "type": "UI/UX", "status": "Planned", "impact_areas": ["Data Privacy", "User Control", "Policy"]}
+                {"id": "P4F1", "title": "User Roles & Permissions for env-ids", "description": "Detailed role management (admin, member, viewer) for env-ids with granular permissions.", "type": "Security", "status": "Planned", "start_date": "2025-11-01", "end_date": "2025-12-15", "impact_areas": ["Security", "User Management", "Admin Tools"]},
+                {"id": "P4F2", "title": "User-Managed KB Contributions", "description": "Allow users to view, edit, delete, and manage their contributions to an env-id's KB.", "type": "UI/UX", "status": "Planned", "start_date": "2025-11-15", "end_date": "2026-01-15", "impact_areas": ["Data Privacy", "User Control", "Policy"]},
+                {"id": "P4F3", "title": "Enterprise SSO Integration", "description": "Support for enterprise single sign-on solutions (SAML, OAuth2, LDAP).", "type": "Security", "status": "Planned", "start_date": "2025-12-01", "end_date": "2026-02-01", "impact_areas": ["Enterprise Integration", "Security", "Authentication"]},
+                {"id": "P4F4", "title": "Advanced Compliance & Audit Trail", "description": "Comprehensive audit logging, data retention policies, and compliance reporting (GDPR, CCPA).", "type": "Policy", "status": "Planned", "start_date": "2025-12-15", "end_date": "2026-03-01", "impact_areas": ["Compliance", "Audit", "Data Governance"]},
+                {"id": "P4F5", "title": "Multi-tenant Architecture", "description": "Complete multi-tenant support with isolated environments and resource allocation.", "type": "Backend/IT", "status": "Planned", "start_date": "2026-01-01", "end_date": "2026-04-01", "impact_areas": ["Architecture", "Scalability", "Enterprise"]},
+                {"id": "P4F6", "title": "AI Model Customization", "description": "Allow organizations to fine-tune AI models for their specific domain and use cases.", "type": "AI/ML", "status": "Planned", "start_date": "2026-02-01", "end_date": "2026-05-01", "impact_areas": ["AI Core", "Customization", "Enterprise"]}
             ]
         }
     ]

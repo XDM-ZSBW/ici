@@ -6,7 +6,7 @@ Starts the refactored ICI Chat application using the new modular backend structu
 import sys
 import os
 import subprocess
-from backend.app import create_app
+from backend.factory import create_app
 from graceful_shutdown import get_shutdown_manager
 
 CERT_FILE = "cert.pem"
