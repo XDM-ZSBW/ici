@@ -161,46 +161,6 @@
                     💾 Response cached offline - will sync when connection is restored
                 </div>
             </div>
-            
-            <!-- Memory Display and Controls Section -->
-            <div style="margin-top:24px;">
-                <h3>Memory Stores</h3>
-                <!-- Shared Memory -->
-                <div style="margin-bottom:16px;">
-                    <label style="font-weight:600;color:#374151;">Shared Memory (All Users)</label>
-                    <textarea id="shared-chat-history" class="memory-textarea" readonly style="height:120px;"></textarea>
-                </div>
-                
-                <!-- IP-Shared Memory -->
-                <div style="margin-bottom:16px;">
-                    <label style="font-weight:600;color:#374151;">IP-Shared Memory (Same Network)</label>
-                    <textarea id="ip-chat-history" class="memory-textarea" readonly style="height:120px;"></textarea>
-                </div>
-                
-                <!-- Private Memory -->
-                <div style="margin-bottom:16px;">
-                    <label style="font-weight:600;color:#374151;">Private Memory (This Browser)</label>
-                    <textarea id="private-chat-history" class="memory-textarea" readonly style="height:120px;"></textarea>
-                </div>
-                
-                <!-- Memory Input and Controls -->
-                <div class="memory-controls">
-                    <div class="memory-input-group">
-                        <input type="text" id="memory-input" placeholder="Add a memory or note..." />
-                    </div>
-                    <div class="memory-buttons">
-                        <button type="button" id="add-to-private" class="memory-btn private">Add to Private</button>
-                        <button type="button" id="add-to-ip" class="memory-btn ip-shared">Add to IP-Shared</button>
-                        <button type="button" id="add-to-shared" class="memory-btn shared">Add to Shared</button>
-                    </div>
-                    <div class="debug-buttons">
-                        <button type="button" id="debug-refresh" class="debug-btn">🔄 Refresh</button>
-                        <button type="button" id="debug-test-sync" class="debug-btn">🔧 Test Sync</button>
-                        <button type="button" id="debug-clear-all" class="debug-btn">🗑️ Clear All</button>
-                        <button type="button" id="debug-test-api" class="debug-btn">📡 Test API</button>
-                    </div>
-                </div>
-            </div>
         </div></main>
         <!-- System Prompt Tuning Box -->
         <div style="max-width:700px;margin:0 auto 32px auto;padding:18px 24px 24px 24px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 1px 6px #0001;">
