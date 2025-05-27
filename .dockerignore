@@ -1,45 +1,56 @@
-# Exclude Python cache, test data, local dev scripts, and other unnecessary files for Docker builds
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
-*.db
-*.sqlite3
-*.log
-*.pot
-*.mo
+
+# Python virtual environments
+.venv/
+env/
+venv/
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# Git and VCS
+.git/
+.gitignore
+
+# Cloud/IDE/CI/CD
+.gcloud/
+.vscode/
+.idea/
 *.swp
-*.swo
-*.bak
-*.tmp
-*.old
-*.orig
-*.pem
-*.key
-*.crt
-*.json
+
+# Tests and local scripts
+tests/
+test_*.py
 *.bat
 *.ps1
 *.sh
-.DS_Store
-.vscode/
-tests/
-gcloud/
-src/__init_seed__/
-static/
-timestamp.txt
-test_results_final.md
-test_vault.json
-test_payload.json
-test_memory_system.ps1
-# Remove run_refactored.py reference - file no longer exists
-start.bat
-daily_health_check.ps1
-test_endpoints_win.ps1
-test_endpoints.bat
-test_endpoints.ps1
-test_endpoints.sh
-ENDPOINT_TESTING_COMPLETE.md
-TESTING_SUITE_INVENTORY.md
-cloudbuild.yaml
-README-secret.md
+
+# Data, logs, and secrets
+*.log
+*.pem
+*.crt
+*.key
+*.json
+*.md
+*.txt
+
+# Node/npm (if present)
+node_modules/
+npm-debug.log
+
+# Build artifacts
+build/
+dist/
+src/
+
+# DO NOT EXCLUDE these (needed for build):
+!backend/
+!static/
+!templates/
+!app.py
+!requirements.txt
