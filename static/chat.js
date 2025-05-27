@@ -1002,3 +1002,58 @@ function onQRCodeScanned(walletAddress, clientData) {
     // Optionally, trigger a UI notification
     if (window.showToast) window.showToast('Authenticated as client: ' + walletAddress);
 }
+
+// --- QR Code rendering above Ask AI textarea ---
+function renderDynamicQrCode(id) {
+    const qrContainer = document.getElementById('dynamic-qr-container');
+    if (!qrContainer) return;
+    // If authenticated, hide QR
+    if (localStorage.getItem('ici-authenticated-client') === '1') {
+        qrContainer.style.display = 'none';
+        return;
+    }
+    const qrUrl = window.location.origin + '/client/' + encodeURIComponent(id);
+    qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrUrl)}" alt="QR Code for authentication" width="180" height="180"><div style='margin-top:8px;font-size:0.95em;word-break:break-all;'><a href="${qrUrl}" target="_blank" rel="noopener">${qrUrl}</a></div>`;
+    qrContainer.style.display = '';
+}
+
+// On load, show QR for current userId unless authenticated
+if (window.localStorage) {
+    let initialId = localStorage.getItem('ici-chat-user-id');
+    if (!initialId) {
+        initialId = generateUserId();
+        localStorage.setItem('ici-chat-user-id', initialId);
+    }
+    renderDynamicQrCode(initialId);
+}
+
+// When QR code is scanned and walletAddress is set, update QR code and hide it
+window.onQRCodeScanned = function(walletAddress, clientData) {
+    // Hide QR code UI
+    const qrSection = document.getElementById('qrSection');
+    if (qrSection) qrSection.style.display = 'none';
+    // Show client details UI (from client.html template)
+    fetch('/client?wallet=' + encodeURIComponent(walletAddress))
+        .then(res => res.text())
+        .then(html => {
+            const clientDetails = document.getElementById('clientDetails');
+            if (clientDetails) {
+                clientDetails.innerHTML = html;
+                clientDetails.style.display = 'block';
+            }
+        });
+    // Update chat memory logic to use walletAddress as the user_id
+    window.currentUserId = walletAddress;
+    localStorage.setItem('ici-authenticated-client', '1');
+    renderDynamicQrCode(walletAddress); // This will hide the QR
+    // Optionally, trigger a UI notification
+    if (window.showToast) window.showToast('Authenticated as client: ' + walletAddress);
+}
+
+// Listen for authentication state changes across tabs/devices
+window.addEventListener('storage', function(e) {
+    if (e.key === 'ici-authenticated-client' && e.newValue === '1') {
+        const qrContainer = document.getElementById('dynamic-qr-container');
+        if (qrContainer) qrContainer.style.display = 'none';
+    }
+});
