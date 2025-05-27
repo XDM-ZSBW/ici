@@ -80,7 +80,7 @@ if __name__ == "__main__":
         print(f"[LOCAL] Running with HTTPS at https://localhost:{PORT}")
         print(f"[STARTUP] Loading page available immediately at https://localhost:{PORT}")
         try:
-            app.run(host="0.0.0.0", port=PORT, debug=True, ssl_context=(CERT_FILE, KEY_FILE))
+            app.run(host="0.0.0.0", port=PORT, debug=True, ssl_context=(CERT_FILE, KEY_FILE), use_reloader=False)
         except KeyboardInterrupt:
             print("\n[SHUTDOWN] Received keyboard interrupt")
         except Exception as e:
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         print(f"[LOCAL] Running HTTP only at http://localhost:{PORT}")
         print(f"[STARTUP] Loading page available immediately at http://localhost:{PORT}")
         try:
-            app.run(host="0.0.0.0", port=PORT, debug=True)
+            app.run(host="0.0.0.0", port=PORT, debug=True, use_reloader=False)
         except KeyboardInterrupt:
             print("\n[SHUTDOWN] Received keyboard interrupt")
         except Exception as e:

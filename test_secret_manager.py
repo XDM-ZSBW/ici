@@ -28,7 +28,7 @@ logging.basicConfig(
 )
 
 def test_secret_retrieval(secrets_manager):
-    """Test retrieving A_Secret_Seed from Secret Manager"""
+    """Test retrieving a secret from Secret Manager or environment"""
     
     print("=" * 60)
     print("Google Secret Manager Test")
@@ -40,15 +40,19 @@ def test_secret_retrieval(secrets_manager):
     print(f"Secret Manager Client Available: {bool(secrets_manager.client)}")
     print()
     
-    # Test secret retrieval
-    secret_name = "A_Secret_Seed"
+    # Prompt for secret name
+    secret_name = input("Enter the secret name to retrieve: ").strip()
     print(f"Attempting to retrieve secret: {secret_name}")
     print("-" * 40)
     
     try:
-        # Retrieve the secret
+        # Try original, UPPERCASE, and lowercase
         secret_value = secrets_manager.get_secret(secret_name)
-        
+        if not secret_value:
+            secret_value = secrets_manager.get_secret(secret_name.upper())
+        if not secret_value:
+            secret_value = secrets_manager.get_secret(secret_name.lower())
+
         if secret_value:
             print(f"✅ SUCCESS: Secret '{secret_name}' retrieved successfully!")
             print(f"Secret Value: {secret_value}")

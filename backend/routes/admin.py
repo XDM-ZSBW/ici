@@ -501,16 +501,16 @@ def secret_lookup():
         try:
             if not project_id or not environment or not secret_name:
                 raise ValueError('All fields are required.')
-            # Set env vars for this lookup only
             os.environ['GOOGLE_CLOUD_PROJECT'] = project_id
             os.environ['ENVIRONMENT'] = environment
-            # Try environment variable first, then Secret Manager
-            value = os.environ.get(secret_name)
             debug = f"[DEBUG] Using project_id={project_id}, environment={environment}, secret_name={secret_name}\n"
-            if value is not None:
+            # Only check the exact name for env var
+            env_val = os.environ.get(secret_name)
+            if env_val is not None:
                 debug += '[DEBUG] Found secret in environment variable.'
-                result = value
+                result = env_val
             else:
+                # Force re-initialize secrets manager with new env vars
                 manager = TransparentSecretsManager()
                 value = manager.get_secret(secret_name)
                 if value is not None:
