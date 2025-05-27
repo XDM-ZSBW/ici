@@ -1010,8 +1010,16 @@ function renderDynamicQrCode(id) {
     const qrUrl = window.location.origin + '/client/' + encodeURIComponent(id);
     const collapsed = localStorage.getItem('ici-authenticated-client') === '1';
     if (collapsed) {
-        // Show client ID and MFA status, hide QR and link
-        qrContainer.innerHTML = `<div style='font-size:1.1em;color:#2563eb;font-weight:bold;margin:8px 0;'>Client ID: <span style='font-family:monospace;'>${id}</span></div><div style='font-size:0.95em;color:#64748b;'>Multi-Factor Authentication (MFA) active</div>`;
+        // Show small QR code (45x45px), client ID, and MFA status
+        qrContainer.innerHTML = `
+            <div style='display:flex;align-items:center;gap:12px;justify-content:center;'>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=45x45&data=${encodeURIComponent(qrUrl)}" alt="QR Code (collapsed)" width="45" height="45" style="border-radius:6px;border:1px solid #e5e7eb;background:#fff;">
+                <div>
+                    <div style='font-size:1.1em;color:#2563eb;font-weight:bold;'>Client ID: <span style='font-family:monospace;'>${id}</span></div>
+                    <div style='font-size:0.95em;color:#64748b;'>Multi-Factor Authentication (MFA) active</div>
+                </div>
+            </div>
+        `;
         qrContainer.style.display = '';
     } else {
         // Show large QR and link
@@ -1022,7 +1030,7 @@ function renderDynamicQrCode(id) {
 
 // Listen for authentication state changes across tabs/devices
 window.addEventListener('storage', function(e) {
-    if (e.key === 'ici-authenticated-client') {
+    if (e.key === 'ici-authenticated-client' || e.key === 'ici-chat-user-id') {
         let id = localStorage.getItem('ici-chat-user-id');
         renderDynamicQrCode(id);
     }
@@ -1031,6 +1039,8 @@ window.addEventListener('storage', function(e) {
 // When QR code is scanned and walletAddress is set, show client ID and MFA
 window.onQRCodeScanned = function(walletAddress, clientData) {
     localStorage.setItem('ici-authenticated-client', '1');
+    // Also trigger a custom event for all tabs
+    localStorage.setItem('ici-auth-update', Date.now().toString());
     let id = walletAddress || localStorage.getItem('ici-chat-user-id');
     renderDynamicQrCode(id);
     // Optionally, show client details UI (from client.html template)
@@ -1047,9 +1057,18 @@ window.onQRCodeScanned = function(walletAddress, clientData) {
     if (window.showToast) window.showToast('Authenticated as client: ' + walletAddress);
 };
 
+// Listen for custom auth update event to force all tabs to update QR UI
+window.addEventListener('storage', function(e) {
+    if (e.key === 'ici-auth-update') {
+        let id = localStorage.getItem('ici-chat-user-id');
+        renderDynamicQrCode(id);
+    }
+});
+
 // Optional: For testing, allow reset of QR code state
 window.resetQrCodeState = function() {
     localStorage.removeItem('ici-authenticated-client');
+    localStorage.setItem('ici-auth-update', Date.now().toString());
     let id = localStorage.getItem('ici-chat-user-id');
     renderDynamicQrCode(id);
 };
