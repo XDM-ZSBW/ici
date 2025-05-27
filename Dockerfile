@@ -8,16 +8,20 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
+# Create user and set ownership
+RUN useradd --create-home --shell /bin/bash app
+
 # Copy only requirements first for caching
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy only the app code (after .dockerignore is fixed)
-COPY . .
+COPY --chown=app:app backend/ backend/
+COPY --chown=app:app static/ static/
+COPY --chown=app:app templates/ templates/
+COPY --chown=app:app app.py ./
 
-# Create user and set ownership
-RUN useradd --create-home --shell /bin/bash app && \
-    chown -R app:app /app
+# Switch to the non-root user
 USER app
 
 # Expose port 8080 (Cloud Run default)
