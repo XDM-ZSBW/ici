@@ -6,15 +6,22 @@
     <link rel="stylesheet" href="/static/css/markdown.css?v={{ config['ICI_CSS_VERSION'] if config and config.get('ICI_CSS_VERSION') else '1.0.0' }}">
     <style>
       body { background: #f4f6fa; }
+      .markdown-body { 
+        max-width: 900px; 
+        margin: 20px auto; 
+        padding: 40px; 
+        background: white; 
+        border-radius: 8px; 
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+        line-height: 1.6; 
+      }
     </style>
 </head>
 <body>
-    {% extends "_header.html" %}
-    {% block content %}
+    {% include "_header.html" %}
     <div class="markdown-body">
         {{ content|safe }}
     </div>
-    {% endblock %}
     {% include "_footer.html" %}
 </body>
 </html>

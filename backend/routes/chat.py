@@ -190,18 +190,7 @@ def env_id_endpoint():
     # Check if this is an AJAX request
     if request.headers.get('Accept') == 'application/json' or request.headers.get('Content-Type') == 'application/json':
         return jsonify({"env_id": env_id})
-    
-    # Otherwise return the HTML page
+      # Otherwise return the HTML page
     return render_template("env-id.html", env_id=env_id)
 
-@chat_bp.route('/readme')
-def readme():
-    import markdown
-    import os
-    readme_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..', 'README.md'))
-    if not os.path.exists(readme_path):
-        return render_template('markdown_render.html', html_content='<h2>README.md not found.</h2>')
-    with open(readme_path, 'r', encoding='utf-8') as f:
-        md_content = f.read()
-    html_content = markdown.markdown(md_content, extensions=['fenced_code', 'tables'])
-    return render_template('markdown_render.html', html_content=html_content)
+# Note: /readme route moved to admin.py to avoid conflicts

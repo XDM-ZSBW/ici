@@ -2,6 +2,23 @@
 
 An open-source, AI-powered memory assistant designed with and for individuals with cognitive disabilities. ICI provides ethical, privacy-respecting memory support through collaborative, adaptive technology that enhances independence and well-being.
 
+---
+
+## 🎯 Solution Architecture Skills
+
+> **Key competencies demonstrated in building this AI-powered accessibility solution:**
+
+### 💡 **Human-Centered AI Design & Accessibility Engineering**
+Expertise in designing AI systems with progressive confirmation methodologies, multi-modal explanations, and "unapologetically naggy" safety mechanisms that prioritize user agency and cognitive accessibility over convenience.
+
+### 🛡️ **Collaborative Memory Architecture & Privacy Engineering** 
+Advanced skills in architecting multi-scope data sharing systems (private/IP/shared) with real-time synchronization, QR-based authentication, and privacy-first design principles for sensitive user populations.
+
+### 🚀 **Full-Stack AI Solution Architecture**
+Proven ability to design and implement complete AI-powered applications including Flask/SocketIO backends, responsive frontends, vector databases, memory systems, and cloud deployment strategies with progressive startup methodologies.
+
+---
+
 ## Mission & Vision
 
 **Purpose**: ICI is an open-source AI memory companion designed with and for individuals with cognitive disabilities, providing ethical, privacy-respecting memory support.

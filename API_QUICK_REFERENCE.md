@@ -12,6 +12,9 @@
 - `GET /chat` → AI chat interface
 - `GET /join` → QR authentication and client table
 - `GET /admin` → Admin dashboard
+- `GET /learn` → Learning guide for safe collaborative memory usage
+- `GET /readme` → Project README documentation
+- `GET /changelog` → Version history and updates
 
 ### AI Chat
 - `POST /ai-chat` → Basic AI conversation
