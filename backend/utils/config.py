@@ -43,24 +43,28 @@ class Config:
             'auth_configured': False,
             'admin_configured': False
         }
-        
-        # Check email configuration (any provider)
+          # Check email configuration (any provider)
         email_providers = [
             'SENDGRID_API_KEY',
             'MAILGUN_API_KEY', 
             'TUTANOTA_USERNAME'
         ]
         
-        for provider in email_providers:
-            if self.secrets.get_secret(provider):
-                status['email_configured'] = True
-                break
+        # Check for explicit email provider setting (including simulated)
+        explicit_provider = self.secrets.get_secret('EMAIL_PROVIDER')
+        if explicit_provider and explicit_provider.lower() == 'simulated':
+            status['email_configured'] = True
+        else:
+            # Check for actual API keys
+            for provider in email_providers:
+                if self.secrets.get_secret(provider):
+                    status['email_configured'] = True
+                    break
         
         # Check database configuration
         if self.secrets.get_secret('DATABASE_URL'):
             status['database_configured'] = True
-        
-        # Check authentication
+          # Check authentication
         if self.secrets.get_secret('JWT_SECRET_KEY'):
             status['auth_configured'] = True
         
@@ -76,6 +80,12 @@ class Config:
     @property
     def email_provider(self) -> Optional[str]:
         """Determine which email provider is configured"""
+        # Check for explicit provider setting first
+        explicit_provider = self.secrets.get_secret('EMAIL_PROVIDER')
+        if explicit_provider:
+            return explicit_provider.lower()
+        
+        # Auto-detect based on available API keys
         if self.secrets.get_secret('SENDGRID_API_KEY'):
             return 'sendgrid'
         elif self.secrets.get_secret('MAILGUN_API_KEY'):

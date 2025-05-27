@@ -12,6 +12,9 @@
 - `GET /env-id` → Get environment identifier
 - `GET /system-info` → Comprehensive server status and Python environment info
 - `GET /health` → Health check with live data stream and system diagnostics
+- `GET /events` → **NEW** Server-Sent Events for real-time health monitoring
+- `GET /admin/config` → Configuration status and validation report
+- `GET /admin/secrets-health` → Secrets management health check
 
 ### Main Application
 - `GET /` → Landing page with navigation and project overview
@@ -79,6 +82,22 @@
 ```powershell
 curl -k https://localhost:8080/env-id
 curl -k https://localhost:8080/system-info
+curl -k https://localhost:8080/health
+```
+
+### Test Health Monitoring (NEW - May 27, 2025)
+```powershell
+# Test health page (HTML)
+curl -k https://localhost:8080/health
+
+# Test Server-Sent Events (streams continuously)
+curl -k https://localhost:8080/events
+
+# Test configuration status
+curl -k https://localhost:8080/admin/config
+
+# Test secrets health
+curl -k https://localhost:8080/admin/secrets-health
 ```
 
 ### Test AI Chat

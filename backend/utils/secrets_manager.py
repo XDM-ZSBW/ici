@@ -39,15 +39,14 @@ class TransparentSecretsManager:
         self.client = None
         
         # Initialize Google Cloud client if available and configured
-        if GOOGLE_CLOUD_AVAILABLE and self.project_id:
+        if GOOGLE_CLOUD_AVAILABLE and self.project_id and secretmanager:
             try:
                 self.client = secretmanager.SecretManagerServiceClient()
                 logger.info(f"Secret Manager client initialized - Project: {self.project_id}")
             except Exception as e:
                 logger.warning(f"Could not initialize Secret Manager client: {e}")
                 self.client = None
-        
-        # Log configuration transparently (no secret values)
+          # Log configuration transparently (no secret values)
         logger.info(f"Secrets Manager initialized - Environment: {self.environment}, "
                    f"Secret Manager available: {bool(self.client)}")
     
@@ -69,13 +68,16 @@ class TransparentSecretsManager:
             else:
                 # Development: Use environment variables
                 return self._get_from_environment(secret_name)
-                
         except Exception as e:
             logger.error(f"Failed to retrieve secret {secret_name}: {str(e)}")
             return None
     
     def _get_from_secret_manager(self, secret_name: str) -> Optional[str]:
         """Get secret from Google Secret Manager"""
+        if not self.client:
+            logger.warning(f"Secret Manager client not available for {secret_name}")
+            return self._get_from_environment(secret_name)
+            
         try:
             secret_path = f"projects/{self.project_id}/secrets/{secret_name}/versions/latest"
             response = self.client.access_secret_version(request={"name": secret_path})

@@ -152,6 +152,19 @@ ICI uses a modern, modular architecture designed for maintainability and extensi
 - `/recovery` : Administrative recovery and system management tools
 - `/debug/*` : Comprehensive debugging endpoints for system diagnostics
 - `/system-info` : Detailed system information and Python environment data
+- `/health` : Real-time health monitoring with Server-Sent Events
+- `/events` : Server-Sent Events endpoint for live system status updates
+- `/admin` : Administrative dashboard with configuration and health metrics
+
+### Health Monitoring System
+ICI includes a comprehensive health monitoring system that provides real-time visibility into application status:
+
+- **Real-Time Health Dashboard**: Live status updates via Server-Sent Events
+- **Configuration Validation**: Automatic validation of all system components
+- **Secrets Management Health**: Monitoring of Google Secret Manager and environment variables
+- **Service Status Tracking**: Database, authentication, email, and other service health
+- **Live Data Streaming**: Continuous health data updates every 5 seconds
+- **Browser-Compatible**: Full EventSource/SSE support with automatic reconnection
 
 ## Technologies Used
 

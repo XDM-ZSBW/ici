@@ -151,6 +151,45 @@
             <p>Track the evolution of ICI Chat with detailed version history and updates</p>
         </div>
 
+        <!-- v1.3.5: Health Check System Fix -->
+        <div class="version fixed">
+            <div class="version-header">
+                <div>
+                    <span class="version-number">v1.3.5</span>
+                    <span class="version-type type-patch">Patch</span>
+                </div>
+                <span class="version-date">May 27, 2025</span>
+            </div>
+            <div class="changes">
+                <div class="change-category fixed">
+                    <h4><span class="icon">🩺</span> Health Check System</h4>
+                    <ul class="change-list">
+                        <li>Fixed health check page showing persistent "Status: Loading..." and connection errors</li>
+                        <li>Added missing <span class="code">/events</span> Server-Sent Events endpoint for real-time health monitoring</li>
+                        <li>Implemented proper SSE streaming with JSON data format expected by frontend</li>
+                        <li>Enhanced health status JavaScript to properly update UI elements and handle reconnections</li>
+                        <li>Added proper CORS headers and event stream formatting for browser compatibility</li>
+                    </ul>
+                </div>
+                <div class="change-category added">
+                    <h4><span class="icon">🔗</span> New Endpoints</h4>
+                    <ul class="change-list">
+                        <li><span class="code">GET /events</span> - Server-Sent Events endpoint for health monitoring</li>
+                        <li>Real-time streaming of health data with 5-second intervals</li>
+                        <li>JSON payload includes random_string, timestamp, and status fields</li>
+                    </ul>
+                </div>
+                <div class="change-category changed">
+                    <h4><span class="icon">🔧</span> Technical Improvements</h4>
+                    <ul class="change-list">
+                        <li>Enhanced EventSource error handling with automatic reconnection logic</li>
+                        <li>Improved health page JavaScript for better status reporting</li>
+                        <li>Fixed indentation issues in admin routes module</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
         <!-- v1.3.4: Build Success -->
         <div class="version changed">
             <div class="version-header">

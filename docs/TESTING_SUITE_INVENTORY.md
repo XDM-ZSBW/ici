@@ -39,6 +39,12 @@ Complete endpoint testing infrastructure for ICI Chat application, enabling conf
    - Perfect for CI/CD pipelines
    - Clear pass/fail status reporting
 
+6. **`tests/health_monitoring_test.ps1`** 🆕 **(NEW - May 27, 2025)**
+   - Specific tests for real-time health monitoring system
+   - Server-Sent Events connectivity testing
+   - Health page functionality validation
+   - Configuration and secrets health checks
+
 ### Functional Tests
 6. **`tests/test_jeanne_functionality.py`**
    - Tests "Who is [person]?" search functionality

@@ -36,7 +36,8 @@ roadmap_data_store = {
                 {"id": "P1F9", "title": "Enhanced 'Who is [person]?' Memory Search", "description": "Implement cross-memory search functionality to find person mentions across all client records and memory stores.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["AI Core", "Memory System", "Search"]},
                 {"id": "P1F10", "title": "Single Entry Point Architecture", "description": "Implement Single Entry Point Rule with only one app.py in root directory and clean modular backend structure.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["Architecture", "Maintainability", "DevOps"]},
                 {"id": "P1F11", "title": "Test Suite Organization", "description": "Consolidate all test files into tests/ folder and remove outdated test files for non-existent endpoints.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-26", "end_date": "2025-05-26", "impact_areas": ["Testing", "Maintainability", "DevOps"]},
-                {"id": "P1F12", "title": "Hybrid Secrets Management", "description": "Implement transparent secrets management with Google Secret Manager for production and environment variables for development.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-27", "end_date": "2025-05-27", "impact_areas": ["Security", "DevOps", "Configuration"]}
+                {"id": "P1F12", "title": "Hybrid Secrets Management", "description": "Implement transparent secrets management with Google Secret Manager for production and environment variables for development.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-27", "end_date": "2025-05-27", "impact_areas": ["Security", "DevOps", "Configuration"]},
+                {"id": "P1F13", "title": "Real-Time Health Monitoring System", "description": "Implement comprehensive health monitoring with Server-Sent Events, live status updates, and real-time system diagnostics.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-27", "end_date": "2025-05-27", "impact_areas": ["Monitoring", "DevOps", "User Experience", "Reliability"]}
             ]
         }
     ]
@@ -209,7 +210,8 @@ Timestamp: {report['timestamp']}
 
 Please review and address this report in the admin dashboard.
                     """
-                      result = email_service.send_email(
+                    
+                    result = email_service.send_email(
                         to_email=config.admin_email,
                         subject=subject,
                         body=body
@@ -258,8 +260,7 @@ def health_check():
                     'source': 'Secret Manager' if config.secrets.project_id else 'Environment Variables',
                     'health': config_report.get('secrets_health', {})
                 }
-            }
-        }
+            }        }
         
         return render_template('health.html', health_data=health_data)
         
@@ -269,3 +270,86 @@ def health_check():
             'error': str(e),
             'timestamp': datetime.now().isoformat()
         }), 500
+
+@admin_bp.route('/events')
+def events():
+    """Server-Sent Events endpoint for health check page"""
+    import time
+    import random
+    import string
+    
+    def generate_events():
+        """Generate server-sent events with health status data"""
+        while True:
+            # Generate a random string for the health check
+            random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+            
+            # Create event data in the format expected by health.html
+            event_data = {
+                'random_string': random_string,
+                'timestamp': datetime.now().isoformat(),
+                'status': 'healthy'
+            }
+            
+            # Format as Server-Sent Event
+            yield f"data: {json.dumps(event_data)}\n\n"
+            
+            # Wait before sending next event
+            time.sleep(5)
+    
+    return Response(
+        generate_events(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Cache-Control'
+        }
+    )
+
+@admin_bp.route("/roadmap")
+def roadmap_view():
+    """Roadmap view with HTML rendering and JSON API support"""
+    current_roadmap_data = roadmap_data_store.copy()
+    current_roadmap_data["last_updated"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+        return jsonify(current_roadmap_data)
+    
+    # For HTML view, calculate min/max dates for Gantt scaling
+    all_dates = []
+    for phase in current_roadmap_data.get("phases", []):
+        for feature in phase.get("features", []):
+            if feature.get("start_date"):
+                all_dates.append(datetime.strptime(feature["start_date"], "%Y-%m-%d"))
+            if feature.get("end_date"):
+                all_dates.append(datetime.strptime(feature["end_date"], "%Y-%m-%d"))
+    
+    min_date = min(all_dates) if all_dates else datetime(2025, 1, 1)
+    max_date = max(all_dates) if all_dates else datetime(2025, 12, 31)
+    
+    if max_date <= min_date and all_dates:
+        max_date = min_date + timedelta(days=30)
+    elif not all_dates:
+        min_date = datetime(datetime.now().year, 1, 1)
+        max_date = datetime(datetime.now().year, 12, 31)
+    
+    return render_template(
+        "roadmap.html",
+        roadmap=current_roadmap_data,
+        min_date=min_date,
+        max_date=max_date,
+        timedelta=timedelta,
+        datetime=datetime
+    )
+
+@admin_bp.route("/changelog")
+def changelog():
+    """Changelog page with version history and updates"""
+    return render_template("changelog.html")
+
+@admin_bp.route("/policies")
+def policies():
+    """Policies and terms page"""
+    return render_template("policies.html")
