@@ -782,15 +782,6 @@ document.addEventListener('DOMContentLoaded', function() {
   let sharedMemoryOnline = true;
   let lastSharedArr = [];
   let sharedChatBox = null;
-  // --- Socket.IO for real-time shared memory updates ---
-  if (window.io) {
-    const socket = io();
-    socket.on('shared_memory_updated', function(data) {
-      // Optionally, check env_id matches if you want to filter
-      renderSharedChat();
-      populateMemorySectionTextareas(); // Also refresh memory textboxes
-    });
-  }
   // === CONSOLIDATED INITIALIZATION ===
   document.addEventListener('DOMContentLoaded', function() {
     var jsDebug = document.getElementById('js-init-debug');
@@ -1099,3 +1090,41 @@ if (window.localStorage) {
     }
     renderDynamicQrCode(initialId);
 }
+
+// --- MFA tab tracking logic ---
+function updateMfaTabCount() {
+    // Use a localStorage key to track open tabs for this client
+    const id = localStorage.getItem('ici-chat-user-id');
+    if (!id) return;
+    const key = 'ici-mfa-tabs-' + id;
+    let tabs = JSON.parse(localStorage.getItem(key) || '[]');
+    const now = Date.now();
+    // Remove stale tabs (older than 10s)
+    tabs = tabs.filter(t => now - t.ts < 10000);
+    // Add/update this tab
+    const tabId = window.name || (window.name = Math.random().toString(36).slice(2));
+    const idx = tabs.findIndex(t => t.tabId === tabId);
+    if (idx >= 0) tabs[idx].ts = now;
+    else tabs.push({ tabId, ts: now });
+    localStorage.setItem(key, JSON.stringify(tabs));
+    // Always include env_id for backend
+    let envId = localStorage.getItem('ici-env-id') || 'ici-demo';
+    // Notify backend if MFA is lost (less than 2 tabs)
+    if (tabs.length < 2) {
+        fetch('/client-mfa-lost', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_id: id, env_id: envId, timestamp: now })
+        });
+    } else {
+        fetch('/client-mfa-active', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_id: id, env_id: envId, timestamp: now })
+        });
+    }
+}
+setInterval(updateMfaTabCount, 5000);
+window.addEventListener('storage', function(e) {
+    if (e.key && e.key.startsWith('ici-mfa-tabs-')) updateMfaTabCount();
+});

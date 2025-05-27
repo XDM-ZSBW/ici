@@ -1,10 +1,9 @@
 # Client management routes for ICI Chat backend
 
 from flask import Blueprint, jsonify, request, render_template
-from backend.utils.id_utils import get_env_id
+from backend.utils.id_utils import get_env_id, generate_secure_key
 import time
 import os
-from eth_account import Account
 import hashlib
 
 client_bp = Blueprint('client', __name__)
@@ -187,64 +186,43 @@ def recovery_data():
 
 @client_bp.route('/client/new-wallet', methods=['POST'])
 def create_new_wallet():
-    """Create a new crypto wallet and return the public address."""
-    acct = Account.create(os.urandom(32))
+    """Create a new unique client ID (256-bit hex string) and return it."""
+    client_id = generate_secure_key()
     return jsonify({
-        'public_address': acct.address,
-        'private_key': acct.key.hex()  # Only return for demo/testing; remove in production!
+        'client_id': client_id
     })
 
 @client_bp.route("/client/<client_id>")
 def client_auth(client_id):
-    """Handle QR code authentication for client IDs"""
+    """Handle QR code authentication for client IDs (no wallet)."""
     env_id = get_env_id()
-    
-    # Generate a wallet address for this client session
-    try:
-        # Create a wallet account for this client
-        acct = Account.create(os.urandom(32))
-        wallet_address = acct.address
-        
-        # Store the wallet association with this client
-        client_key = f"{env_id}:{client_id}"
-        auth_record = {
-            "env_id": env_id,
-            "client_id": client_id,
-            "wallet_address": wallet_address,
-            "timestamp": int(time.time() * 1000),
-            "authenticated": True
-        }
-        
-        # Store in client memory with wallet info
-        if client_key in client_memory:
-            client_memory[client_key].update(auth_record)
-        else:
-            client_memory[client_key] = auth_record
-            
-        # Update client table
-        for client in client_json_table:
-            if client.get("client_id") == client_id and client.get("env_id") == env_id:
-                client.update(auth_record)
-                break
-        else:
-            # Add new client if not found
-            client_json_table.append(auth_record)
-        
-        # Render the client authentication template
-        return render_template('client_auth.html',
-                             client_id=client_id,
-                             wallet_address=wallet_address,
-                             env_id=env_id,
-                             authenticated=True)
-                             
-    except Exception as e:
-        # Fallback: render auth template without wallet
-        return render_template('client_auth.html',
-                             client_id=client_id,
-                             wallet_address=None,
-                             env_id=env_id,
-                             authenticated=False,
-                             error=str(e))
+    # Use the client_id directly (already a 256-bit hex string)
+    wallet_address = None  # No wallet, just a unique ID
+    client_key = f"{env_id}:{client_id}"
+    auth_record = {
+        "env_id": env_id,
+        "client_id": client_id,
+        "wallet_address": wallet_address,
+        "timestamp": int(time.time() * 1000),
+        "authenticated": True
+    }
+    # Store in client memory with info
+    if client_key in client_memory:
+        client_memory[client_key].update(auth_record)
+    else:
+        client_memory[client_key] = auth_record
+    # Update client table
+    for client in client_json_table:
+        if client.get("client_id") == client_id and client.get("env_id") == env_id:
+            client.update(auth_record)
+            break
+    else:
+        client_json_table.append(auth_record)
+    return render_template('client_auth.html',
+                         client_id=client_id,
+                         wallet_address=wallet_address,
+                         env_id=env_id,
+                         authenticated=True)
 
 @client_bp.route("/client-mfa-active", methods=["POST"])
 def client_mfa_active():
