@@ -30,7 +30,7 @@ if not (os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)):
         sys.exit(1)
 
 if __name__ == "__main__":
-    print("Starting ICI Chat with refactored backend...")
+    print("Starting ICI Chat with progressive startup...")
 
     # Only run shutdown/cleanup logic if not in a Flask code reload
     is_reloader = os.environ.get("WERKZEUG_RUN_MAIN") == "true"
@@ -39,14 +39,37 @@ if __name__ == "__main__":
         shutdown_mgr = get_shutdown_manager()
         shutdown_mgr.prepare_for_startup()
 
+    # Create app with basic functionality first
+    print("[STARTUP] Creating basic Flask app...")
     app, socketio = create_app()
 
     if shutdown_mgr:
         shutdown_mgr.register_app(app, socketio)
 
     use_ssl = CERT_FILE and KEY_FILE and os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)
+    
+    # Start server in background thread to serve loading page immediately
+    import threading
+    import time
+    
+    def complete_initialization():
+        """Complete app initialization in background"""
+        print("[STARTUP] Starting background initialization...")
+        time.sleep(1)  # Brief delay to ensure server is responding
+        
+        from backend.app import complete_app_initialization
+        complete_app_initialization(app)
+        
+        print("[STARTUP] Background initialization complete!")
+    
+    # Start background initialization
+    init_thread = threading.Thread(target=complete_initialization, daemon=True)
+    init_thread.start()
+    
+    # Start server immediately with basic routes
     if use_ssl:
         print("[SSL] Running with HTTPS at https://localhost:8080 ...")
+        print("[STARTUP] Loading page available immediately at https://localhost:8080")
         try:
             socketio.run(app, host="0.0.0.0", port=PORT, debug=True, keyfile=KEY_FILE, certfile=CERT_FILE)
         except KeyboardInterrupt:
@@ -58,6 +81,7 @@ if __name__ == "__main__":
                 shutdown_mgr.cleanup()
     else:
         print("[SSL] Running without HTTPS (no certs found or generated). Use HTTP only.")
+        print("[STARTUP] Loading page available immediately at http://localhost:8080")
         try:
             socketio.run(app, host="0.0.0.0", port=PORT, debug=True)
         except KeyboardInterrupt:

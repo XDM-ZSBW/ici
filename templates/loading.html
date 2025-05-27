@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICI Chat - Starting Up</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .loading-container {
+            text-align: center;
+            max-width: 600px;
+            padding: 2rem;
+        }
+        
+        .logo {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards;
+        }
+        
+        .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease 0.3s forwards;
+        }
+        
+        .loading-spinner {
+            margin: 2rem auto;
+            opacity: 0;
+            animation: fadeInUp 1s ease 0.6s forwards;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        .status-text {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease 0.9s forwards;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            max-width: 400px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            margin: 1rem auto;
+            overflow: hidden;
+            opacity: 0;
+            animation: fadeInUp 1s ease 1.2s forwards;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #81C784);
+            border-radius: 4px;
+            width: 0%;
+            animation: progressFill 3s ease-in-out forwards;
+        }
+        
+        .startup-steps {
+            margin-top: 2rem;
+            text-align: left;
+            opacity: 0;
+            animation: fadeInUp 1s ease 1.5s forwards;
+        }
+        
+        .step {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        
+        .step.completed {
+            background: rgba(76, 175, 80, 0.3);
+        }
+        
+        .step.current {
+            background: rgba(255, 193, 7, 0.3);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .eta {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            opacity: 0;
+            animation: fadeInUp 1s ease 1.8s forwards;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes progressFill {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { background-color: rgba(255, 193, 7, 0.3); }
+            50% { background-color: rgba(255, 193, 7, 0.6); }
+        }
+        
+        .redirect-notice {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            opacity: 0;
+            animation: fadeInUp 1s ease 2.1s forwards;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-container">
+        <div class="logo">ICI Chat</div>
+        <div class="subtitle">Your AI Memory Companion</div>
+        
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="status-text" id="status-text">Initializing services...</div>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        
+        <div class="startup-steps">
+            <div class="step completed" id="step-ssl">✓ SSL certificates ready</div>
+            <div class="step current" id="step-app">⟳ Loading application components...</div>
+            <div class="step" id="step-blueprints">⏳ Registering route blueprints</div>
+            <div class="step" id="step-memory">⏳ Initializing memory systems</div>
+            <div class="step" id="step-vector">⏳ Starting vector database</div>
+            <div class="step" id="step-ready">⏳ Final preparations</div>
+        </div>
+        
+        <div class="eta" id="eta">
+            Estimated completion: 5-10 seconds
+        </div>
+        
+        <div class="redirect-notice">
+            You will be automatically redirected to the main application when startup is complete.
+            <br>
+            If this takes longer than expected, you can manually navigate to <strong>/chat</strong>
+        </div>
+    </div>
+      <script>
+        // Real startup tracking with server polling
+        const steps = [
+            { id: 'step-ssl', key: 'ssl_ready', delay: 0 },
+            { id: 'step-app', key: 'app_created', delay: 500 },
+            { id: 'step-blueprints', key: 'blueprints_registered', delay: 1000 },
+            { id: 'step-memory', key: 'memory_initialized', delay: 1500 },
+            { id: 'step-vector', key: 'vector_db_ready', delay: 2000 },
+            { id: 'step-ready', key: 'fully_ready', delay: 2500 }
+        ];
+        
+        const statusMessages = [
+            'SSL certificates ready...',
+            'Flask application created...',
+            'Registering route blueprints...',
+            'Initializing memory systems...',
+            'Starting vector database...',
+            'Application ready!'
+        ];
+        
+        let currentStep = 0;
+        let pollingActive = true;
+        
+        function updateStep(stepIndex, completed = false) {
+            if (stepIndex > 0) {
+                const prevStep = document.getElementById(steps[stepIndex - 1].id);
+                if (prevStep) {
+                    prevStep.className = 'step completed';
+                    prevStep.innerHTML = '✓ ' + prevStep.innerHTML.substring(2);
+                }
+            }
+            
+            if (stepIndex < steps.length) {
+                const currentStepEl = document.getElementById(steps[stepIndex].id);
+                if (currentStepEl) {
+                    if (completed) {
+                        currentStepEl.className = 'step completed';
+                        currentStepEl.innerHTML = '✓ ' + currentStepEl.innerHTML.substring(2);
+                    } else {
+                        currentStepEl.className = 'step current';
+                    }
+                }
+                
+                if (stepIndex < statusMessages.length) {
+                    document.getElementById('status-text').textContent = statusMessages[stepIndex];
+                }
+                
+                // Update progress bar
+                const progress = ((stepIndex + 1) / steps.length) * 100;
+                document.querySelector('.progress-fill').style.width = progress + '%';
+            }
+        }
+        
+        // Poll server for real startup status
+        function pollStartupStatus() {
+            if (!pollingActive) return;
+            
+            fetch('/startup-status')
+                .then(response => response.json())
+                .then(state => {
+                    // Update steps based on real server state
+                    steps.forEach((step, index) => {
+                        if (state[step.key] && index >= currentStep) {
+                            updateStep(index, true);
+                            currentStep = index + 1;
+                        }
+                    });
+                    
+                    // Check if fully ready
+                    if (state.fully_ready) {
+                        pollingActive = false;
+                        document.getElementById('status-text').textContent = 'Startup complete! Redirecting...';
+                        
+                        // Complete all remaining steps
+                        for (let i = currentStep; i < steps.length; i++) {
+                            updateStep(i, true);
+                        }
+                        
+                        setTimeout(() => {
+                            window.location.href = '/chat';
+                        }, 1000);
+                    } else {
+                        // Continue polling
+                        setTimeout(pollStartupStatus, 500);
+                    }
+                })
+                .catch(() => {
+                    // Server might not be ready yet, continue polling
+                    if (pollingActive) {
+                        setTimeout(pollStartupStatus, 1000);
+                    }
+                });
+        }
+        
+        // Start with immediate visual feedback
+        updateStep(0);
+        
+        // Begin polling after a brief delay
+        setTimeout(pollStartupStatus, 200);
+        
+        // Fallback: If polling fails for too long, redirect anyway
+        setTimeout(() => {
+            if (pollingActive) {
+                document.getElementById('status-text').textContent = 'Startup taking longer than expected...';
+                document.getElementById('eta').textContent = 'Redirecting to main application...';
+                setTimeout(() => {
+                    window.location.href = '/chat';
+                }, 3000);
+            }
+        }, 30000); // 30 second timeout
+    </script>
+</body>
+</html>

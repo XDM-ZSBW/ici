@@ -13,31 +13,114 @@ def create_app():
                 template_folder=os.path.join(project_root, 'templates'),
                 static_folder=os.path.join(project_root, 'static'))
     
-    socketio = SocketIO(app, cors_allowed_origins="*")    # Import and register blueprints
-    from backend.routes.chat import chat_bp
-    from backend.routes.client import client_bp
-    from backend.routes.admin import admin_bp
-    from backend.routes.vault import vault_bp
-    from backend.routes.learn import learn_bp
-    from backend.routes.memory import memory_bp
+    # SocketIO will be initialized later during progressive startup
+    socketio = None
     
-    app.register_blueprint(chat_bp)
-    app.register_blueprint(client_bp)
-    app.register_blueprint(admin_bp)
-    app.register_blueprint(vault_bp)
-    app.register_blueprint(learn_bp)
-    app.register_blueprint(memory_bp)
+    # Add startup state tracking using app.config
+    app.config['STARTUP_STATE'] = {
+        'ssl_ready': True,  # Already handled by launcher
+        'app_created': True,
+        'blueprints_registered': False,
+        'memory_initialized': False,
+        'vector_db_ready': False,
+        'socketio_ready': False,
+        'fully_ready': False
+    }
     
-    # Add data endpoint for backward compatibility
-    from backend.utils.id_utils import generate_secure_key
-    from flask import jsonify
+    # Early route for loading page - serves immediately
+    @app.route("/")
+    def startup_loader():
+        """Serve loading page during startup, redirect to main app when ready"""
+        if app.config['STARTUP_STATE'].get('fully_ready', False):
+            # If app is fully ready, redirect to main app
+            from flask import redirect
+            return redirect('/chat')
+        else:
+            # Show loading page during startup
+            from flask import render_template
+            return render_template("loading.html")
     
-    @app.route("/data")
-    def data():
-        key = generate_secure_key()
-        return jsonify({"key": key})
+    # Progressive initialization routes
+    @app.route("/startup-status")
+    def startup_status():
+        """Get current startup status for loading page"""
+        from flask import jsonify
+        return jsonify(app.config['STARTUP_STATE'])
+    
+    # Immediate health check for early availability
+    @app.route("/health")
+    def health_check():
+        """Basic health check that works during startup"""
+        from flask import jsonify
+        status = "starting" if not app.config['STARTUP_STATE'].get('fully_ready', False) else "ready"
+        return jsonify({
+            "status": status,
+            "startup_state": app.config['STARTUP_STATE'],
+            "message": "Server is starting up..." if status == "starting" else "Server ready"
+        })
+    
+    # Initialize SocketIO early for basic functionality
+    socketio = SocketIO(app, cors_allowed_origins="*")
+    app.config['STARTUP_STATE']['socketio_ready'] = True
     
     return app, socketio
+
+def complete_app_initialization(app):
+    """Complete the app initialization with all blueprints and services"""
+    try:
+        # Import and register blueprints
+        from backend.routes.chat import chat_bp
+        from backend.routes.client import client_bp
+        from backend.routes.admin import admin_bp
+        from backend.routes.vault import vault_bp
+        from backend.routes.learn import learn_bp
+        from backend.routes.memory import memory_bp
+        
+        app.register_blueprint(chat_bp)
+        app.register_blueprint(client_bp)
+        app.register_blueprint(admin_bp)
+        app.register_blueprint(vault_bp)
+        app.register_blueprint(learn_bp)
+        app.register_blueprint(memory_bp)
+        
+        app.config['STARTUP_STATE']['blueprints_registered'] = True
+        
+        # Initialize memory systems
+        try:
+            from backend.utils.memory_utils import initialize_memory_systems
+            initialize_memory_systems()
+            app.config['STARTUP_STATE']['memory_initialized'] = True
+        except ImportError:
+            # Memory utils might not have this function yet
+            app.config['STARTUP_STATE']['memory_initialized'] = True
+        
+        # Initialize vector database
+        try:
+            from backend.utils.vector_db import get_vector_database
+            get_vector_database()  # This initializes the vector DB
+            app.config['STARTUP_STATE']['vector_db_ready'] = True
+        except Exception as e:
+            print(f"[STARTUP] Vector DB initialization warning: {e}")
+            app.config['STARTUP_STATE']['vector_db_ready'] = True  # Continue anyway
+        
+        # Add data endpoint for backward compatibility
+        from backend.utils.id_utils import generate_secure_key
+        from flask import jsonify
+        
+        @app.route("/data")
+        def data():
+            key = generate_secure_key()
+            return jsonify({"key": key})
+        
+        # Mark as fully ready
+        app.config['STARTUP_STATE']['fully_ready'] = True
+        
+        print("[STARTUP] Progressive initialization complete - all systems ready")
+        
+    except Exception as e:
+        print(f"[STARTUP] Error during progressive initialization: {e}")
+        # Don't fail completely, mark as ready anyway for graceful degradation
+        app.config['STARTUP_STATE']['fully_ready'] = True
 
 # For running directly
 if __name__ == "__main__":

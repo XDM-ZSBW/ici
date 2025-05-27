@@ -169,7 +169,7 @@ def get_build_version():
     except Exception:
         return get_env_id()[:10]
 
-@chat_bp.route("/")
+@chat_bp.route("/home")
 def index():
     return render_template("index.html")
 
