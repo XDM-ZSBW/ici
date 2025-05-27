@@ -88,8 +88,7 @@ def search_person_across_memory_stores(person_name):
                     'user': msg.get('user', 'Unknown'),
                     'timestamp': msg.get('timestamp', msg.get('ts', 0))
                 })
-    
-    # Search client records (if we have access to them)
+      # Search client records (if we have access to them)
     try:
         from backend.routes.client import client_memory, client_json_table
         for client_data in client_json_table:

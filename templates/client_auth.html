@@ -9,7 +9,15 @@
 <body>
     <div class="container">
         <h1>ICI Chat Authentication</h1>
-        <p>You are being authenticated with client ID: <strong>{{ client_id }}</strong></p>
+        {% if authenticated and wallet_address %}
+        <p>You are being authenticated with wallet: <strong>{{ wallet_address }}</strong></p>
+        <p>Client ID: <code>{{ client_id }}</code></p>
+        {% elif error %}
+        <p>Authentication error: {{ error }}</p>
+        <p>Client ID: <code>{{ client_id }}</code></p>
+        {% else %}
+        <p>Authenticating client ID: <strong>{{ client_id }}</strong></p>
+        {% endif %}
         
         <div class="auth-actions">
             <button id="continue-btn" class="btn btn-primary">Continue to Chat</button>
@@ -18,16 +26,26 @@
         
         <div class="auth-info">
             <p>This authentication link was generated for secure access to your chat session.</p>
+            {% if wallet_address %}
+            <p>Your wallet address <code>{{ wallet_address }}</code> will be used as your primary identity.</p>
+            {% endif %}
             <p>Click "Continue to Chat" to proceed with your existing session, or "Start New Session" to begin fresh.</p>
         </div>
     </div>
 
     <script>
         const clientId = '{{ client_id }}';
+        const walletAddress = '{{ wallet_address if wallet_address else "" }}';
+        const authenticated = {{ 'true' if authenticated else 'false' }};
         
         document.getElementById('continue-btn').addEventListener('click', function() {
-            // Set authentication and redirect to chat
-            localStorage.setItem('ici-chat-user-id', clientId);
+            // Set authentication with wallet address as primary user ID
+            if (authenticated && walletAddress) {
+                localStorage.setItem('ici-chat-user-id', walletAddress);
+                localStorage.setItem('ici-client-id', clientId);
+            } else {
+                localStorage.setItem('ici-chat-user-id', clientId);
+            }
             localStorage.setItem('ici-auth-via-qr', 'true');
             window.location.href = '/chat';
         });

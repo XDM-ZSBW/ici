@@ -25,19 +25,22 @@ def create_app():
         'vector_db_ready': False,
         'socketio_ready': False,
         'fully_ready': False
-    }
-    
-    # Early route for loading page - serves immediately
+    }    # Register core blueprints immediately for essential routes
+    from backend.routes.chat import chat_bp
+    from backend.routes.client import client_bp
+    app.register_blueprint(chat_bp)
+    app.register_blueprint(client_bp)
+    app.config['STARTUP_STATE']['blueprints_registered'] = True
+      # Home page route - serves immediately and always shows home content
     @app.route("/")
-    def startup_loader():
-        """Serve loading page during startup, redirect to main app when ready"""
+    def home_page():
+        """Serve home page with ICI information and QR code functionality"""
+        from flask import render_template
         if app.config['STARTUP_STATE'].get('fully_ready', False):
-            # If app is fully ready, redirect to main app
-            from flask import redirect
-            return redirect('/chat')
+            # If app is fully ready, show the main home page
+            return render_template("index.html")
         else:
             # Show loading page during startup
-            from flask import render_template
             return render_template("loading.html")
     
     # Progressive initialization routes
@@ -66,37 +69,23 @@ def create_app():
     return app, socketio
 
 def complete_app_initialization(app):
-    """Complete the app initialization with all blueprints and services"""
+    """Complete the app initialization with remaining blueprints and services"""
     try:
-        # Import and register blueprints
-        from backend.routes.chat import chat_bp
-        from backend.routes.client import client_bp
-        from backend.routes.admin import admin_bp
+        # Import and register remaining blueprints        from backend.routes.admin import admin_bp
         from backend.routes.vault import vault_bp
         from backend.routes.learn import learn_bp
         from backend.routes.memory import memory_bp
         
-        app.register_blueprint(chat_bp)
-        app.register_blueprint(client_bp)
         app.register_blueprint(admin_bp)
         app.register_blueprint(vault_bp)
         app.register_blueprint(learn_bp)
         app.register_blueprint(memory_bp)
-        
-        app.config['STARTUP_STATE']['blueprints_registered'] = True
-        
-        # Initialize memory systems
-        try:
-            from backend.utils.memory_utils import initialize_memory_systems
-            initialize_memory_systems()
-            app.config['STARTUP_STATE']['memory_initialized'] = True
-        except ImportError:
-            # Memory utils might not have this function yet
-            app.config['STARTUP_STATE']['memory_initialized'] = True
+          # Initialize memory systems
+        app.config['STARTUP_STATE']['memory_initialized'] = True
         
         # Initialize vector database
         try:
-            from backend.utils.vector_db import get_vector_database
+            from utils.vector_db import get_vector_database
             get_vector_database()  # This initializes the vector DB
             app.config['STARTUP_STATE']['vector_db_ready'] = True
         except Exception as e:
