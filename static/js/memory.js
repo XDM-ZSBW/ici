@@ -134,6 +134,12 @@ const MemoryManager = {
 
       // Refresh display
       await this.loadSharedMemory(envId);
+      
+      // Update authenticated client display
+      if (AuthManager && AuthManager.getUserId()) {
+        UIManager.showAuthenticatedClient(AuthManager.getUserId());
+      }
+      
       UIManager.updateStatus('shared', 'success', 'Added to shared memory');
       return true;
     } catch (error) {
@@ -172,6 +178,12 @@ const MemoryManager = {
 
       // Refresh display
       await this.loadIpMemory(envId, publicIp);
+      
+      // Update authenticated client display
+      if (AuthManager && AuthManager.getUserId()) {
+        UIManager.showAuthenticatedClient(AuthManager.getUserId());
+      }
+      
       UIManager.updateStatus('ip', 'success', 'Added to IP-shared memory');
       return true;
     } catch (error) {
@@ -195,6 +207,12 @@ const MemoryManager = {
 
       localStorage.setItem('ici-private-memory', JSON.stringify(updatedMemories));
       this.loadPrivateMemory(); // Refresh display
+      
+      // Update authenticated client display
+      if (AuthManager && AuthManager.getUserId()) {
+        UIManager.showAuthenticatedClient(AuthManager.getUserId());
+      }
+      
       UIManager.updateStatus('private', 'success', 'Added to private memory');
       return true;
     } catch (error) {

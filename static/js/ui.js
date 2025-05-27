@@ -64,6 +64,21 @@ const UIManager = {
       });
     }
 
+    // Listen for authentication changes across tabs
+    window.addEventListener('storage', (e) => {
+      if (e.key === AuthManager.USER_ID_KEY || e.key === AuthManager.AUTH_VIA_QR_KEY) {
+        // Authentication state changed, update display
+        const authViaQR = localStorage.getItem(AuthManager.AUTH_VIA_QR_KEY);
+        const userId = localStorage.getItem(AuthManager.USER_ID_KEY);
+        
+        if (authViaQR === 'true' && userId) {
+          this.showAuthenticatedClient(userId);
+        } else {
+          this.hideAuthenticatedClient();
+        }
+      }
+    });
+
     const testSyncBtn = document.getElementById('debug-test-sync');
     if (testSyncBtn) {
       testSyncBtn.addEventListener('click', () => {
@@ -155,6 +170,38 @@ const UIManager = {
     const authSection = document.getElementById('auth-section');
     
     if (authSection) authSection.style.display = 'none';
+  },
+
+  // Show authenticated client display
+  showAuthenticatedClient: function(clientId) {
+    const clientDisplay = document.getElementById('authenticated-client-display');
+    const clientIdSpan = document.getElementById('authenticated-client-id');
+    const qrContainer = document.getElementById('dynamic-qr-container');
+    
+    if (clientDisplay && clientIdSpan) {
+      clientIdSpan.textContent = clientId || 'Unknown';
+      clientDisplay.style.display = 'block';
+    }
+    
+    // Hide QR code container
+    if (qrContainer) {
+      qrContainer.style.display = 'none';
+    }
+  },
+
+  // Hide authenticated client display and show QR code
+  hideAuthenticatedClient: function() {
+    const clientDisplay = document.getElementById('authenticated-client-display');
+    const qrContainer = document.getElementById('dynamic-qr-container');
+    
+    if (clientDisplay) {
+      clientDisplay.style.display = 'none';
+    }
+    
+    // Show QR code container
+    if (qrContainer) {
+      qrContainer.style.display = 'block';
+    }
   },
 
   // Update QR code and auth link

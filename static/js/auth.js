@@ -37,19 +37,23 @@ const AuthManager = {
     if (!this.userId) {
       this.userId = this.generateUserId();
       this.setUserId(this.userId);
-    }
-
-    // Check if authenticated via QR code
+    }    // Check if authenticated via QR code
     const authViaQR = localStorage.getItem(this.AUTH_VIA_QR_KEY);
     
     if (authViaQR === 'true') {
       // User has been authenticated via QR code, show chat
       UIManager.showChat();
-      this.onAuthenticationSuccess();
+      UIManager.showAuthenticatedClient(this.userId);
+      
+      // Initialize app after authentication
+      if (typeof AppManager !== 'undefined') {
+        AppManager.initializeAfterAuth();
+      }
     } else {
       // Show authentication prompt
       UIManager.showAuthPrompt();
       UIManager.updateAuthUI(this.userId);
+      UIManager.hideAuthenticatedClient();
     }
   },
 
@@ -57,6 +61,9 @@ const AuthManager = {
   onAuthenticationSuccess: function() {
     localStorage.setItem(this.AUTH_VIA_QR_KEY, 'true');
     UIManager.showChat();
+    
+    // Show authenticated client display
+    UIManager.showAuthenticatedClient(this.userId);
     
     // Initialize app after authentication
     if (typeof AppManager !== 'undefined') {
@@ -107,9 +114,12 @@ const AuthManager = {
   authenticateClient: function(clientId) {
     // This is called when user visits /client/<userId>
     this.setUserId(clientId);
-    this.onAuthenticationSuccess();
+    localStorage.setItem(this.AUTH_VIA_QR_KEY, 'true');
     
-    // Redirect to chat page
-    window.location.href = '/chat?auth=' + clientId;
+    // Show authenticated client display
+    UIManager.showAuthenticatedClient(clientId);
+    
+    // Navigate back to chat
+    window.location.href = '/chat';
   }
 };
