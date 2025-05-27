@@ -36,7 +36,14 @@ const APIManager = {
   },
 
   // Register client with backend
-  registerClient: async function(envId, publicIp, userId) {
+  registerClient: async function(envId, publicIp, userId, email = null) {
+    let finalUserId = userId;
+    if (email) {
+      // Use hash of initial-id + input + email
+      const initialId = localStorage.getItem('ici-initial-clientid') || userId;
+      finalUserId = await hashStringToHex(initialId + userId + email);
+      AuthManager.setUserId(finalUserId);
+    }
     try {
       const response = await fetch('/client-register', {
         method: 'POST',
@@ -44,9 +51,10 @@ const APIManager = {
         body: JSON.stringify({
           env_id: envId,
           public_ip: publicIp,
-          client_id: userId,
+          client_id: finalUserId,
           user_agent: navigator.userAgent,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          email: email
         })
       });
 

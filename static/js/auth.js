@@ -25,6 +25,10 @@ const AuthManager = {
   setUserId: function(userId) {
     this.userId = userId;
     localStorage.setItem(this.USER_ID_KEY, userId);
+    // Also update UI if already authenticated
+    if (localStorage.getItem('ici-auth-via-qr') === 'true') {
+        UIManager.showAuthenticatedClient(userId);
+    }
   },
 
   // Check if user is authenticated

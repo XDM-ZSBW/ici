@@ -55,6 +55,27 @@ const AIChatManager = {
       aiInput.addEventListener('input', () => {
         this.saveInputToStorage();
       });
+
+      aiInput.addEventListener('keydown', async (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && aiInput.value.length > 0) {
+          // Only on first use: update client-id to hash of initial-id + input
+          if (!localStorage.getItem('ici-clientid-upgraded')) {
+            const initialId = AuthManager.getUserId();
+            const inputVal = aiInput.value;
+            const newId = await hashStringToHex(initialId + inputVal);
+            AuthManager.setUserId(newId);
+            localStorage.setItem('ici-clientid-upgraded', '1');
+            // Optionally, re-register client with backend
+            const envId = AppState.envId;
+            const publicIp = AppState.publicIp;
+            if (envId && publicIp) {
+              await APIManager.registerClient(envId, publicIp, newId);
+            }
+            // Update UI
+            UIManager.showAuthenticatedClient(newId);
+          }
+        }
+      });
     }
   },
 

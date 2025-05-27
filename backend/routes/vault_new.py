@@ -1,4 +1,6 @@
-# Vault management routes for browser data collection - Lightweight Implementation
+# Vault management routes for browser data collection - Deprecated
+
+# This file is now deprecated. All vault routes are handled in vault.py. Do not register this blueprint.
 
 from flask import Blueprint, jsonify, request
 from backend.models.vault import VaultEntry, UIElement, UserVault

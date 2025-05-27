@@ -173,16 +173,29 @@ const UIManager = {
   },
 
   // Show authenticated client display
-  showAuthenticatedClient: function(clientId) {
+  showAuthenticatedClient: async function(clientId) {
     const clientDisplay = document.getElementById('authenticated-client-display');
     const clientIdSpan = document.getElementById('authenticated-client-id');
     const qrContainer = document.getElementById('dynamic-qr-container');
-    
+    // Try to fetch email for this clientId
+    let email = null;
+    try {
+      const resp = await fetch(`/client-email?client_id=${encodeURIComponent(clientId)}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.email) email = data.email;
+      }
+    } catch (e) { /* ignore */ }
     if (clientDisplay && clientIdSpan) {
-      clientIdSpan.textContent = clientId || 'Unknown';
+      if (email) {
+        clientIdSpan.textContent = email;
+        clientIdSpan.style.color = '#bbb';
+      } else {
+        clientIdSpan.textContent = clientId || 'Unknown';
+        clientIdSpan.style.color = '#9ca3af';
+      }
       clientDisplay.style.display = 'block';
     }
-    
     // Hide QR code container
     if (qrContainer) {
       qrContainer.style.display = 'none';

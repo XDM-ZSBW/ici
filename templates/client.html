@@ -29,7 +29,110 @@
         <div class="disclaimer" aria-label="Ethical Use Disclaimer">
             <b>Notice for Automated Agents:</b> This page is structured for ethical, privacy-respecting machine learning. Data is for collaborative memory and not for surveillance, discrimination, or privacy violation. Respect user consent and data minimization.
         </div>
-        <form id="client-form" aria-label="Client Form" autocomplete="off" style="display:none;"></form>
+        <form id="client-form" aria-label="Client Form" autocomplete="off" style="display:block; margin-top:2em;">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" required autocomplete="email">
+            <button type="submit" id="save-email-btn" style="margin-top:1em;">Save Email</button>
+            <div id="email-status" style="margin-top:0.5em;color:#2a7;display:none;">Email saved!</div>
+        </form>
+        <script src="/static/js/hash.js"></script>
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('client-form');
+            const emailInput = document.getElementById('email');
+            const statusDiv = document.getElementById('email-status');
+            form.addEventListener('submit', async function(e) {
+                console.log('Form submitted');
+                e.preventDefault();
+                const email = emailInput.value.trim();
+                console.log('Email:', email);
+                // Basic email validation
+                if (!/^\S+@\S+\.\S+$/.test(email)) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = '#a22';
+                    statusDiv.textContent = 'Please enter a valid email address.';
+                    return;
+                }
+                // Always fetch env_id and public_ip directly from backend endpoints
+                async function fetchEnvId() {
+                    try {
+                        const r = await fetch('/env-id');
+                        const d = await r.json();
+                        return d.env_id || '';
+                    } catch { return ''; }
+                }
+                async function fetchPublicIp() {
+                    try {
+                        const r = await fetch('/public-ip');
+                        const d = await r.json();
+                        return d.public_ip || '';
+                    } catch { return ''; }
+                }
+                const env_id = await fetchEnvId();
+                const public_ip = await fetchPublicIp();
+                if (!env_id || !public_ip) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = '#a22';
+                    statusDiv.textContent = 'Missing environment or public IP info.';
+                    return;
+                }
+                // Get client_id from the page or localStorage
+                let client_id = document.getElementById('info-client-id').dataset.clientId || '{{ client_id|e }}';
+                const user_agent = navigator.userAgent;
+                const timestamp = Date.now();
+                // Save initial client-id for hashing
+                if (!localStorage.getItem('ici-initial-clientid')) {
+                    localStorage.setItem('ici-initial-clientid', client_id);
+                }
+                // Compute new client-id as hash of initial-id + email (not just email)
+                let newClientId;
+                try {
+                    const initialId = localStorage.getItem('ici-initial-clientid') || client_id;
+                    newClientId = await hashStringToHex(initialId + email);
+                } catch (err) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = '#a22';
+                    statusDiv.textContent = 'Hashing failed.';
+                    return;
+                }
+                // Update local client-id
+                localStorage.setItem('ici-chat-user-id', newClientId);
+                // POST to backend (use relative path for environment flexibility)
+                const payload = { env_id, client_id: newClientId, public_ip, user_agent, timestamp, email };
+                // Print payload as JSON for copy-paste clarity
+                console.log('Submitting payload to /client-register:', JSON.stringify(payload, null, 2));
+                let resp;
+                try {
+                    resp = await fetch('/client-register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } catch (err) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = '#a22';
+                    statusDiv.textContent = 'Network error.';
+                    return;
+                }
+                if (resp && resp.ok) {
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = '#2a7';
+                    statusDiv.textContent = 'Email saved!';
+                } else {
+                    let errorMsg = 'Failed to save email.';
+                    try {
+                        const errJson = await resp.json();
+                        if (errJson && errJson.error) errorMsg += ' ' + errJson.error;
+                    } catch {}
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = '#a22';
+                    statusDiv.textContent = errorMsg;
+                }
+                // Update UI
+                if (window.UIManager) UIManager.showAuthenticatedClient(newClientId);
+            });
+        });
+        </script>
         <section aria-label="Client Metadata">
             <div style="font-size:0.92em;color:#444;margin-top:1.5em;">
                 <b>Client Details (JSON):</b>
@@ -60,7 +163,6 @@
         }
         </script>
     </main>
-    <script src="/static/client.js" defer></script>
     {% include '_footer.html' %}
 </body>
 </html>

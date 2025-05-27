@@ -104,10 +104,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     // --- Socket.IO for live client table updates ---
-    if (window.io) {
-        const socket = io();
-        socket.on('client_table_updated', function(table) {
-            renderClientTable(table);
-        });
-    }
+    // Removed: if (window.io) { ... } to prevent 404s for /socket.io
 });

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/join.css">
 </head>
 <body>
+    {% include '_header.html' %}
     <div class="container">
         <h1>ICI Chat Authentication</h1>
         {% if authenticated and wallet_address %}
@@ -18,12 +19,16 @@
         {% else %}
         <p>Authenticating client ID: <strong>{{ client_id }}</strong></p>
         {% endif %}
-        
+        <form id="email-form" style="margin: 2em 0;">
+            <label for="email">Email Address (optional, for personalized session):</label>
+            <input type="email" id="email" name="email" placeholder="Enter your email" autocomplete="email" style="width:100%;padding:8px;margin-top:0.5em;">
+            <button type="submit" class="btn btn-primary" style="margin-top:1em;">Save Email</button>
+            <div id="email-status" style="margin-top:0.5em;color:#2a7;display:none;">Email saved!</div>
+        </form>
         <div class="auth-actions">
             <button id="continue-btn" class="btn btn-primary">Continue to Chat</button>
             <button id="new-session-btn" class="btn btn-secondary">Start New Session</button>
         </div>
-        
         <div class="auth-info">
             <p>This authentication link was generated for secure access to your chat session.</p>
             {% if wallet_address %}
@@ -32,12 +37,18 @@
             <p>Click "Continue to Chat" to proceed with your existing session, or "Start New Session" to begin fresh.</p>
         </div>
     </div>
-
+    <script src="/static/js/hash.js"></script>
     <script>
         const clientId = '{{ client_id }}';
         const walletAddress = '{{ wallet_address if wallet_address else "" }}';
-        const authenticated = {{ 'true' if authenticated else 'false' }};
-        
+        // Authenticated JS boolean
+        var authenticated = false;
+    </script>
+    {% if authenticated %}
+    <script>authenticated = true;</script>
+    {% endif %}
+    <script>
+        const envId = '{{ env_id if env_id else "" }}';
         document.getElementById('continue-btn').addEventListener('click', function() {
             // Set authentication with wallet address as primary user ID
             if (authenticated && walletAddress) {
@@ -49,12 +60,59 @@
             localStorage.setItem('ici-auth-via-qr', 'true');
             window.location.href = '/chat';
         });
-        
         document.getElementById('new-session-btn').addEventListener('click', function() {
             // Clear any existing data and redirect
             localStorage.clear();
             window.location.href = '/chat';
         });
+        // Email form logic
+        document.getElementById('email-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const emailInput = document.getElementById('email');
+            const statusDiv = document.getElementById('email-status');
+            const email = emailInput.value.trim();
+            if (!email) return;
+            // Save initial client-id for hashing
+            if (!localStorage.getItem('ici-initial-clientid')) {
+                localStorage.setItem('ici-initial-clientid', clientId);
+            }
+            const initialId = localStorage.getItem('ici-initial-clientid') || clientId;
+            let newClientId;
+            try {
+                newClientId = await hashStringToHex(initialId + clientId + email);
+            } catch (err) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = '#a22';
+                statusDiv.textContent = 'Hashing failed.';
+                return;
+            }
+            localStorage.setItem('ici-chat-user-id', newClientId);
+            // POST to backend
+            const payload = { env_id: envId, client_id: newClientId, email: email };
+            let resp;
+            try {
+                resp = await fetch('/client-register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = '#a22';
+                statusDiv.textContent = 'Network error.';
+                return;
+            }
+            if (resp && resp.ok) {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = '#2a7';
+                statusDiv.textContent = 'Email saved!';
+            } else {
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = '#a22';
+                statusDiv.textContent = 'Failed to save email.';
+            }
+        });
     </script>
+    {% include '_footer.html' %}
 </body>
 </html>

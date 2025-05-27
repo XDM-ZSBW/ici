@@ -42,44 +42,56 @@ def client_page():
 
 @client_bp.route("/client-register", methods=["POST"])
 def client_register():
-    """Register a client with the backend"""
-    data = request.get_json()
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-    
-    env_id = data.get("env_id")
-    public_ip = data.get("public_ip")
-    client_id = data.get("client_id")
-    user_agent = data.get("user_agent", "Unknown")
-    timestamp = data.get("timestamp", time.time() * 1000)
-    
-    if not all([env_id, public_ip, client_id]):
-        return jsonify({"error": "Missing required fields"}), 400
-    
-    # Create client record
-    client_record = {
-        "env_id": env_id,
-        "public_ip": public_ip,
-        "client_id": client_id,
-        "user_agent": user_agent,
-        "timestamp": timestamp,
-        "last_seen": timestamp
-    }
-    
-    # Store in client memory
-    client_key = f"{env_id}:{client_id}"
-    client_memory[client_key] = client_record
-    
-    # Update client table (remove duplicates and add new)
-    client_json_table[:] = [c for c in client_json_table if c.get("client_id") != client_id or c.get("env_id") != env_id]
-    client_json_table.append(client_record)
-    
-    return jsonify({
-        "success": True,
-        "client_id": client_id,
-        "env_id": env_id,
-        "registered_at": timestamp
-    })
+    """Register a client with the backend, including email"""
+    try:
+        data = request.get_json(force=True)
+        print('Received payload:', data)  # Debug print
+        # Validate required fields
+        required = ['env_id', 'client_id', 'public_ip', 'user_agent', 'timestamp', 'email']
+        for field in required:
+            if field not in data:
+                print(f"Missing field: {field}")  # Debug print
+                return jsonify({'error': f'Missing field: {field}'}), 400
+        # Validate client_id (must be 64-char hex)
+        client_id = data['client_id']
+        if not isinstance(client_id, str) or len(client_id) != 64 or not all(c in '0123456789abcdef' for c in client_id):
+            print('Invalid client_id format')  # Debug print
+            return jsonify({'error': 'Invalid client_id format'}), 400
+        # Validate email format
+        email = data['email']
+        import re
+        if not re.match(r'^\S+@\S+\.\S+$', email):
+            print('Invalid email format')  # Debug print
+            return jsonify({'error': 'Invalid email format'}), 400
+        env_id = data.get("env_id")
+        public_ip = data.get("public_ip")
+        user_agent = data.get("user_agent", "Unknown")
+        timestamp = data.get("timestamp", time.time() * 1000)
+        # Create client record
+        client_record = {
+            "env_id": env_id,
+            "public_ip": public_ip,
+            "client_id": client_id,
+            "user_agent": user_agent,
+            "timestamp": timestamp,
+            "last_seen": timestamp,
+            "email": email
+        }
+        # Store in client memory
+        client_key = f"{env_id}:{client_id}"
+        client_memory[client_key] = client_record
+        # Update client table (remove duplicates and add new)
+        client_json_table[:] = [c for c in client_json_table if c.get("client_id") != client_id or c.get("env_id") != env_id]
+        client_json_table.append(client_record)
+        return jsonify({
+            "success": True,
+            "client_id": client_id,
+            "env_id": env_id,
+            "registered_at": timestamp
+        })
+    except Exception as e:
+        print('Exception in /client-register:', str(e))  # Debug print
+        return jsonify({'error': str(e)}), 400
 
 @client_bp.route("/client-heartbeat", methods=["POST"])
 def client_heartbeat():
@@ -273,3 +285,15 @@ def client_mfa_lost():
             break
     print(f"[MFA LOST] Client {client_id} in env {env_id} at {timestamp}")
     return jsonify({"success": True, "mfa_active": False, "client_id": client_id, "env_id": env_id, "timestamp": timestamp})
+
+@client_bp.route("/client-email")
+def get_client_email():
+    """Return the email for a given client_id (if known)"""
+    client_id = request.args.get("client_id")
+    if not client_id:
+        return jsonify({"error": "Missing client_id"}), 400
+    # Search for the client record in memory
+    for rec in client_memory.values():
+        if rec.get("client_id") == client_id and rec.get("email"):
+            return jsonify({"email": rec["email"]})
+    return jsonify({"email": None})
