@@ -17,7 +17,6 @@ __pycache__/
 *.pem
 *.key
 *.crt
-*.md
 *.json
 *.bat
 *.ps1
@@ -43,7 +42,4 @@ test_endpoints.sh
 ENDPOINT_TESTING_COMPLETE.md
 TESTING_SUITE_INVENTORY.md
 cloudbuild.yaml
-
-*.md
-!README*.md
 README-secret.md
