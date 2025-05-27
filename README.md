@@ -292,13 +292,11 @@ Below is a complete list of all available endpoints, their purpose, and usage. E
 
 - When a user scans a QR code on the chat page, the QR disappears and the UI updates to show client details (from client.html). The user's wallet address is now used as the unique identifier for all memory and chat operations, instead of the previous guest env-id. Memory continuity is preserved.
 
-## QR Code Authentication Flow
-
-When a user scans the QR code on the chat page:
-- The QR code UI disappears.
-- The client details UI (from client.html) is shown in its place.
-- All chat and memory operations now use the wallet address as the unique identifier (user_id), instead of the previous guest env-id.
-- Memory continuity is preserved: the user's previous chat history and facts remain accessible, now associated with their wallet address.
+## QR Code Authentication Behavior (Updated May 2025)
+- The QR code for client authentication is now displayed above the "Ask AI" textarea on the chat page.
+- Once a client authenticates by scanning the QR code from another device, the QR code disappears on all tabs/devices for that client session.
+- This state is synchronized in real time using localStorage.
+- The join page always displays the QR code and unique client ID for sharing and linking new devices.
 
 ---
 
