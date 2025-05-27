@@ -328,6 +328,17 @@ ICI operates under strict ethical guidelines developed in partnership with disab
 - Admin UI allows wallet creation and management.
 - Use `/client/new-wallet` endpoint for new crypto addresses.
 
+### Email Gateway (ProtonMail) - TEMPORARILY DISABLED
+- **Development Status**: Email features are currently disabled while in development
+- **Structure Preserved**: All routes and functionality remain in place for future activation
+- **Secure Notifications**: ProtonMail API integration for admin alerts (when enabled)
+- **Privacy-Focused**: End-to-end encrypted email delivery (when enabled)
+- **Cloud Run Compatible**: Serverless-friendly API-based approach
+- **Lost Memory Reports**: Automatic email notifications to admins (when enabled)
+- **Configuration**: Set `PROTONMAIL_API_KEY` and `ADMIN_EMAIL` environment variables
+- **Testing**: Admin dashboard includes email status check and test functionality
+- **Re-enable**: Change `EMAIL_ENABLED = True` in `backend/utils/email_utils.py`
+
 ---
 
 # ICI Chat API & Web Endpoints

@@ -41,11 +41,25 @@
                 <button class="btn btn-secondary" onclick="loadMemoryStats()">Refresh</button>
                 <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
             </div>
-            
-            <div class="card">
+              <div class="card">
                 <h3>Active Clients</h3>
                 <div id="client-list">Loading...</div>
                 <button class="btn btn-secondary" onclick="loadClients()">Refresh</button>
+            </div>
+              <div class="card">
+                <h3>Email Gateway (ProtonMail)</h3>
+                <div id="email-status">Loading...</div>
+                <div style="margin-top: 10px;">
+                    <button class="btn btn-secondary" onclick="loadEmailStatus()">Check Status</button>
+                    <button class="btn btn-primary" onclick="testEmail()" id="test-email-btn">Send Test Email</button>
+                </div>
+                <div id="email-test-result" style="margin-top: 10px; display: none;"></div>
+                <div style="margin-top: 15px; padding: 12px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px;">
+                    <p style="margin: 0; color: #856404; font-size: 0.9em;">
+                        <strong>🔧 Development Notice:</strong> Email features are temporarily disabled while in development. 
+                        All email routes and functionality remain in place for future activation.
+                    </p>
+                </div>
             </div>
         </div>
         
@@ -239,18 +253,118 @@
             } catch (error) {
                 alert(`Error exporting data: ${error.message}`);
             }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
+        }        document.addEventListener('DOMContentLoaded', function() {
             loadSystemInfo();
             loadMemoryStats();
             loadClients();
+            loadEmailStatus(); // Add email status check
         });
 
         setInterval(() => {
             loadMemoryStats();
             loadClients();
-        }, 30000);
+        }, 30000);        // Email gateway functions
+        async function loadEmailStatus() {
+            try {
+                const response = await fetch('/email-status');
+                const data = await response.json();
+                
+                let html = `
+                    <p><strong>Feature Status:</strong> ${data.feature_enabled ? '✅ Enabled' : '❌ Disabled'}</p>
+                    <p><strong>Configuration:</strong> ${data.configured ? '✅ Configured' : '❌ Not Configured'}</p>
+                `;
+                
+                if (data.feature_enabled) {
+                    html += `
+                        <p><strong>API Key:</strong> ${data.api_key_set ? '✅ Set' : '❌ Missing'}</p>
+                        <p><strong>Admin Email:</strong> ${data.admin_email_set ? '✅ Set' : '❌ Missing'}</p>
+                    `;
+                    
+                    if (data.admin_email_set) {
+                        html += `<p><strong>Admin:</strong> ${data.admin_email}</p>`;
+                    }
+                    
+                    if (!data.configured) {
+                        html += `<p style="color: #dc3545; font-size: 0.9em;">Set PROTONMAIL_API_KEY and ADMIN_EMAIL environment variables</p>`;
+                    }
+                } else {
+                    html += `
+                        <p style="color: #856404; font-size: 0.9em;">
+                            ${data.status_message || 'Email features are currently disabled'}
+                        </p>
+                    `;
+                }
+                
+                document.getElementById('email-status').innerHTML = html;
+                
+                // Enable/disable test button based on feature status and configuration
+                const testBtn = document.getElementById('test-email-btn');
+                if (testBtn) {
+                    testBtn.disabled = !data.feature_enabled || !data.configured;
+                    testBtn.title = !data.feature_enabled ? 'Email features disabled' : 
+                                   !data.configured ? 'Email not configured' : 'Send test email';
+                }
+                
+            } catch (error) {
+                document.getElementById('email-status').innerHTML = `<p style="color: red;">Error checking email status: ${error.message}</p>`;
+            }
+        }        async function testEmail() {
+            const testBtn = document.getElementById('test-email-btn');
+            const resultDiv = document.getElementById('email-test-result');
+            
+            if (testBtn) {
+                testBtn.disabled = true;
+                testBtn.textContent = 'Sending...';
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p style="color: #6c757d;">Testing email functionality...</p>';
+            
+            try {
+                const response = await fetch('/test-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <p style="color: #28a745;">✅ Test email sent successfully!</p>
+                        <p style="font-size: 0.9em;">Sent to: ${data.email}</p>
+                    `;
+                } else {
+                    let errorColor = '#dc3545';
+                    let icon = '❌';
+                    
+                    // Special handling for disabled feature
+                    if (data.feature_disabled) {
+                        errorColor = '#856404';
+                        icon = '🔧';
+                    }
+                    
+                    resultDiv.innerHTML = `
+                        <p style="color: ${errorColor};">${icon} ${data.feature_disabled ? 'Email features disabled' : 'Test email failed'}</p>
+                        <p style="font-size: 0.9em;">${data.error}</p>
+                        ${data.details ? `<p style="font-size: 0.8em; color: #6c757d;">${data.details}</p>` : ''}
+                    `;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: #dc3545;">❌ Error: ${error.message}</p>`;
+            }
+            
+            if (testBtn) {
+                testBtn.disabled = false;
+                testBtn.textContent = 'Send Test Email';
+            }
+            
+            // Hide result after 10 seconds
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 10000);
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
           // Wallet management logic

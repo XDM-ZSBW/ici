@@ -2,3 +2,5 @@ flask
 eth-account
 psutil
 markdown
+requests
+aiohttp
