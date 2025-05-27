@@ -974,12 +974,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // ...existing code...
   });
 // QR Code Auth UI Logic for Chat Page
-function onQRCodeScanned(walletAddress, clientData) {
+function onQRCodeScanned(clientId, clientData) {
     // Hide QR code UI
     const qrSection = document.getElementById('qrSection');
     if (qrSection) qrSection.style.display = 'none';
     // Show client details UI (from client.html template)
-    fetch('/client?wallet=' + encodeURIComponent(walletAddress))
+    fetch('/client?client_id=' + encodeURIComponent(clientId))
         .then(res => res.text())
         .then(html => {
             const clientDetails = document.getElementById('clientDetails');
@@ -988,10 +988,10 @@ function onQRCodeScanned(walletAddress, clientData) {
                 clientDetails.style.display = 'block';
             }
         });
-    // Update chat memory logic to use walletAddress as the user_id
-    window.currentUserId = walletAddress;
+    // Update chat memory logic to use clientId as the user_id
+    window.currentUserId = clientId;
     // Optionally, trigger a UI notification
-    if (window.showToast) window.showToast('Authenticated as client: ' + walletAddress);
+    if (window.showToast) window.showToast('Authenticated as client: ' + clientId);
 }
 
 // --- QR Code rendering above Ask AI textarea ---
@@ -1044,15 +1044,15 @@ window.addEventListener('storage', function(e) {
     }
 });
 
-// When QR code is scanned and walletAddress is set, show client ID and MFA
-window.onQRCodeScanned = function(walletAddress, clientData) {
+// When QR code is scanned and clientId is set, show client ID and MFA
+window.onQRCodeScanned = function(clientId, clientData) {
     localStorage.setItem('ici-authenticated-client', '1');
     // Also trigger a custom event for all tabs
     localStorage.setItem('ici-auth-update', Date.now().toString());
-    let id = walletAddress || localStorage.getItem('ici-chat-user-id');
+    let id = clientId || localStorage.getItem('ici-chat-user-id');
     renderDynamicQrCode(id);
     // Optionally, show client details UI (from client.html template)
-    fetch('/client?wallet=' + encodeURIComponent(walletAddress))
+    fetch('/client?client_id=' + encodeURIComponent(clientId))
         .then(res => res.text())
         .then(html => {
             const clientDetails = document.getElementById('clientDetails');
@@ -1061,8 +1061,8 @@ window.onQRCodeScanned = function(walletAddress, clientData) {
                 clientDetails.style.display = 'block';
             }
         });
-    window.currentUserId = walletAddress;
-    if (window.showToast) window.showToast('Authenticated as client: ' + walletAddress);
+    window.currentUserId = clientId;
+    if (window.showToast) window.showToast('Authenticated as client: ' + clientId);
 };
 
 // Listen for custom auth update event to force all tabs to update QR UI
@@ -1084,8 +1084,23 @@ window.resetQrCodeState = function() {
 // On load, always render QR for current userId
 if (window.localStorage) {
     let initialId = localStorage.getItem('ici-chat-user-id');
+    // If the ID looks like a wallet address (0x... and 42 chars), reset it
+    if (initialId && /^0x[a-fA-F0-9]{40}$/.test(initialId)) {
+        localStorage.removeItem('ici-chat-user-id');
+        localStorage.removeItem('ici-authenticated-client');
+        localStorage.removeItem('ici-auth-via-qr');
+        initialId = null;
+    }
     if (!initialId) {
-        initialId = generateUserId();
+        // Generate a new secure 256-bit hex client ID
+        if (window.crypto && window.crypto.getRandomValues) {
+            const arr = new Uint8Array(32);
+            window.crypto.getRandomValues(arr);
+            initialId = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+        } else {
+            // Fallback: use timestamp and Math.random (not cryptographically secure)
+            initialId = 'c-' + Date.now().toString(16) + Math.random().toString(16).slice(2);
+        }
         localStorage.setItem('ici-chat-user-id', initialId);
     }
     renderDynamicQrCode(initialId);
