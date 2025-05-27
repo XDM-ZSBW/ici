@@ -1,7 +1,5 @@
 flask
 flask-socketio
-eventlet
-numpy
 eth-account
 psutil
 markdown
