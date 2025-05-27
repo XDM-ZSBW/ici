@@ -102,7 +102,8 @@
             <span class="legend-item"><span class="legend-color status-on-hold" style="color:white;padding:1px 3px; border-radius:3px;"></span> On Hold</span>
         </div>
         <div style="margin: 20px 0; padding: 15px; background: #fffbe6; border-left: 5px solid #f39c12; border-radius: 5px; color: #7f6516; font-size: 1.05em;">
-            <strong>Note:</strong> This project no longer uses any third-party or external LLMs. All chat memory and response logic is powered by a per-env-id knowledge base that learns from user interactions within each environment. No external model APIs are called for chat generation.
+            <strong>Note:</strong> This project no longer uses any third-party or external LLMs. All chat memory and response logic is powered by a per-env-id knowledge base that learns from user interactions within each environment. No external model APIs are called for chat generation.<br>
+            <span style="color:#b91c1c"><strong>Update (May 2025):</strong> WebSocket/Socket.IO-based real-time sync and live updates have been <b>deprecated and removed</b> for Cloud Run optimization. All communication is now HTTP-based only.</span>
         </div>
         {% set overall_min_date = min_date %}
         {% set overall_max_date = max_date %}

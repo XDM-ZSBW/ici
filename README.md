@@ -34,7 +34,7 @@ Proven ability to design and implement complete AI-powered applications includin
   - **Private Memory**: Personal, secure storage for individual use
   - **IP Shared Memory**: Shared with trusted devices on the same network
   - **Shared Memory**: Community memory for broader collaboration
-- **Real-Time Synchronization**: Instant updates across devices using WebSockets for seamless memory access.
+- **Real-Time Synchronization**: ~~Instant updates across devices using WebSockets for seamless memory access.~~
 - **QR Code Authentication**: Simple, accessible authentication system for easy device linking.
 - **Adaptive Interface**: UI that learns and adapts to user preferences and accessibility needs.
 - **Privacy-First Design**: User-controlled data sharing with transparent privacy policies.
@@ -134,9 +134,6 @@ ICI uses a modern, modular architecture designed for maintainability and extensi
 ## Technologies Used
 
 - **Flask** (Python)
-- **Flask-SocketIO** for WebSocket support
-- **Socket.IO JS client** for real-time updates
-- **Server-Sent Events (SSE)** for admin live tables
 - **HTML5, CSS, JavaScript** (vanilla, no frameworks)
 
 ## 🚀 Running the Application
@@ -204,7 +201,7 @@ ICI operates under strict ethical guidelines developed in partnership with disab
 - Secure local development with automated HTTPS (self-signed certs)
 - Memory and screenshot support (requires HTTPS)
 - Crypto wallet generation and admin tools
-- Modular backend (Flask, Flask-SocketIO)
+- Modular backend (Flask only)
 - Ready for Google Cloud Run deployment
 
 ## Quick Start (Local Dev)

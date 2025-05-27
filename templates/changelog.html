@@ -376,7 +376,7 @@
             </div>
         </div>
 
-        <div class="version added">
+        <div class="version removed">
             <div class="version-header">
                 <div>
                     <span class="version-number">v1.3.2</span>
@@ -385,54 +385,26 @@
                 <span class="version-date">May 26, 2025</span>
             </div>
             <div class="changes">
-                <div class="change-category">
-                    <h4><span class="icon">🚀</span> Cloud Run Optimization</h4>
+                <div class="change-category removed">
+                    <h4><span class="icon">🗑️</span> Removed / Deprecated</h4>
                     <ul class="change-list">
-                        <li><strong>Lightweight Dependencies</strong>: Removed heavy ML packages (sentence-transformers, transformers, torch, faiss-cpu)</li>
-                        <li><strong>Vector Database Removal</strong>: Replaced vector search with efficient text-based search</li>
-                        <li><strong>Memory Footprint</strong>: Reduced from ~2GB to <512MB RAM for Google Cloud Run</li>
-                        <li><strong>Build Time</strong>: Optimized Dockerfile for faster cold starts</li>
-                        <li><strong>LLM Decoupling</strong>: Completed removal of pre-trained LLM dependencies</li>
+                        <li>Removed all WebSocket and Socket.IO support from backend and frontend for Cloud Run optimization</li>
+                        <li>Eliminated <span class="code">flask-socketio</span> and all related dependencies from requirements and Dockerfile</li>
+                        <li>Updated documentation and roadmap to reflect HTTP-only architecture</li>
+                        <li>Marked real-time sync and live updates as deprecated in favor of stateless HTTP endpoints</li>
                     </ul>
                 </div>
-                <div class="change-category">
-                    <h4><span class="icon">🔧</span> Changed</h4>
+                <div class="change-category changed">
+                    <h4><span class="icon">📚</span> Documentation</h4>
                     <ul class="change-list">
-                        <li>Chat endpoints now use lightweight memory-based responses</li>
-                        <li>Vault search uses simple text matching instead of vector similarity</li>
-                        <li>Factory initialization no longer requires vector database</li>
-                        <li>Dockerfile optimized with multi-stage builds and security improvements</li>
-                    </ul>
-                </div>
-                <div class="change-category">
-                    <h4><span class="icon">📈</span> Performance</h4>
-                    <ul class="change-list">
-                        <li>Docker image size reduced by ~1.5GB</li>
-                        <li>Cloud Run deployment time improved</li>
-                        <li>Memory usage optimized for 512MB constraint</li>
-                        <li>Faster application startup without model loading</li>
+                        <li>README.md now uses <span class="code">strikeout</span> for all removed WebSocket/Socket.IO features</li>
+                        <li>Added migration note for users relying on real-time sync</li>
                     </ul>
                 </div>
             </div>
-        </div>
-
-        <div class="version added">
-            <div class="version-header">
-                <div>
-                    <span class="version-number">v1.3.3</span>
-                    <span class="version-type type-patch">Patch</span>
-                </div>
-                <span class="version-date">May 26, 2025</span>
-            </div>
-            <div class="changes">
-                <div class="change-category">
-                    <h4><span class="icon">🔄</span> Deprecated</h4>
-                    <ul class="change-list">
-                        <li>Entrypoint consolidation: <code>app.py</code> is now the ONLY supported startup script for all environments (local &amp; Cloud Run).</li>
-                        <li><code>run_refactored.py</code> is deprecated and will be removed in a future release.</li>
-                        <li>All documentation and deployment instructions updated to reflect this change.</li>
-                    </ul>
-                </div>
+            <div class="note">
+                <div class="note-title">⚠️ Breaking Change</div>
+                WebSocket-based real-time sync is no longer available. All communication is now HTTP-based for maximum compatibility and minimal resource usage on Cloud Run.
             </div>
         </div>
 
