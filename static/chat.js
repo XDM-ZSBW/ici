@@ -11,14 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
   showMemorySection();
   if (jsDebug) jsDebug.textContent += ' showMemorySection() called.';
   
-  const authSection = document.getElementById('auth-section');
   const chatSection = document.getElementById('chat-section');
   const sharedChatHistory = document.getElementById('shared-chat-history');
   const privateChatHistory = document.getElementById('private-chat-history');
   const chatForm = document.getElementById('chat-form');
   const chatInput = document.getElementById('chat-input');
-  const qrCodeImg = document.getElementById('qr-code-img');
-  const authLink = document.getElementById('auth-link');
 
   // --- Auth logic ---
   // Use a localStorage key for user_id; if not present, require authentication
@@ -30,20 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return 'u-' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
   }
 
-  function showAuthPrompt() {
-    authSection.style.display = '';
-    chatSection.style.display = 'none';
-    // Generate a QR code for authentication (link to /client/<userId>)
-    if (!userId) userId = generateUserId();
-    const authUrl = window.location.origin + '/client/' + userId;
-    authLink.href = authUrl;
-    authLink.textContent = 'open authentication link';
-    // Use a free QR code API for demo
-    qrCodeImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(authUrl);
-  }
-
   function showChat() {
-    authSection.style.display = 'none';
     chatSection.style.display = '';
   }
   // Add a flag to track if authenticated via QR code
