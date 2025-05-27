@@ -46,10 +46,10 @@ if __name__ == "__main__":
 
     # Create app with lightweight architecture
     print("[STARTUP] Creating lightweight Flask app (no vector database)...")
-    app, socketio = create_app()
+    app = create_app()
 
     if shutdown_mgr:
-        shutdown_mgr.register_app(app, socketio)
+        shutdown_mgr.register_app(app, None)
 
     # SSL only for local development (Cloud Run handles SSL termination)
     use_ssl = not IS_CLOUD_RUN and CERT_FILE and KEY_FILE and os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)    
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         print(f"[CLOUD RUN] Starting HTTP server on port {PORT} (SSL handled by Cloud Run)")
         print("[STARTUP] Health check available at /health")
         try:
-            socketio.run(app, host="0.0.0.0", port=PORT, debug=False)  # No debug in production
+            app.run(host="0.0.0.0", port=PORT, debug=False)
         except Exception as e:
             print(f"[ERROR] Cloud Run server error: {e}")
             sys.exit(1)
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         print(f"[LOCAL] Running with HTTPS at https://localhost:{PORT}")
         print(f"[STARTUP] Loading page available immediately at https://localhost:{PORT}")
         try:
-            socketio.run(app, host="0.0.0.0", port=PORT, debug=True, keyfile=KEY_FILE, certfile=CERT_FILE)
+            app.run(host="0.0.0.0", port=PORT, debug=True, ssl_context=(CERT_FILE, KEY_FILE))
         except KeyboardInterrupt:
             print("\n[SHUTDOWN] Received keyboard interrupt")
         except Exception as e:
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         print(f"[LOCAL] Running HTTP only at http://localhost:{PORT}")
         print(f"[STARTUP] Loading page available immediately at http://localhost:{PORT}")
         try:
-            socketio.run(app, host="0.0.0.0", port=PORT, debug=True)
+            app.run(host="0.0.0.0", port=PORT, debug=True)
         except KeyboardInterrupt:
             print("\n[SHUTDOWN] Received keyboard interrupt")
         except Exception as e:
