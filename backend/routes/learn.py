@@ -39,8 +39,4 @@ _Last updated: May 25, 2025_
 
 @learn_bp.route('/learn')
 def learn():
-    html = markdown.markdown(
-        LEARN_MARKDOWN,
-        extensions=['fenced_code', 'extra']
-    )
-    return render_template('markdown_render.html', content=html, title="Learn / Lessons")
+    return render_template('learn.html', title="Learn: Using ICI Safely & Collaboratively")

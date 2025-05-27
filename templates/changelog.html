@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICI Chat - Changelog</title>
+    <style>
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            line-height: 1.6; 
+            background: #f8fafc; 
+            margin: 0; 
+            color: #334155; 
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            background: white; 
+            border-radius: 8px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            margin-top: 20px; 
+            margin-bottom: 40px; 
+        }
+        .changelog-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .changelog-header h1 {
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-size: 2.5em;
+        }
+        .changelog-header p {
+            color: #64748b;
+            font-size: 1.1em;
+        }
+        .version {
+            margin-bottom: 40px;
+            padding: 20px;
+            border-left: 4px solid #3b82f6;
+            background: #f8fafc;
+            border-radius: 0 8px 8px 0;
+        }
+        .version-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .version-number {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .version-date {
+            background: #3b82f6;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .version-type {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 500;
+            text-transform: uppercase;
+            margin-left: 8px;
+        }
+        .type-major { background: #dc2626; color: white; }
+        .type-minor { background: #059669; color: white; }
+        .type-patch { background: #d97706; color: white; }
+        .type-hotfix { background: #7c2d12; color: white; }
+        .changes {
+            margin-top: 15px;
+        }
+        .change-category {
+            margin-bottom: 20px;
+        }
+        .change-category h4 {
+            color: #374151;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+        }
+        .change-category .icon {
+            margin-right: 8px;
+            font-size: 1.2em;
+        }
+        .change-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .change-list li {
+            padding: 6px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        .change-list li:before {
+            content: "•";
+            position: absolute;
+            left: 12px;
+            color: #6b7280;
+        }
+        .added { border-left-color: #10b981; }
+        .added .icon { color: #10b981; }
+        .changed { border-left-color: #3b82f6; }
+        .changed .icon { color: #3b82f6; }
+        .fixed { border-left-color: #f59e0b; }
+        .fixed .icon { color: #f59e0b; }
+        .removed { border-left-color: #ef4444; }
+        .removed .icon { color: #ef4444; }
+        .deprecated { border-left-color: #6b7280; }
+        .deprecated .icon { color: #6b7280; }
+        .security { border-left-color: #7c2d12; }
+        .security .icon { color: #7c2d12; }
+        .code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #475569;
+        }
+        .note {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 15px 0;
+            color: #92400e;
+        }
+        .note .note-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    {% include "_header.html" %}
+    
+    <div class="container">
+        <div class="changelog-header">
+            <h1>📋 Changelog</h1>
+            <p>Track the evolution of ICI Chat with detailed version history and updates</p>
+        </div>
+
+        <div class="version changed">
+            <div class="version-header">
+                <div>
+                    <span class="version-number">v1.2.0</span>
+                    <span class="version-type type-minor">Minor</span>
+                </div>
+                <span class="version-date">May 26, 2025</span>
+            </div>
+            <div class="changes">
+                <div class="change-category">
+                    <h4><span class="icon">✨</span> Added</h4>
+                    <ul class="change-list">                        <li>Enhanced "Who is [person]?" memory search across all client records</li>
+                        <li>Fast startup loading page with real-time progress tracking</li>
+                        <li>Progressive app initialization for improved perceived performance</li>
+                        <li>Live demo banner with dismissible functionality</li>
+                        <li>Comprehensive endpoint testing suite (38 endpoints tested)</li>
+                        <li><span class="code">/changelog</span> endpoint for version tracking</li>
+                        <li><strong>Progressive Confirmation System</strong>: Implemented "unapologetically naggy" confirmation methodology for enhanced user safety and accessibility</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">🔧</span> Changed</h4>
+                    <ul class="change-list">
+                        <li>Moved root route from <span class="code">/</span> to <span class="code">/home</span> to avoid conflicts</li>
+                        <li>Refactored startup sequence for better user experience</li>
+                        <li>Enhanced memory search to query across multiple memory scopes</li>
+                        <li>Improved roadmap visualization with Gantt chart timeline</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">🐛</span> Fixed</h4>
+                    <ul class="change-list">
+                        <li>Footer duplication issue in <span class="code">templates/index.html</span></li>
+                        <li>CSS leakage between duplicate footer sections</li>
+                        <li>Malformed template structure with mixed extends/includes</li>
+                        <li>Memory search timing and accuracy improvements</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">📈</span> Performance</h4>
+                    <ul class="change-list">
+                        <li>Startup time reduced with immediate loading page</li>
+                        <li>Memory search response time improved</li>
+                        <li>Template rendering optimized</li>
+                    </ul>
+                </div>            </div>
+            <div class="note">
+                <div class="note-title">🎯 Major Milestone:</div>
+                This release completes Phase 1 core features including enhanced memory search and startup performance improvements.
+            </div>
+            <div class="note">
+                <div class="note-title">🛡️ Progressive Confirmation Philosophy:</div>
+                ICI now implements a comprehensive "unapologetically naggy" confirmation system that ensures user safety through multiple explanation methods, progressive detail levels, and accessibility-first design. This approach prioritizes informed consent and user agency over convenience, particularly for users with cognitive disabilities.
+            </div>
+        </div>
+
+        <div class="version added">
+            <div class="version-header">
+                <div>
+                    <span class="version-number">v1.1.0</span>
+                    <span class="version-type type-minor">Minor</span>
+                </div>
+                <span class="version-date">May 20, 2025</span>
+            </div>
+            <div class="changes">
+                <div class="change-category">
+                    <h4><span class="icon">✨</span> Added</h4>
+                    <ul class="change-list">
+                        <li>Project roadmap with interactive Gantt chart visualization</li>
+                        <li>Per-environment knowledge base implementation</li>
+                        <li>Client-side environment ID integration</li>
+                        <li>Policy updates for shared learning transparency</li>
+                        <li>Admin dashboard with debug capabilities</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">🔧</span> Changed</h4>
+                    <ul class="change-list">
+                        <li>Decoupled pre-trained LLM dependencies</li>
+                        <li>Optimized project file structure for Cloud Run</li>
+                        <li>Enhanced memory storage and retrieval system</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">🐛</span> Fixed</h4>
+                    <ul class="change-list">
+                        <li>Memory context search accuracy</li>
+                        <li>Client registration and heartbeat system</li>
+                        <li>Vector database initialization timing</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="version fixed">
+            <div class="version-header">
+                <div>
+                    <span class="version-number">v1.0.0</span>
+                    <span class="version-type type-major">Major</span>
+                </div>
+                <span class="version-date">May 15, 2025</span>
+            </div>
+            <div class="changes">
+                <div class="change-category">
+                    <h4><span class="icon">🎉</span> Initial Release</h4>
+                    <ul class="change-list">
+                        <li>Core AI chat functionality with memory support</li>
+                        <li>Client authentication with QR code system</li>
+                        <li>Multi-scope memory (private, IP-based, shared)</li>
+                        <li>File upload and screenshot analysis</li>
+                        <li>Crypto wallet integration for user identification</li>
+                        <li>Health monitoring and recovery tools</li>
+                        <li>Responsive web interface with modern UI</li>
+                        <li>Cloud Run deployment support</li>
+                    </ul>
+                </div>
+                <div class="change-category">
+                    <h4><span class="icon">🔒</span> Security</h4>
+                    <ul class="change-list">
+                        <li>HTTPS support with self-signed certificates</li>
+                        <li>Environment-based data isolation</li>
+                        <li>Privacy-focused memory storage</li>
+                        <li>Client authentication system</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="note">
+                <div class="note-title">🚀 Launch:</div>
+                First stable release of ICI Chat as an open-source AI memory companion designed for cognitive accessibility.
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f1f5f9; border-radius: 8px;">
+            <h3 style="color: #374151; margin-bottom: 8px;">Stay Updated</h3>
+            <p style="color: #6b7280; margin-bottom: 15px;">
+                Follow our progress on the <a href="/roadmap" style="color: #3b82f6;">roadmap</a> 
+                or check our <a href="https://github.com/zip-myl/ici" target="_blank" style="color: #3b82f6;">GitHub repository</a> 
+                for the latest developments.
+            </p>
+            <p style="color: #9ca3af; font-size: 0.9em;">
+                This changelog follows <a href="https://keepachangelog.com/" target="_blank" style="color: #6b7280;">Keep a Changelog</a> format.
+            </p>
+        </div>
+    </div>
+    
+    {% include "_footer.html" %}
+</body>
+</html>

@@ -21,7 +21,21 @@ An open-source, AI-powered memory assistant designed with and for individuals wi
 - **QR Code Authentication**: Simple, accessible authentication system for easy device linking.
 - **Adaptive Interface**: UI that learns and adapts to user preferences and accessibility needs.
 - **Privacy-First Design**: User-controlled data sharing with transparent privacy policies.
+- **Progressive Confirmation System**: "Unapologetically naggy" confirmation methodology that ensures user understanding and safety through multiple explanation methods and accessible confirmations.
 - **Modular Architecture**: Clean, maintainable codebase supporting ongoing development and customization.
+
+## Design Philosophy
+
+### Progressive Confirmation & Accessibility
+ICI implements an intentionally thorough confirmation system that prioritizes user safety and understanding over convenience. This "unapologetically naggy" approach includes:
+
+- **Multi-Modal Explanations**: Actions are explained through various methods (visual, textual, interactive) to accommodate different learning styles and accessibility needs
+- **Progressive Detail**: Information is presented with increasing detail and context to ensure comprehensive understanding
+- **Graceful Repetition**: The system will ask for confirmation multiple times in different ways, particularly for significant actions
+- **Accessibility-First Design**: All confirmations work seamlessly with screen readers, keyboard navigation, and assistive technologies
+- **User Agency**: Maintains user control and informed consent throughout all interactions
+
+This methodology ensures that individuals with cognitive disabilities maintain full autonomy while receiving appropriate support and protection.
 
 ## Architecture
 

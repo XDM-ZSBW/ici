@@ -87,6 +87,11 @@ def policies():
     """Policies and terms page"""
     return render_template("policies.html")
 
+@admin_bp.route("/changelog")
+def changelog():
+    """Changelog page with version history and updates"""
+    return render_template("changelog.html")
+
 @admin_bp.route("/lost-memory-report", methods=["POST"])
 def lost_memory_report():
     """Submit a lost memory report"""

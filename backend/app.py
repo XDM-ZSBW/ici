@@ -28,8 +28,12 @@ def create_app():
     }    # Register core blueprints immediately for essential routes
     from backend.routes.chat import chat_bp
     from backend.routes.client import client_bp
+    from backend.routes.admin import admin_bp
+    from backend.routes.learn import learn_bp
     app.register_blueprint(chat_bp)
     app.register_blueprint(client_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(learn_bp)
     app.config['STARTUP_STATE']['blueprints_registered'] = True
       # Home page route - serves immediately and always shows home content
     @app.route("/")
@@ -71,14 +75,11 @@ def create_app():
 def complete_app_initialization(app):
     """Complete the app initialization with remaining blueprints and services"""
     try:
-        # Import and register remaining blueprints        from backend.routes.admin import admin_bp
+        # Import and register remaining blueprints
         from backend.routes.vault import vault_bp
-        from backend.routes.learn import learn_bp
         from backend.routes.memory import memory_bp
         
-        app.register_blueprint(admin_bp)
         app.register_blueprint(vault_bp)
-        app.register_blueprint(learn_bp)
         app.register_blueprint(memory_bp)
           # Initialize memory systems
         app.config['STARTUP_STATE']['memory_initialized'] = True
