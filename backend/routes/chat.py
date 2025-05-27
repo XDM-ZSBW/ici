@@ -2,7 +2,6 @@
 
 from flask import Blueprint, render_template, jsonify, request, Response, send_file
 from backend.utils.id_utils import get_env_id, get_private_id
-from backend.utils.vector_db import get_vector_database
 import json
 import time
 import base64
@@ -22,12 +21,11 @@ chat_bp = Blueprint('chat_bp', __name__)
 def ai_chat():
     data = request.json or {}
     user_message = data.get('message')
-    user_id = data.get('user_id', 'anonymous')
-
-    if not user_message:
+    user_id = data.get('user_id', 'anonymous')    if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
-    db = get_vector_database() # Get DB instance for this request
+    # No longer need vector database - using lightweight memory functions
+    db = None  # Lightweight implementation doesn't use vector DB
     response_text = ""
     memory_stored = False
     memory_context_found = False
@@ -90,15 +88,15 @@ def ai_chat():
 
 # Enhanced AI chat endpoint with file/screenshot support and memory search
 @chat_bp.route('/ai-chat-enhanced', methods=['POST'])
-def ai_chat_enhanced():
-    data = request.json or {}
+def ai_chat_enhanced():    data = request.json or {}
     user_message = data.get('message', '')
     user_id = data.get('user_id', 'anonymous')
-
+    
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
-    db = get_vector_database() # Get DB instance here
+    # No longer need vector database - using lightweight memory functions
+    db = None  # Lightweight implementation doesn't use vector DB
     response_text = ""
     memory_stored = False
     memory_context_found = False

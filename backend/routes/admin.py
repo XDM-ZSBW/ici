@@ -21,7 +21,7 @@ roadmap_data_store = {
             "status": "Completed",
             "target_completion": "Q2 2025",
             "features": [
-                {"id": "P1F1", "title": "Decouple Pre-trained LLM", "description": "Remove dependency on external/pre-trained generative LLMs (e.g., distilgpt2) for core chat.", "type": "Backend/IT", "status": "In Progress", "start_date": "2025-05-20", "end_date": "2025-06-10", "impact_areas": ["AI Core", "Performance"]},
+                {"id": "P1F1", "title": "Decouple Pre-trained LLM", "description": "Remove dependency on external/pre-trained generative LLMs (e.g., distilgpt2) for core chat.", "type": "Backend/IT", "status": "Completed", "start_date": "2025-05-20", "end_date": "2025-06-10", "impact_areas": ["AI Core", "Performance"]},
                 {"id": "P1F2", "title": "Implement Per-env-id 'Learning' KB", "description": "Develop a persistent, per-env-id knowledge base using the vector database. 'Learning' means populating and querying this KB.", "type": "Backend/IT", "status": "In Progress", "start_date": "2025-05-22", "end_date": "2025-06-15", "impact_areas": ["AI Core", "Data Storage", "Privacy"]},
                 {"id": "P1F3", "title": "Client-Side env-id Integration", "description": "Ensure client consistently sends env-id for shared context.", "type": "UI/UX", "status": "Planned", "start_date": "2025-06-01", "end_date": "2025-06-10", "impact_areas": ["User Interface", "API"]},
                 {"id": "P1F4", "title": "Policy Updates for Shared Learning", "description": "Update policies.html to explain shared learning, env-id context, and data use.", "type": "Policy", "status": "In Progress", "start_date": "2025-05-25", "end_date": "2025-06-05", "impact_areas": ["Legal", "User Trust"]},

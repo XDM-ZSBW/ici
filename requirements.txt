@@ -1,11 +1,7 @@
 flask
 flask-socketio
 eventlet
-sentence-transformers
-faiss-cpu
 numpy
 eth-account
-transformers
-torch
 psutil
 markdown
