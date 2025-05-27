@@ -8,17 +8,14 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Copy only requirements first for caching
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies with optimizations
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
+# Copy only the app code (after .dockerignore is fixed)
 COPY . .
 
-# Create non-root user for security
+# Create user and set ownership
 RUN useradd --create-home --shell /bin/bash app && \
     chown -R app:app /app
 USER app
