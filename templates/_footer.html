@@ -1,21 +1,20 @@
 <!-- _footer.html: Common footer for all pages -->
 <footer class="ici-footer" style="background:#f3f7fa;border-top:1px solid #e0e6ed;padding:24px 0 18px 0;margin-top:40px;">
   <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;">
+    <!-- Main navigation links -->
     <nav style="margin-bottom:8px;">
-      <a href="/" style="margin-right:18px;">Home</a>
-      <a href="/chat" style="margin-right:18px;">Chat Demo</a>
-      <a href="/join" style="margin-right:18px;">Join</a>
-      <a href="/admin" id="admin-link" style="margin-right:18px;">Admin</a>
-      <a href="/readme" style="margin-right:18px;">README</a>
-      <a href="https://github.com/your-org/ici" target="_blank" rel="noopener" style="margin-right:18px;">GitHub</a>
-      <a href="#purpose" style="margin-right:18px;">Purpose</a>
-      <a href="#mission" style="margin-right:18px;">Mission</a>
-      <a href="#vision" style="margin-right:18px;">Vision</a>
-      <a href="#team" style="margin-right:18px;">Team</a>
-      <a href="#partners" style="margin-right:18px;">Partners</a>
-      <a href="#contact" style="margin-right:18px;">Contact</a>
-      <a href="/learn" id="learn-link">Learn</a>
-    </nav>    <div style="font-size:0.98em;color:#555;text-align:center;max-width:700px;">
+      <a href="/" style="margin:0 10px;">Home</a> |
+      <a href="/chat" style="margin:0 10px;">Chat</a> |
+      <a href="/client" style="margin:0 10px;">Client</a> |
+      <a href="/roadmap" style="margin:0 10px;">Roadmap</a> |
+      <a href="/policies" style="margin:0 10px;">Policies</a> |
+      <a href="/readme" style="margin:0 10px;">README</a> |
+      <a href="/health" style="margin:0 10px;">Health</a> |
+      <a href="/recovery" style="margin:0 10px;">Recovery</a>
+    </nav>
+    
+    <!-- Project information -->
+    <div style="font-size:0.98em;color:#555;text-align:center;max-width:700px;">
       <b id="purpose">Purpose:</b> ICI is an open-source AI memory companion designed with and for individuals with cognitive disabilities, providing ethical, privacy-respecting memory support.<br>
       <b id="mission">Mission:</b> To enhance independence and well-being through AI-powered, personalized memory assistance that empowers rather than replaces human agency.<br>
       <b id="vision">Vision:</b> A world where cognitive support technology is accessible, dignified, and designed by the communities it serves.<br>
@@ -23,9 +22,12 @@
       <b id="partners">Partners:</b> We welcome partners from disability advocacy, healthcare, and AI ethics communities. <a href="https://github.com/your-org/ici#partners" target="_blank" rel="noopener">Learn more</a>.<br>
       <b id="contact">Contact:</b> <a href="mailto:ici-project@myl.zip">ici-project@myl.zip</a>
     </div>
-    <div style="font-size:0.9em;color:#888;margin-top:8px;">&copy; 2025 ICI Project. Open source under the MIT License.</div>
-  </div>
-  <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;width:100%;background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 0;text-align:center;z-index:1000;box-shadow:0 -2px 8px #0001;">
+    
+    <!-- Copyright -->
+    <div style="font-size:0.9em;color:#888;margin-top:8px;">
+      ICI Chat &copy; 2025 | <a href="https://github.com/zip-myl/ici" target="_blank">GitHub</a>
+    </div>
+  </div>  <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;width:100%;background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 0;text-align:center;z-index:1000;box-shadow:0 -2px 8px #0001;">
     <span style="font-size:1em;color:#374151;">This site uses cookies for session management and analytics. By using this site, you agree to our <a href="/policies" style="color:#2563eb;text-decoration:underline;">Policies</a>.</span>
     <button id="cookie-accept-btn" style="margin-left:18px;padding:8px 18px;border-radius:6px;border:1px solid #2563eb;background:#2563eb;color:#fff;font-weight:500;cursor:pointer;">Accept</button>
   </div>

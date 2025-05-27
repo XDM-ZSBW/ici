@@ -114,11 +114,10 @@
             background: #e2e8f0;
             border-color: #94a3b8;
         }
-    </style>
-    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+    </style>    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    {% extends "_header.html" %}
+    {% include "_header.html" %}
     <main>
         <noscript>
             <div style="background:#fee;color:#900;padding:16px;border-radius:8px;margin-bottom:16px;">
@@ -132,7 +131,12 @@
             <b>Authenticate to join the chat</b><br>
             <span>Scan this QR code with your device to authenticate:</span><br>
             <img id="qr-code-img" class="qr-code" src="" alt="QR Code for authentication" width="180" height="180">
-            <div style="margin-top:10px;">Or <a href="#" id="auth-link">open authentication link</a></div>        </div><div id="memory-section" style="display:none;">
+            <div style="margin-top:10px;">Or <a href="#" id="auth-link">open authentication link</a></div>        </div>
+        <div id="qrSection" style="display:none;">
+            <!-- QR code and scan instructions here -->
+        </div>
+        <div id="clientDetails" style="display:none;"></div>
+        <div id="memory-section" style="display:none;">
             <h2>Collaborative Memory</h2>
               <!-- AI Chat Canvas -->
             <div class="memory-controls">
@@ -173,5 +177,6 @@
     <script src="/static/js/ai-chat.js" defer></script>
     <script src="/static/js/ui.js" defer></script>
     <script src="/static/js/app.js" defer></script>
+    <script src="/static/chat.js"></script>
 </body>
 </html>

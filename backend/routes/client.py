@@ -5,6 +5,7 @@ from backend.utils.id_utils import get_env_id
 import time
 import os
 from eth_account import Account
+import hashlib
 
 client_bp = Blueprint('client', __name__)
 
@@ -12,6 +13,33 @@ client_bp = Blueprint('client', __name__)
 client_memory = {}
 # In-memory table for all email/client_id pairs and their data
 client_json_table = []
+
+@client_bp.route("/client")
+def client_page():
+    """Client information page"""
+    env_id = get_env_id()
+    
+    # Get client info from request headers and generate a client ID
+    user_agent = request.headers.get('User-Agent', 'Unknown')
+    public_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if public_ip:
+        public_ip = public_ip.split(',')[0].strip()
+    else:
+        public_ip = 'unknown'
+    
+    # Generate a simple client ID for demo purposes
+    client_info = f"{env_id}|{public_ip}|{user_agent}"
+    client_id = hashlib.sha256(client_info.encode()).hexdigest()[:16]
+    
+    timestamp = int(time.time() * 1000)
+    
+    return render_template('client.html',
+                         env_id=env_id,
+                         client_id=client_id,
+                         public_ip=public_ip,
+                         user_agent=user_agent,
+                         timestamp=timestamp,
+                         private_id=client_id)  # Using client_id as private_id for simplicity
 
 @client_bp.route("/client-register", methods=["POST"])
 def client_register():

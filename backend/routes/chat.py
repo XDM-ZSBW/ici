@@ -177,6 +177,23 @@ def index():
 def chat_page():
     return render_template("chat.html")
 
+@chat_bp.route("/join")
+def join_page():
+    """Join page for QR code generation and client management"""
+    return render_template("join.html")
+
+@chat_bp.route("/env-id")
+def env_id_endpoint():
+    """Environment ID endpoint for client identification"""
+    env_id = get_env_id()
+    
+    # Check if this is an AJAX request
+    if request.headers.get('Accept') == 'application/json' or request.headers.get('Content-Type') == 'application/json':
+        return jsonify({"env_id": env_id})
+    
+    # Otherwise return the HTML page
+    return render_template("env-id.html", env_id=env_id)
+
 @chat_bp.route('/readme')
 def readme():
     import markdown

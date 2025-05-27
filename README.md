@@ -64,11 +64,12 @@ ICI uses a modern, modular architecture designed for maintainability and extensi
 ### Main UI & Info
 - `/` : Portal landing page with README and navigation.
 - `/chat` : Main chat interface (shared, IP, and private memory boxes).
-- `/readme` : Raw README.md as plain text.
-- `/health` : Health check page.
-- `/env-id` : Returns current environment ID as JSON.
-- `/env-id-html` : Returns current environment ID as HTML.
-- `/data` : Returns a random key (demo endpoint).
+- `/client` : Client authenticated chat (shows wallet address, QR, etc.)
+- `/roadmap` : Project roadmap and Gantt chart
+- `/policies` : Policies and terms
+- `/readme` : Rendered README documentation
+- `/health` : Health check/status page.
+- `/recovery` : Admin/Recovery tools
 
 ### Memory APIs
 - `/env-box` : Shared memory API (GET/POST)
@@ -237,15 +238,50 @@ ICI operates under strict ethical guidelines developed in partnership with disab
 
 ---
 
-## Endpoints
-- `/ai-chat` — AI chat with system prompt tuning
-- `/client/new-wallet` — Generate new crypto wallet
-- `/vault/collect` — Collect memory/screenshot data
-- `/vault/search` — Search memory
-- `/admin` — Admin UI
-- `/learn` — (see below)
+# ICI Chat API & Web Endpoints
+
+Below is a complete list of all available endpoints, their purpose, and usage. Endpoints marked with [HTML] return a web page; others return JSON or other formats.
+
+## Main Endpoints
+
+- `/` [HTML] — Home page
+- `/chat` [HTML] — Chat interface (guest or client)
+- `/client` [HTML] — Client authenticated chat (shows wallet address, QR, etc.)
+- `/roadmap` [HTML] — Project roadmap and Gantt chart
+- `/policies` [HTML] — Policies and terms
+- `/readme` [HTML] — Rendered README documentation
+- `/health` [HTML] — Health check/status page
+- `/recovery` [HTML] — Admin/Recovery tools
+
+## API Endpoints
+
+- `/ai-chat` — POST: Chat as guest (uses env-id for memory)
+- `/ai-chat-enhanced` — POST: Chat with file/screenshot support
+- `/client-register` — POST: Register a client (returns wallet address)
+- `/client-heartbeat` — POST: Client keepalive
+- `/clients` — List all registered clients
+- `/client/<client_id>/data` — Get client data
+- `/client/<client_id>/remove` — Remove client
+- `/debug/env-box` — Admin: view all env-box data
+- `/debug/ip-box` — Admin: view all IP-box data
+- `/debug/clients` — Admin: view all client data
+- `/debug/clear-all` — Admin: clear all data
+
+## Auth & QR Code
+
+- When a user scans a QR code on the chat page, the QR disappears and the UI updates to show client details (from client.html). The user's wallet address is now used as the unique identifier for all memory and chat operations, instead of the previous guest env-id. Memory continuity is preserved.
+
+## QR Code Authentication Flow
+
+When a user scans the QR code on the chat page:
+- The QR code UI disappears.
+- The client details UI (from client.html) is shown in its place.
+- All chat and memory operations now use the wallet address as the unique identifier (user_id), instead of the previous guest env-id.
+- Memory continuity is preserved: the user's previous chat history and facts remain accessible, now associated with their wallet address.
 
 ---
+
+For more details, see the web UI or contact the project maintainers.
 
 ## Learn Endpoint
 See `/learn` for a live Markdown knowledge base of lessons learned, deployment tips, and dev workflow nuggets.

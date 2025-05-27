@@ -982,3 +982,23 @@ document.addEventListener('DOMContentLoaded', function() {
     autoRegisterClient();
     // ...existing code...
   });
+// QR Code Auth UI Logic for Chat Page
+function onQRCodeScanned(walletAddress, clientData) {
+    // Hide QR code UI
+    const qrSection = document.getElementById('qrSection');
+    if (qrSection) qrSection.style.display = 'none';
+    // Show client details UI (from client.html template)
+    fetch('/client?wallet=' + encodeURIComponent(walletAddress))
+        .then(res => res.text())
+        .then(html => {
+            const clientDetails = document.getElementById('clientDetails');
+            if (clientDetails) {
+                clientDetails.innerHTML = html;
+                clientDetails.style.display = 'block';
+            }
+        });
+    // Update chat memory logic to use walletAddress as the user_id
+    window.currentUserId = walletAddress;
+    // Optionally, trigger a UI notification
+    if (window.showToast) window.showToast('Authenticated as client: ' + walletAddress);
+}
