@@ -36,8 +36,20 @@
             {% endif %}
             <p>Click "Continue to Chat" to proceed with your existing session, or "Start New Session" to begin fresh.</p>
         </div>
+        <div class="client-debug" style="margin-top:2em;">
+            <b>Client Record (to be posted):</b>
+            <pre id="client-record-json" style="font-size:0.85em;background:#f3f7fa;padding:10px 12px;border-radius:6px;overflow-x:auto;"></pre>
+            <table class="info-table">
+                <tr><td>Env ID</td><td id="info-env-id"></td></tr>
+                <tr><td>Client ID</td><td id="info-client-id" data-client-id="{{ client_id|e }}"></td></tr>
+                <tr><td>User Agent</td><td id="info-user-agent"></td></tr>
+                <tr><td>Timestamp</td><td id="info-timestamp"></td></tr>
+                <tr><td>Email</td><td id="info-email"></td></tr>
+            </table>
+        </div>
     </div>
     <script src="/static/js/hash.js"></script>
+    <script src="/static/client.js"></script>
     <script>
         const clientId = '{{ client_id }}';
         const walletAddress = '{{ wallet_address if wallet_address else "" }}';
@@ -110,6 +122,78 @@
                 statusDiv.style.display = 'block';
                 statusDiv.style.color = '#a22';
                 statusDiv.textContent = 'Failed to save email.';
+            }
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            async function updateClientRecordDisplay() {
+                // Fetch env_id and public_ip
+                let env_id = '{{ env_id if env_id else "" }}';
+                let client_id = '{{ client_id if client_id else "" }}';
+                let user_agent = navigator.userAgent || '';
+                let timestamp = new Date().toISOString();
+                let email = document.getElementById('email') ? document.getElementById('email').value.trim() : '';
+                // Fetch public_ip from backend
+                let public_ip = '';
+                try {
+                    const r = await fetch('/public-ip');
+                    const d = await r.json();
+                    public_ip = d.public_ip || '';
+                } catch {}
+                const payload = { env_id, client_id, public_ip, user_agent, timestamp, email };
+                const pre = document.getElementById('client-record-json');
+                if (pre) pre.textContent = JSON.stringify(payload, null, 2);
+                if (payload.env_id) document.getElementById('info-env-id').textContent = payload.env_id;
+                if (payload.client_id) document.getElementById('info-client-id').textContent = payload.client_id;
+                if (payload.user_agent) document.getElementById('info-user-agent').textContent = payload.user_agent;
+                if (payload.timestamp) document.getElementById('info-timestamp').textContent = payload.timestamp;
+                if (payload.email) document.getElementById('info-email').textContent = payload.email;
+            }
+            updateClientRecordDisplay();
+            if (document.getElementById('email')) {
+                document.getElementById('email').addEventListener('input', updateClientRecordDisplay);
+            }
+            // Patch email form submit to send all required fields
+            const form = document.getElementById('email-form');
+            if (form) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    let env_id = '{{ env_id if env_id else "" }}';
+                    let client_id = '{{ client_id if client_id else "" }}';
+                    let user_agent = navigator.userAgent || '';
+                    let timestamp = new Date().toISOString();
+                    let email = document.getElementById('email') ? document.getElementById('email').value.trim() : '';
+                    let public_ip = '';
+                    try {
+                        const r = await fetch('/public-ip');
+                        const d = await r.json();
+                        public_ip = d.public_ip || '';
+                    } catch {}
+                    const payload = { env_id, client_id, public_ip, user_agent, timestamp, email };
+                    updateClientRecordDisplay();
+                    const statusDiv = document.getElementById('email-status');
+                    let resp;
+                    try {
+                        resp = await fetch('/client-register', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                    } catch (err) {
+                        statusDiv.style.display = 'block';
+                        statusDiv.style.color = '#a22';
+                        statusDiv.textContent = 'Network error.';
+                        return;
+                    }
+                    if (resp && resp.ok) {
+                        statusDiv.style.display = 'block';
+                        statusDiv.style.color = '#2a7';
+                        statusDiv.textContent = 'Email saved!';
+                    } else {
+                        statusDiv.style.display = 'block';
+                        statusDiv.style.color = '#a22';
+                        statusDiv.textContent = 'Failed to save email.';
+                    }
+                });
             }
         });
     </script>

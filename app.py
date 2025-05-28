@@ -48,6 +48,25 @@ if __name__ == "__main__":
     print("[STARTUP] Creating lightweight Flask app (no vector database)...")
     app = create_app()
 
+    # Print all registered routes for debugging
+    print("[ROUTES] Registered Flask routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"  {rule.methods} {rule}")
+
+    @app.route("/")
+    def root_index_app():
+        print(">>> ROOT INDEX ROUTE HIT (app.py) <<<")
+        from flask import render_template
+        return render_template("index.html")
+
+    use_ssl = CERT_FILE and KEY_FILE and os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE)
+    if use_ssl:
+        print(f"[STARTUP] Running with HTTPS at https://localhost:{PORT}")
+        app.run(host="0.0.0.0", port=PORT, debug=True, ssl_context=(CERT_FILE, KEY_FILE))
+    else:
+        print(f"[STARTUP] Running HTTP only at http://localhost:{PORT}")
+        app.run(host="0.0.0.0", port=PORT, debug=True)
+
     if shutdown_mgr:
         shutdown_mgr.register_app(app, None)
 

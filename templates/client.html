@@ -36,18 +36,54 @@
             <div id="email-status" style="margin-top:0.5em;color:#2a7;display:none;">Email saved!</div>
         </form>
         <script src="/static/js/hash.js"></script>
+        <script src="/static/client.js"></script>
         <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('client-form');
-            const emailInput = document.getElementById('email');
-            const statusDiv = document.getElementById('email-status');
-            form.addEventListener('submit', async function(e) {
+            // Helper to update client record display
+            function updateClientRecordDisplay(payload) {
+                const pre = document.getElementById('client-record-json');
+                if (pre) pre.textContent = JSON.stringify(payload, null, 2);
+                if (payload.env_id) document.getElementById('info-env-id').textContent = payload.env_id;
+                if (payload.public_ip) document.getElementById('info-client-ip').textContent = payload.public_ip;
+                if (payload.client_id) document.getElementById('info-client-id').textContent = payload.client_id;
+                if (payload.user_agent) document.getElementById('info-user-agent').textContent = payload.user_agent;
+                if (payload.timestamp) document.getElementById('info-timestamp').textContent = payload.timestamp;
+                if (payload.email) document.getElementById('info-email').textContent = payload.email;
+            }
+            // On page load, fetch env_id and public_ip and display initial record
+            (async function() {
+                let env_id = '';
+                let public_ip = '';
+                try {
+                    const r1 = await fetch('/env-id');
+                    const d1 = await r1.json();
+                    env_id = d1.env_id || '';
+                } catch {}
+                try {
+                    const r2 = await fetch('/public-ip');
+                    const d2 = await r2.json();
+                    public_ip = d2.public_ip || '';
+                } catch {}
+                let client_id = document.getElementById('info-client-id').dataset.clientId || '{{ client_id|e }}';
+                if (!client_id || client_id.length !== 64 || !/^[0-9a-f]{64}$/.test(client_id)) {
+                    const arr = new Uint8Array(32);
+                    window.crypto.getRandomValues(arr);
+                    client_id = Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+                }
+                let user_agent = navigator.userAgent || '';
+                let timestamp = new Date().toISOString();
+                let email = document.getElementById('email').value.trim();
+                const payload = { env_id, client_id, public_ip, user_agent, timestamp, email };
+                updateClientRecordDisplay(payload);
+            })();
+            document.getElementById('client-form').addEventListener('submit', async function(e) {
                 console.log('Form submitted');
                 e.preventDefault();
-                const email = emailInput.value.trim();
+                const email = document.getElementById('email').value.trim();
                 console.log('Email:', email);
                 // Basic email validation
                 if (!/^\S+@\S+\.\S+$/.test(email)) {
+                    const statusDiv = document.getElementById('email-status');
                     statusDiv.style.display = 'block';
                     statusDiv.style.color = '#a22';
                     statusDiv.textContent = 'Please enter a valid email address.';
@@ -59,62 +95,95 @@
                         const r = await fetch('/env-id');
                         const d = await r.json();
                         return d.env_id || '';
-                    } catch { return ''; }
+                    } catch (err) { console.error('fetchEnvId error:', err); return ''; }
                 }
                 async function fetchPublicIp() {
                     try {
                         const r = await fetch('/public-ip');
                         const d = await r.json();
                         return d.public_ip || '';
-                    } catch { return ''; }
+                    } catch (err) { console.error('fetchPublicIp error:', err); return ''; }
                 }
                 const env_id = await fetchEnvId();
                 const public_ip = await fetchPublicIp();
+                console.debug('env_id:', env_id, 'public_ip:', public_ip);
                 if (!env_id || !public_ip) {
+                    const statusDiv = document.getElementById('email-status');
                     statusDiv.style.display = 'block';
                     statusDiv.style.color = '#a22';
                     statusDiv.textContent = 'Missing environment or public IP info.';
                     return;
                 }
-                // Get client_id from the page or localStorage
+                // Ensure client_id is a 64-character lowercase hex string
+                function generateHexId64() {
+                    const arr = new Uint8Array(32);
+                    window.crypto.getRandomValues(arr);
+                    return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+                }
                 let client_id = document.getElementById('info-client-id').dataset.clientId || '{{ client_id|e }}';
-                const user_agent = navigator.userAgent;
-                const timestamp = Date.now();
-                // Save initial client-id for hashing
-                if (!localStorage.getItem('ici-initial-clientid')) {
-                    localStorage.setItem('ici-initial-clientid', client_id);
+                if (!client_id || client_id.length !== 64 || !/^[0-9a-f]{64}$/.test(client_id)) {
+                    client_id = generateHexId64();
                 }
-                // Compute new client-id as hash of initial-id + email (not just email)
-                let newClientId;
-                try {
-                    const initialId = localStorage.getItem('ici-initial-clientid') || client_id;
-                    newClientId = await hashStringToHex(initialId + email);
-                } catch (err) {
-                    statusDiv.style.display = 'block';
-                    statusDiv.style.color = '#a22';
-                    statusDiv.textContent = 'Hashing failed.';
-                    return;
-                }
+                // Do NOT hash the email. Use it as entered.
+                let newClientId = client_id;
                 // Update local client-id
                 localStorage.setItem('ici-chat-user-id', newClientId);
-                // POST to backend (use relative path for environment flexibility)
+                // Ensure all required fields are present before sending
+                if (!env_id || !public_ip || !email) {
+                    alert('Missing required fields: env_id, public_ip, or email.');
+                    const statusDiv = document.getElementById('email-status');
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = '#a22';
+                    statusDiv.textContent = 'Missing required fields: env_id, public_ip, or email.';
+                    return;
+                }
+                let user_agent = navigator.userAgent || '';
+                let timestamp = new Date().toISOString();
+                if (!user_agent || !timestamp) {
+                    alert('Missing user_agent or timestamp.');
+                    const statusDiv = document.getElementById('email-status');
+                    statusDiv.style.display = 'block';
+                    statusDiv.style.color = '#a22';
+                    statusDiv.textContent = 'Missing user_agent or timestamp.';
+                    return;
+                }
+                // Debug output for all fields
+                console.debug('client_id:', newClientId, 'user_agent:', user_agent, 'timestamp:', timestamp);
+                // POST to backend (use absolute path to avoid cross-origin issues)
+                let url = '/client-register';
                 const payload = { env_id, client_id: newClientId, public_ip, user_agent, timestamp, email };
                 // Print payload as JSON for copy-paste clarity
                 console.log('Submitting payload to /client-register:', JSON.stringify(payload, null, 2));
+                // Update client record display
+                function updateClientRecordDisplay(payload) {
+                    const pre = document.getElementById('client-record-json');
+                    if (pre) pre.textContent = JSON.stringify(payload, null, 2);
+                    // Also update table fields
+                    if (payload.env_id) document.getElementById('info-env-id').textContent = payload.env_id;
+                    if (payload.public_ip) document.getElementById('info-client-ip').textContent = payload.public_ip;
+                    if (payload.client_id) document.getElementById('info-client-id').textContent = payload.client_id;
+                    if (payload.user_agent) document.getElementById('info-user-agent').textContent = payload.user_agent;
+                    if (payload.timestamp) document.getElementById('info-timestamp').textContent = payload.timestamp;
+                    if (payload.email) document.getElementById('info-email').textContent = payload.email;
+                }
+                updateClientRecordDisplay(payload);
                 let resp;
                 try {
-                    resp = await fetch('/client-register', {
+                    resp = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
                 } catch (err) {
+                    console.error('Fetch error:', err);
+                    const statusDiv = document.getElementById('email-status');
                     statusDiv.style.display = 'block';
                     statusDiv.style.color = '#a22';
                     statusDiv.textContent = 'Network error.';
                     return;
                 }
                 if (resp && resp.ok) {
+                    const statusDiv = document.getElementById('email-status');
                     statusDiv.style.display = 'block';
                     statusDiv.style.color = '#2a7';
                     statusDiv.textContent = 'Email saved!';
@@ -124,6 +193,7 @@
                         const errJson = await resp.json();
                         if (errJson && errJson.error) errorMsg += ' ' + errJson.error;
                     } catch {}
+                    const statusDiv = document.getElementById('email-status');
                     statusDiv.style.display = 'block';
                     statusDiv.style.color = '#a22';
                     statusDiv.textContent = errorMsg;
@@ -131,25 +201,31 @@
                 // Update UI
                 if (window.UIManager) UIManager.showAuthenticatedClient(newClientId);
             });
+            document.getElementById('new-session-btn')?.addEventListener('click', function() {
+                // Clear only authentication and email, but do NOT erase memory associated with client-id
+                localStorage.removeItem('ici-chat-user-id');
+                localStorage.removeItem('ici-initial-clientid');
+                localStorage.removeItem('ici-auth-via-qr');
+                // Optionally, clear email field
+                document.getElementById('email').value = '';
+                // Reload page to start a new session
+                window.location.reload();
+            });
         });
         </script>
         <section aria-label="Client Metadata">
             <div style="font-size:0.92em;color:#444;margin-top:1.5em;">
-                <b>Client Details (JSON):</b>
-                <pre style="font-size:0.85em;background:#f3f7fa;padding:10px 12px;border-radius:6px;overflow-x:auto;">{{ {
-  'env_id': env_id,
-  'public_ip': public_ip,
-  'user_agent': user_agent,
-  'timestamp': timestamp,
-  'client_id': client_id,
-  'private_id': private_id
-}|tojson(indent=2) }}</pre>
+                <b>Client Record (to be posted):</b>
+                <pre id="client-record-json" style="font-size:0.85em;background:#f3f7fa;padding:10px 12px;border-radius:6px;overflow-x:auto;"></pre>
             </div>
             <table class="info-table">
                 <tr><td>Env ID</td><td id="info-env-id"></td></tr>
                 <tr><td>Client IP</td><td id="info-client-ip"></td></tr>
                 <tr><td>Server Key</td><td id="info-server-ip"></td></tr>
                 <tr><td>Client ID</td><td id="info-client-id" data-client-id="{{ client_id|e }}"></td></tr>
+                <tr><td>User Agent</td><td id="info-user-agent"></td></tr>
+                <tr><td>Timestamp</td><td id="info-timestamp"></td></tr>
+                <tr><td>Email</td><td id="info-email"></td></tr>
             </table>
         </section>
         <!-- Machine-readable JSON-LD for agents -->

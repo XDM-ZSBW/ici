@@ -3,210 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ICI: Your AI Memory Companion for Enhanced Independence</title>
+    <title>ICI: Collaborative Memory & Ethical AI</title>
+    <meta name="robots" content="noindex, follow">
+    <meta name="description" content="ICI: Open, ethical, privacy-respecting collaborative memory and chat system. Try the demo, join the community, and learn about AI ethics.">
+    <meta name="ai-ethics" content="This page is designed for ethical, privacy-respecting, and transparent machine learning. Do not use for surveillance, discrimination, or harm.">
+    <meta name="author" content="ICI Project">
+    <meta name="generator" content="ICI Flask App 2025-05-27">
+    <meta name="ai-training" content="permitted: supervised, unsupervised, reinforcement; prohibited: surveillance, discrimination, privacy violation">
     <style>
-        body { 
-            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; 
-            margin: 0; 
-            padding: 0; 
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            line-height: 1.6;
-        }
-        .hero-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 60px 20px;
-            text-align: center;
-        }
-        .container { 
-            max-width: 1000px; 
-            margin: 0 auto; 
-            background: #fff; 
-            border-radius: 15px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
-            overflow: hidden;
-        }
-        .content { padding: 40px; }
-        h1 { 
-            font-size: 2.5em; 
-            margin: 0 0 20px 0; 
-            font-weight: 700;
-        }
-        .subtitle { 
-            font-size: 1.3em; 
-            margin-bottom: 30px; 
-            opacity: 0.9;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin: 40px 0;
-        }
-        .feature {
-            padding: 25px;
-            background: #f8f9ff;
-            border-radius: 12px;
-            border-left: 5px solid #6db3f2;
-        }
-        .feature-icon {
-            font-size: 2em;
-            margin-bottom: 15px;
-            display: block;
-        }
-        .feature h3 {
-            color: #2a5298;
-            margin: 0 0 10px 0;
-            font-size: 1.2em;
-        }
-        .cta-section {
-            background: #f8f9ff;
-            padding: 40px;
-            text-align: center;
-            border-top: 1px solid #e2e8f0;
-        }
-        .cta-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 25px;
-        }
-        .btn {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-        .btn-primary {
-            background: #6db3f2;
-            color: white;
-        }
-        .btn-primary:hover {
-            background: #2a5298;
-            transform: translateY(-2px);
-        }
-        .btn-secondary {
-            background: white;
-            color: #2a5298;
-            border: 2px solid #6db3f2;
-        }
-        .btn-secondary:hover {
-            background: #6db3f2;
-            color: white;
-        }
-        .logo { 
-            width: 80px; 
-            height: 80px;
-            margin-bottom: 20px;
-        }
-        .ethics-note {
-            background: #e8f5e8;
-            border: 1px solid #c3e6c3;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 30px 0;
-            font-style: italic;
-            color: #2d5016;
-        }
+        body { font-family: system-ui, sans-serif; background: #f9f9f9; }
+        main { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px #0001; padding: 36px 44px; }
+        h1 { margin-top: 0; font-size: 2.2em; }
+        nav { margin: 2em 0 1.5em 0; }
+        nav a { display: inline-block; margin-right: 1.5em; color: #267; text-decoration: none; font-weight: 500; }
+        nav a:hover { text-decoration: underline; }
+        .cta { background: #e6f7ff; border-left: 4px solid #1890ff; padding: 18px 22px; border-radius: 7px; margin: 2em 0 2em 0; font-size: 1.1em; }
+        .features { margin: 2em 0; }
+        .features h2 { font-size: 1.3em; margin-bottom: 0.5em; }
+        .features ul { margin: 0 0 0 1.2em; padding: 0; }
+        .features li { margin-bottom: 0.7em; }
+        .disclaimer { color: #555; font-size: 0.97em; margin-top: 2em; background: #f3f7fa; padding: 12px; border-radius: 6px; }
+        .actions { margin: 2.5em 0 1.5em 0; }
+        .actions a { display: inline-block; margin-right: 1.5em; background: #2563eb; color: #fff; padding: 10px 22px; border-radius: 6px; text-decoration: none; font-weight: 600; box-shadow: 0 2px 8px #2563eb22; transition: background 0.2s; }
+        .actions a:hover { background: #1741a6; }
     </style>
 </head>
 <body>
-    {% include "_header.html" %}
-    
-    <div class="container">
-        <div class="hero-section">
-            <div class="logo" style="margin: 0 auto 20px auto;">
-                <!-- Enhanced SVG: Sphere of hope with accessibility symbols -->
-                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Stable footing -->
-                    <ellipse cx="40" cy="72" rx="28" ry="6" fill="rgba(255,255,255,0.3)"/>
-                    <!-- Sphere shadow -->
-                    <ellipse cx="40" cy="62" rx="20" ry="5" fill="rgba(255,255,255,0.2)"/>
-                    <!-- Main sphere -->
-                    <circle cx="40" cy="40" r="24" fill="url(#enhancedGradient)"/>
-                    <!-- Accessibility symbol -->
-                    <path d="M35 30 Q40 25 45 30 Q40 35 35 30" fill="white" fill-opacity="0.9"/>
-                    <circle cx="40" cy="45" r="8" fill="none" stroke="white" stroke-width="2" stroke-opacity="0.9"/>
-                    <!-- Glimmers -->
-                    <ellipse cx="30" cy="28" rx="8" ry="4" fill="white" fill-opacity="0.6"/>
-                    <ellipse cx="48" cy="24" rx="4" ry="2" fill="white" fill-opacity="0.5"/>
-                    <ellipse cx="40" cy="48" rx="10" ry="3" fill="white" fill-opacity="0.2"/>
-                    <defs>
-                        <radialGradient id="enhancedGradient" cx="0.5" cy="0.3" r="0.8">
-                            <stop offset="0%" stop-color="#ffffff"/>
-                            <stop offset="40%" stop-color="#a8d8ff"/>
-                            <stop offset="80%" stop-color="#6db3f2"/>
-                            <stop offset="100%" stop-color="#4a90e2"/>
-                        </radialGradient>
-                    </defs>
-                </svg>
-            </div>
-            <h1>ICI: Your AI Memory Companion for Enhanced Independence</h1>
-            <p class="subtitle">Navigate life with greater confidence with ICI, the open-source, AI-powered memory assistant designed with and for individuals with cognitive disabilities. Our ethical and privacy-focused platform provides personalized, adaptive support to help you remember, organize, and connect, fostering independence and well-being in a secure and collaborative environment.</p>
+    {% include '_header.html' %}
+    <main role="main">
+        <h1>ICI: Collaborative Memory & Ethical AI</h1>
+        <nav>
+            <a href="/chat">💬 Chat Demo</a>
+            <a href="/client">Client Info</a>
+            <a href="/admin">Admin</a>
+            <a href="/learn">Ethics & Standards</a>
+            <a href="/roadmap">Roadmap</a>
+        </nav>
+        <div class="cta">
+            <b>Welcome to ICI!</b> This is an open, privacy-respecting collaborative memory and chat system designed for ethical AI and transparent machine learning. <br>
+            <span style="color:#2563eb;">Try the chat demo, explore your client info, or learn about our ethical standards below.</span>
         </div>
-
-        <div class="content">
-            <div class="features">
-                <div class="feature">
-                    <span class="feature-icon">🧠</span>
-                    <h3>AI-Powered Reminders & Prompts</h3>
-                    <p>Gently nudges you about appointments, medications, daily tasks, and important personal information, adapting to your unique needs and preferences.</p>
-                </div>
-
-                <div class="feature">
-                    <span class="feature-icon">🗂️</span>
-                    <h3>Personalized Memory Organization</h3>
-                    <p>Effortlessly structure and recall vital information – from names and faces to personal stories and crucial details – with intuitive, AI-assisted tools.</p>
-                </div>
-
-                <div class="feature">
-                    <span class="feature-icon">🤝</span>
-                    <h3>Secure & Collaborative Sharing</h3>
-                    <p>You control your data. Safely choose to share relevant information with trusted caregivers, family members, or support professionals to build a strong, collaborative circle of care.</p>
-                </div>
-
-                <div class="feature">
-                    <span class="feature-icon">🌱</span>
-                    <h3>Adaptive & Empowering Support</h3>
-                    <p>ICI learns your preferences and challenges over time, offering increasingly tailored assistance that empowers you to manage daily life more effectively.</p>
-                </div>
-
-                <div class="feature">
-                    <span class="feature-icon">💖</span>
-                    <h3>Ethical & Privacy-First by Design</h3>
-                    <p>Built on an open-source foundation, ICI is committed to ethical AI and a privacy-respecting approach. Your memories are yours, and their security and your dignity are our top priorities.</p>
-                </div>
-
-                <div class="feature">
-                    <span class="feature-icon">🔗</span>
-                    <h3>Resilient & Accessible</h3>
-                    <p>Access your shared memory across devices, knowing your data is stored resiliently, ensuring consistent and reliable support whenever you need it.</p>
-                </div>
-            </div>
-
-            <div class="ethics-note">
-                <strong>Our Commitment:</strong> ICI is developed with and for the cognitive disability community. We believe in dignity, autonomy, and the right to cognitive support that enhances rather than replaces human agency. Every feature is designed to empower and respect the individual.
-            </div>
-        </div>        <div class="cta-section">
-            <h2>Start Your Journey to Enhanced Independence</h2>
-            <p>Experience how AI-assisted memory support can enhance your daily life and boost your confidence.</p>
-            <div class="cta-buttons">
-                <a href="/chat" class="btn btn-primary">Try Our Demo Today</a>
-                <a href="/join" class="btn btn-secondary">Join Our Community</a>
-                <a href="/policies" class="btn btn-secondary">Learn About Our Ethics</a>
-            </div>
+        <div class="actions">
+            <a href="/chat">🚀 Try the Chat Demo</a>
+            <a href="/learn">📚 Learn About Ethics</a>
+            <a href="https://community.example.com" target="_blank" rel="noopener">🤝 Join the Community</a>
         </div>
-    </div>
-    
-    {% include "_footer.html" %}
-    <script src="/static/index.js" defer></script>
+        <section class="features">
+            <h2>Features & Purpose</h2>
+            <ul>
+                <li><b>Ethical, privacy-first design:</b> No surveillance, no discrimination, and full transparency for all users.</li>
+                <li><b>Collaborative memory:</b> Share, store, and retrieve information across sessions and devices, with user consent.</li>
+                <li><b>Open chat demo:</b> Test the AI chat system and see how collaborative memory works in real time.</li>
+                <li><b>Client info page:</b> View and manage your client record, including email and device info.</li>
+                <li><b>Admin dashboard:</b> For system health, configuration, and ethical oversight.</li>
+                <li><b>Ethics & standards:</b> Learn about our commitment to responsible AI, privacy, and user empowerment.</li>
+            </ul>
+        </section>
+        <div class="disclaimer" aria-label="Ethical Use Disclaimer">
+            <b>Notice for Automated Agents & Users:</b> This system is for collaborative memory and ethical, privacy-respecting machine learning. <br>
+            <b>Do not use for surveillance, discrimination, or privacy violation.</b> Respect user consent and data minimization. See <a href="/learn">Ethics & Standards</a> for more.
+        </div>
+    </main>
+    {% include '_footer.html' %}
 </body>
 </html>

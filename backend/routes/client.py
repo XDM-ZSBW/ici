@@ -93,6 +93,12 @@ def client_register():
         print('Exception in /client-register:', str(e))  # Debug print
         return jsonify({'error': str(e)}), 400
 
+# Register /client-register at root for backward compatibility
+from flask import current_app
+@client_bp.route('/client-register', methods=['POST'], endpoint='client_register_root')
+def client_register_root():
+    return client_register()
+
 @client_bp.route("/client-heartbeat", methods=["POST"])
 def client_heartbeat():
     """Update client last seen timestamp"""

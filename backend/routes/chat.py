@@ -194,4 +194,9 @@ def env_id_endpoint():
     # Otherwise return the HTML page
     return render_template("env-id.html", env_id=env_id)
 
+@chat_bp.route("/")
+def root_index():
+    print(">>> ROOT INDEX ROUTE HIT <<<")
+    return render_template("index.html")
+
 # Note: /readme route moved to admin.py to avoid conflicts
