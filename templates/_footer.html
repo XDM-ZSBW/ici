@@ -1,36 +1,61 @@
 <!-- _footer.html: Common footer for all pages -->
-<footer class="ici-footer" style="background:#f3f7fa;border-top:1px solid #e0e6ed;padding:24px 0 18px 0;margin-top:40px;">
-  <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:10px;">    <!-- Main navigation links -->
-    <nav style="margin-bottom:8px;">
-      <a href="/" style="margin:0 10px;">Home</a> |
-      <a href="/chat" style="margin:0 10px;">Chat</a> |
-      <a href="/client" style="margin:0 10px;">Client</a> |
-      <a href="/roadmap" style="margin:0 10px;">Roadmap</a> |
-      <a href="/changelog" style="margin:0 10px;">Changelog</a> |
-      <a href="/policies" style="margin:0 10px;">Policies</a> |
-      <a href="/health" style="margin:0 10px;">Health</a> |
-      <a href="/recovery" style="margin:0 10px;">Recovery</a> |
-      <a href="/learn" style="margin:0 10px;">Learn</a>
+<footer class="ici-footer" style="background: var(--color-gray-50); border-top: 1px solid var(--color-gray-200); padding: var(--spacing-8) 0 var(--spacing-6) 0; margin-top: var(--spacing-8);">
+  <div class="ici-container">
+    <!-- Main navigation links -->
+    <nav class="ici-footer-nav" style="display: flex; flex-wrap: wrap; justify-content: center; gap: var(--spacing-4); margin-bottom: var(--spacing-6);">
+      <a href="/" class="ici-footer-link" style="color: var(--color-gray-600); text-decoration: none; font-weight: 500;">Home</a>
+      <a href="/chat" class="ici-footer-link" style="color: var(--color-gray-600); text-decoration: none; font-weight: 500;">Chat</a>
+      <a href="/client" class="ici-footer-link" style="color: var(--color-gray-600); text-decoration: none; font-weight: 500;">Client</a>
+      <a href="/roadmap" class="ici-footer-link" style="color: var(--color-gray-600); text-decoration: none; font-weight: 500;">Roadmap</a>
+      <a href="/changelog" class="ici-footer-link" style="color: var(--color-gray-600); text-decoration: none; font-weight: 500;">Changelog</a>
+      <a href="/policies" class="ici-footer-link" style="color: var(--color-gray-600); text-decoration: none; font-weight: 500;">Policies</a>
+      <a href="/health" class="ici-footer-link" style="color: var(--color-gray-600); text-decoration: none; font-weight: 500;">Health</a>
+      <a href="/recovery" class="ici-footer-link" style="color: var(--color-gray-600); text-decoration: none; font-weight: 500;">Recovery</a>
+      <a href="/learn" class="ici-footer-link" style="color: var(--color-gray-600); text-decoration: none; font-weight: 500;">Learn</a>
     </nav>
     
     <!-- Project information -->
-    <div style="font-size:0.98em;color:#555;text-align:center;max-width:700px;">
-      <b id="purpose">Purpose:</b> ICI is an open-source AI memory companion designed with and for individuals with cognitive disabilities, providing ethical, privacy-respecting memory support.<br>
-      <b id="mission">Mission:</b> To enhance independence and well-being through AI-powered, personalized memory assistance that empowers rather than replaces human agency.<br>
-      <b id="vision">Vision:</b> A world where cognitive support technology is accessible, dignified, and designed by the communities it serves.<br>
-      <b id="team">Team:</b> Built by the ICI open-source community with the cognitive disability community. <a href="https://github.com/XDM-ZSBW/ici/graphs/contributors" target="_blank" rel="noopener noreferrer">Contributors</a>.<br>
-      <b id="partners">Partners:</b> We welcome partners from disability advocacy, healthcare, and AI ethics communities. <a href="https://github.com/your-org/ici#partners" target="_blank" rel="noopener">Learn more</a>.<br>
-      <b id="contact">Contact:</b> <a href="mailto:ici-project@myl.zip">ici-project@myl.zip</a>
+    <div class="ici-footer-info" style="max-width: 800px; margin: 0 auto; text-align: center; color: var(--color-gray-600); font-size: 0.95rem; line-height: 1.6;">
+      <div class="ici-footer-section" style="margin-bottom: var(--spacing-4);">
+        <strong style="color: var(--color-gray-700);">Purpose:</strong> ICI is an open-source AI memory companion designed with and for individuals with cognitive disabilities, providing ethical, privacy-respecting memory support.
+      </div>
+      <div class="ici-footer-section" style="margin-bottom: var(--spacing-4);">
+        <strong style="color: var(--color-gray-700);">Mission:</strong> To enhance independence and well-being through AI-powered, personalized memory assistance that empowers rather than replaces human agency.
+      </div>
+      <div class="ici-footer-section" style="margin-bottom: var(--spacing-4);">
+        <strong style="color: var(--color-gray-700);">Vision:</strong> A world where cognitive support technology is accessible, dignified, and designed by the communities it serves.
+      </div>
+      <div class="ici-footer-section" style="margin-bottom: var(--spacing-4);">
+        <strong style="color: var(--color-gray-700);">Team:</strong> Built by the ICI open-source community with the cognitive disability community. 
+        <a href="https://github.com/XDM-ZSBW/ici/graphs/contributors" target="_blank" rel="noopener noreferrer" style="color: var(--color-primary);">Contributors</a>.
+      </div>
+      <div class="ici-footer-section" style="margin-bottom: var(--spacing-4);">
+        <strong style="color: var(--color-gray-700);">Partners:</strong> We welcome partners from disability advocacy, healthcare, and AI ethics communities. 
+        <a href="https://github.com/your-org/ici#partners" target="_blank" rel="noopener" style="color: var(--color-primary);">Learn more</a>.
+      </div>
+      <div class="ici-footer-section">
+        <strong style="color: var(--color-gray-700);">Contact:</strong> 
+        <a href="mailto:ici-project@myl.zip" style="color: var(--color-primary);">ici-project@myl.zip</a>
+      </div>
     </div>
     
     <!-- Copyright -->
-    <div style="font-size:0.9em;color:#888;margin-top:8px;">
-      ICI Chat &copy; 2025 | <a href="https://github.com/XDM-ZSBW/ici" target="_blank" rel="noopener noreferrer">GitHub</a>
+    <div class="ici-footer-copyright" style="text-align: center; margin-top: var(--spacing-6); color: var(--color-gray-500); font-size: 0.9rem;">
+      ICI Chat &copy; 2025 | 
+      <a href="https://github.com/XDM-ZSBW/ici" target="_blank" rel="noopener noreferrer" style="color: var(--color-primary);">GitHub</a>
     </div>
-  </div>  <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;width:100%;background:#f9fafb;border-top:1px solid #e5e7eb;padding:18px 0;text-align:center;z-index:1000;box-shadow:0 -2px 8px #0001;">
-    <span style="font-size:1em;color:#374151;">This site uses cookies for session management and analytics. By using this site, you agree to our <a href="/policies" style="color:#2563eb;text-decoration:underline;">Policies</a>.</span>
-    <button id="cookie-accept-btn" style="margin-left:18px;padding:8px 18px;border-radius:6px;border:1px solid #2563eb;background:#2563eb;color:#fff;font-weight:500;cursor:pointer;">Accept</button>
   </div>
+
+  <!-- Cookie Banner -->
+  <div id="cookie-banner" class="ici-cookie-banner" style="display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--color-gray-50); border-top: 1px solid var(--color-gray-200); padding: var(--spacing-4) 0; text-align: center; z-index: 1000; box-shadow: var(--shadow-lg);">
+    <div class="ici-container" style="display: flex; align-items: center; justify-content: center; gap: var(--spacing-4);">
+      <span style="color: var(--color-gray-700);">This site uses cookies for session management and analytics. By using this site, you agree to our 
+        <a href="/policies" style="color: var(--color-primary); text-decoration: underline;">Policies</a>.
+      </span>
+      <button id="cookie-accept-btn" class="ici-btn ici-btn-primary" style="white-space: nowrap;">Accept</button>
+    </div>
+  </div>
+
   <script>
   (function() {
     function setCookie(name, value, days) {
@@ -42,6 +67,7 @@
       }
       document.cookie = name + '=' + (value || '')  + expires + '; path=/';
     }
+    
     function getCookie(name) {
       var nameEQ = name + '=';
       var ca = document.cookie.split(';');
@@ -52,8 +78,10 @@
       }
       return null;
     }
+    
     var banner = document.getElementById('cookie-banner');
     var btn = document.getElementById('cookie-accept-btn');
+    
     if (banner && !getCookie('ici_cookie_consent')) {
       banner.style.display = '';
       btn.onclick = function() {
@@ -64,3 +92,24 @@
   })();
   </script>
 </footer>
+
+<style>
+.ici-footer-link:hover {
+  color: var(--color-gray-900);
+}
+
+@media (max-width: 768px) {
+  .ici-footer-nav {
+    gap: var(--spacing-2);
+  }
+  
+  .ici-footer-info {
+    padding: 0 var(--spacing-4);
+  }
+  
+  .ici-cookie-banner .ici-container {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+</style>

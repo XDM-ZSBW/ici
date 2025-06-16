@@ -4,178 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ICI Chat</title>
-    <style>        body { font-family: system-ui, sans-serif; background: #f9f9f9; }
-        main { max-width: 700px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px #0001; padding: 32px 40px; }
-        h1 { margin-top: 0; }
-        .auth-prompt { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 18px; margin-bottom: 24px; text-align: center; }
-        .qr-code { margin: 16px auto; display: block; }        #memory-section { margin-top: 24px; }
-        #memory-section h2 { font-size: 1.5em; margin-bottom: 20px; color: #2a5298; }
-        
-        /* Memory textarea styling */
-        .memory-textarea { 
-            border: 2px solid #e0e6ed; 
-            border-radius: 12px; 
-            padding: 16px; 
-            font-size: 0.95em; 
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            background: #fafbfc;
-            transition: all 0.3s ease;
-            resize: vertical;
-            min-height: 60px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .memory-textarea:focus { 
-            outline: none; 
-            border-color: #6db3f2; 
-            box-shadow: 0 0 0 3px rgba(109, 179, 242, 0.1);
-            background: #fff;
-        }
-        
-        /* Offline styling */
-        .memory-textarea.offline {
-            background: #fff5f5;
-            border-color: #ef4444;
-            outline: 2px solid #fecaca;
-        }
-        
-        /* Modern form styling */
-        .memory-controls {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 24px;
-        }
-        
-        .memory-input-group {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        
-        .memory-input-group input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: all 0.2s ease;
-        }
-        .memory-input-group input:focus {
-            outline: none;
-            border-color: #6db3f2;
-            box-shadow: 0 0 0 3px rgba(109, 179, 242, 0.1);
-        }
-        
-        .memory-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        
-        .memory-btn {
-            padding: 10px 16px;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            font-size: 0.95em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .memory-btn.private { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
-        .memory-btn.private:hover { background: #e5e7eb; border-color: #9ca3af; }
-        
-        .memory-btn.ip-shared { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
-        .memory-btn.ip-shared:hover { background: #bfdbfe; border-color: #60a5fa; }
-        
-        .memory-btn.shared { background: #dcfce7; color: #166534; border-color: #86efac; }
-        .memory-btn.shared:hover { background: #bbf7d0; border-color: #4ade80; }
-        
-        .debug-buttons {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            gap: 8px;
-        }
-        
-        .debug-btn {
-            padding: 6px 12px;
-            font-size: 0.85em;
-            background: #f1f5f9;
-            color: #475569;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .debug-btn:hover {
-            background: #e2e8f0;
-            border-color: #94a3b8;
-        }
-    </style>    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/static/css/main.css">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
     {% include "_header.html" %}
-    <main>
-        <noscript>
-            <div style="background:#fee;color:#900;padding:16px;border-radius:8px;margin-bottom:16px;">
-                <b>JavaScript is required for ICI Chat to function.</b><br>
-                Please enable JavaScript in your browser.
+    
+    <main class="ici-main">
+        <div class="ici-container">
+            <noscript>
+                <div class="ici-alert ici-alert-error">
+                    <strong>JavaScript is required for ICI Chat to function.</strong><br>
+                    Please enable JavaScript in your browser.
+                </div>
+            </noscript>
+
+            <div id="js-init-debug" class="ici-alert ici-alert-warning" style="display: none;"></div>
+            
+            <div id="connection-status" class="ici-alert ici-alert-success" style="display: none;">
+                🟢 Connected to server
             </div>
-        </noscript>        <div id="js-init-debug" style="display:none;background:#fffbe6;color:#b45309;padding:12px;border-radius:8px;margin-bottom:16px;font-size:1.1em;"></div>
-        <div id="connection-status" style="display:none;background:#dcfce7;color:#166534;padding:8px 12px;border-radius:6px;margin-bottom:16px;font-size:0.9em;">
-            🟢 Connected to server
-        </div>
-        <h1>ICI Chat</h1>
-        <div id="auth-section" class="auth-prompt" style="display:none;">
-            <b>Authenticate to join the chat</b><br>
-            <span>Scan this QR code with your device to authenticate:</span><br>
-            <img id="qr-code-img" class="qr-code" src="" alt="QR Code for authentication" width="180" height="180">
-            <div style="margin-top:10px;">Or <a href="#" id="auth-link">open authentication link</a></div>        </div>
-        <div id="qrSection" style="display:none;">
-            <!-- QR code and scan instructions here -->
-        </div>
-        <div id="clientDetails" style="display:none;"></div>
-        <div id="memory-section" style="display:none;">
-            <h2>Collaborative Memory</h2>
-            <!-- Dynamic QR code for client authentication -->
-            <div id="dynamic-qr-container" style="text-align:center;margin-bottom:16px;"></div>
-            <!-- AI Chat Canvas -->
-            <div class="memory-controls">
-                <textarea id="ai-canvas" class="memory-textarea" style="height:180px;min-height:120px;resize:vertical;width:100%;margin-bottom:12px;" placeholder="Type your question or memory here..."></textarea>
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
-                    <div style="display:flex;gap:8px;">
-                        <input type="file" id="file-upload" accept="image/*,text/*,.pdf,.doc,.docx" style="display:none;" multiple>
-                        <button type="button" id="file-upload-btn" class="memory-btn private" style="font-size:0.9em;padding:8px 12px;" title="Upload files">📁 Upload</button>
-                        <button type="button" id="screenshot-btn" class="memory-btn private" style="font-size:0.9em;padding:8px 12px;" title="Take screenshot">📷 Screenshot</button>
+
+            <h1>ICI Chat</h1>
+
+            <div id="auth-section" class="ici-card ici-alert ici-alert-warning" style="display: none;">
+                <h2 style="font-size: 1.25rem; margin-bottom: var(--spacing-4);">Authenticate to join the chat</h2>
+                <p>Scan this QR code with your device to authenticate:</p>
+                <img id="qr-code-img" class="qr-code" src="" alt="QR Code for authentication" width="180" height="180" style="margin: var(--spacing-4) auto; display: block;">
+                <p>Or <a href="#" id="auth-link" style="color: var(--color-primary);">open authentication link</a></p>
+            </div>
+
+            <div id="qrSection" style="display: none;"></div>
+            <div id="clientDetails" style="display: none;"></div>
+
+            <div id="memory-section" class="ici-card" style="display: none;">
+                <h2>Collaborative Memory</h2>
+                
+                <!-- Dynamic QR code for client authentication -->
+                <div id="dynamic-qr-container" class="ici-text-center" style="margin-bottom: var(--spacing-4);"></div>
+
+                <!-- AI Chat Canvas -->
+                <div class="ici-memory-controls" style="background: var(--color-gray-50); border: 1px solid var(--color-gray-200); border-radius: var(--radius-lg); padding: var(--spacing-6);">
+                    <textarea id="ai-canvas" class="ici-input" style="height: 180px; min-height: 120px; resize: vertical; width: 100%; margin-bottom: var(--spacing-4); font-family: var(--font-mono);" placeholder="Type your question or memory here..."></textarea>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--spacing-4);">
+                        <div style="display: flex; gap: var(--spacing-2);">
+                            <input type="file" id="file-upload" accept="image/*,text/*,.pdf,.doc,.docx" style="display: none;" multiple>
+                            <button type="button" id="file-upload-btn" class="ici-btn ici-btn-secondary" style="font-size: 0.9rem;" title="Upload files">📁 Upload</button>
+                            <button type="button" id="screenshot-btn" class="ici-btn ici-btn-secondary" style="font-size: 0.9rem;" title="Take screenshot">📷 Screenshot</button>
+                        </div>
+                        <button type="button" id="ai-chat-submit" class="ici-btn ici-btn-primary" style="font-size: 1.1rem; padding: var(--spacing-3) var(--spacing-6);">Ask AI</button>
                     </div>
-                    <button type="button" id="ai-chat-submit" class="memory-btn shared" style="font-size:1.1em;padding:10px 28px;">Ask AI</button>
-                </div>
-                <!-- Authenticated Client Display for debugging/visual identification -->
-                <div id="authenticated-client-display" style="display:none;margin-top:8px;font-size:0.8em;color:#9ca3af;text-align:center;">
-                    Last updated by client: <span id="authenticated-client-id">Unknown</span>
-                </div>
-                <div id="uploaded-files" style="margin-top:12px;display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:12px;">
-                    <div style="font-weight:600;margin-bottom:8px;color:#0369a1;">📎 Attached Files:</div>
-                    <div id="file-list"></div>
-                </div>
-                <div id="ai-chat-response" style="margin-top:18px;display:none;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:18px 16px;white-space:pre-line;font-family:inherit;"></div>                <div id="offline-cache-indicator" style="margin-top:8px;display:none;font-size:0.85em;color:#f59e0b;background:#fffbeb;border:1px solid #fed7aa;border-radius:4px;padding:6px 10px;">
-                    💾 Response cached offline - will sync when connection is restored
+
+                    <!-- Authenticated Client Display -->
+                    <div id="authenticated-client-display" style="display: none; margin-top: var(--spacing-2); font-size: 0.8rem; color: var(--color-gray-500); text-align: center;">
+                        Last updated by client: <span id="authenticated-client-id">Unknown</span>
+                    </div>
+
+                    <!-- Uploaded Files -->
+                    <div id="uploaded-files" style="display: none; margin-top: var(--spacing-4); background: var(--color-info); color: white; border-radius: var(--radius-md); padding: var(--spacing-4);">
+                        <div style="font-weight: 600; margin-bottom: var(--spacing-2);">📎 Attached Files:</div>
+                        <div id="file-list"></div>
+                    </div>
+
+                    <!-- AI Response -->
+                    <div id="ai-chat-response" style="display: none; margin-top: var(--spacing-6); background: var(--color-gray-50); border: 1px solid var(--color-gray-200); border-radius: var(--radius-md); padding: var(--spacing-4); white-space: pre-line;"></div>
+
+                    <!-- Offline Cache Indicator -->
+                    <div id="offline-cache-indicator" style="display: none; margin-top: var(--spacing-2); font-size: 0.85rem; color: var(--color-warning); background: var(--color-warning); color: white; border-radius: var(--radius-sm); padding: var(--spacing-2) var(--spacing-3);">
+                        💾 Response cached offline - will sync when connection is restored
+                    </div>
                 </div>
             </div>
-        </div></main>
-        <!-- System Prompt Tuning Box -->
-        <div style="max-width:700px;margin:0 auto 32px auto;padding:18px 24px 24px 24px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 1px 6px #0001;">
-            <label for="system-prompt-box" style="font-weight:600;color:#374151;display:block;margin-bottom:8px;">System Prompt (AI Personality/Instructions)</label>
-            <textarea id="system-prompt-box" style="width:100%;min-height:60px;border-radius:8px;border:2px solid #e5e7eb;padding:12px;font-size:1em;resize:vertical;">You are a helpful AI assistant. Answer the user's question in a concise, non-repetitive way.</textarea>
-            <div style="margin-top:8px;font-size:0.95em;color:#64748b;">Edit the system prompt above to tune the AI's behavior in real time. Changes take effect immediately for new questions.</div>
         </div>
-        <div style="text-align:center;margin:32px 0 0 0;">
-          <a href="/learn" style="color:#2563eb;text-decoration:underline;font-weight:500;">📚 Learn: Deployment & Dev Tips</a>
-        </div>    {% include "_footer.html" %}
-      <!-- Load modular JavaScript files -->
+
+        <!-- System Prompt Tuning Box -->
+        <div class="ici-container" style="margin-top: var(--spacing-8);">
+            <div class="ici-card">
+                <label for="system-prompt-box" class="ici-label">System Prompt (AI Personality/Instructions)</label>
+                <textarea id="system-prompt-box" class="ici-input" style="min-height: 60px; resize: vertical;">You are a helpful AI assistant. Answer the user's question in a concise, non-repetitive way.</textarea>
+                <p style="margin-top: var(--spacing-2); font-size: 0.95rem; color: var(--color-gray-500);">
+                    Edit the system prompt above to tune the AI's behavior in real time. Changes take effect immediately for new questions.
+                </p>
+            </div>
+        </div>
+
+        <div class="ici-container ici-text-center" style="margin-top: var(--spacing-8);">
+            <a href="/learn" class="ici-btn ici-btn-secondary" style="text-decoration: none;">📚 Learn: Deployment & Dev Tips</a>
+        </div>
+    </main>
+
+    {% include "_footer.html" %}
+
+    <!-- Load modular JavaScript files -->
     <script src="/static/js/hash.js" defer></script>
     <script src="/static/js/debug.js" defer></script>
     <script src="/static/js/api.js" defer></script>
@@ -184,6 +105,5 @@
     <script src="/static/js/ai-chat.js" defer></script>
     <script src="/static/js/ui.js" defer></script>
     <script src="/static/js/app.js" defer></script>
-    <!-- Removed conflicting chat.js file -->
 </body>
 </html>

@@ -1,16 +1,10 @@
 <!-- _header.html: Common navigation header for all pages -->
-<style>
-  .ici-header { background:#f3f7fa; border-bottom:1px solid #e0e6ed; padding:18px 0 10px 0; margin-bottom:32px; }
-  .ici-header-inner { max-width:900px; margin:0 auto; display:flex; align-items:center; gap:24px; }
-  .ici-header-logo { text-decoration:none; color:#1a2a3a; font-weight:bold; font-size:1.2em; display:flex; align-items:center; gap:10px; }
-  .ici-header nav a { margin-right:18px; color:inherit; text-decoration:none; }
-  .ici-header nav a:last-child { margin-right:0; }
-</style>
-<header class="ici-header" role="banner">
-  <div class="ici-header-inner">
-    <a href="/" class="ici-header-logo" aria-label="ICI Portal Home">
-      <span style="display:inline-block;vertical-align:middle;">
-        <svg width="32" height="32" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+<link rel="stylesheet" href="/static/css/main.css">
+<header class="ici-header" role="banner" style="background: var(--color-gray-50); border-bottom: 1px solid var(--color-gray-200); padding: var(--spacing-4) 0;">
+  <div class="ici-container" style="display: flex; align-items: center; justify-content: space-between;">
+    <a href="/" class="ici-header-logo" aria-label="ICI Portal Home" style="display: flex; align-items: center; gap: var(--spacing-3); text-decoration: none; color: var(--color-gray-900); font-weight: 600;">
+      <span style="display: inline-block; vertical-align: middle;">
+        <svg width="32" height="32" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <ellipse cx="30" cy="54" rx="22" ry="5" fill="#b3b3b3"/>
           <ellipse cx="30" cy="46" rx="16" ry="4" fill="#d1e3f7"/>
           <circle cx="30" cy="30" r="18" fill="url(#sphereGradient)"/>
@@ -26,13 +20,34 @@
           </defs>
         </svg>
       </span>
-      ICI Portal (DEV LIVE DEMO NOT FOR PRODUCTION)
+      <span>ICI Portal</span>
+      <span class="ici-badge" style="font-size: 0.75rem; padding: 0.125rem 0.5rem; background: var(--color-warning); color: white; border-radius: var(--radius-sm);">DEV</span>
     </a>
-    <nav aria-label="Main navigation">
-      <a href="/chat">Chat Demo</a>
-      <a href="/join">Join</a>
-      <a href="/recovery">Recovery/Admin</a>
-      <a href="/">Home</a>
+    <nav aria-label="Main navigation" style="display: flex; gap: var(--spacing-4);">
+      <a href="/chat" class="ici-nav-link" style="color: var(--color-gray-700); text-decoration: none; font-weight: 500; padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-md); transition: all var(--transition-fast);">Chat Demo</a>
+      <a href="/join" class="ici-nav-link" style="color: var(--color-gray-700); text-decoration: none; font-weight: 500; padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-md); transition: all var(--transition-fast);">Join</a>
+      <a href="/recovery" class="ici-nav-link" style="color: var(--color-gray-700); text-decoration: none; font-weight: 500; padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-md); transition: all var(--transition-fast);">Recovery/Admin</a>
+      <a href="/" class="ici-nav-link" style="color: var(--color-gray-700); text-decoration: none; font-weight: 500; padding: var(--spacing-2) var(--spacing-3); border-radius: var(--radius-md); transition: all var(--transition-fast);">Home</a>
     </nav>
   </div>
 </header>
+
+<style>
+.ici-nav-link:hover {
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-900);
+}
+
+@media (max-width: 768px) {
+  .ici-header .ici-container {
+    flex-direction: column;
+    gap: var(--spacing-4);
+    text-align: center;
+  }
+  
+  .ici-header nav {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+</style>
